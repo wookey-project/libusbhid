@@ -1,0 +1,25 @@
+config USR_LIB_USBHID
+  bool  "userspace USB HID stack for various HID usages"
+  default y
+  select USR_LIB_USBCTRL
+  ---help---
+  Support for USB HID class feature for USB stack.
+
+if USR_LIB_USBHID
+
+menu "HID options"
+
+config USR_LIB_USBHID_DEBUG
+  int "HID stack debug informations level"
+  default 0
+  range 0 2
+  ---help---
+  USB HID stack debug level. Supported levels are:
+    * 0: no debug
+    * 1: command execution debug, list received and sent commands
+    * 2: command dump debug, dumping complex commands content and
+         received and sent data size
+
+endmenu
+
+endif
