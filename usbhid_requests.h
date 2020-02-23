@@ -14,42 +14,22 @@
  *
  * This package is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
+ * You should have received a copy of the GNU Lesser General Public License along
  * with this package; if not, write to the Free Software Foundation, Inc., 51
  * Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
-#ifndef LIBUSBHID_H_
-#define LIBUSBHID_H_
+#ifndef USBHID_REQUESTS_H_
+#define USBHID_REQUESTS_H_
 
 #include "libc/types.h"
 #include "libc/syscall.h"
 #include "libusbctrl.h"
 #include "autoconf.h"
 
-/*
- * USB HID class is defined here:
- * https://www.usb.org/sites/default/files/documents/hid1_11.pdf
- */
+mbed_error_t usbhid_class_rqst_handler(usbctrl_context_t *ctx,
+                                       usbctrl_setup_pkt_t *packet);
 
-typedef enum {
-    USBHID_SUBCLASS_NONE = 0,
-    USBHID_SUBCLASS_BOOT_IFACE = 1
-} usbhid_subclass_t;
-
-typedef enum {
-    USBHID_PROTOCOL_NONE     = 0,
-    USBHID_PROTOCOL_KEYBOARD = 1,
-    USBHID_PROTOCOL_MOUSE    = 2
-} usbhid_protocol_t;
-
-
-mbed_error_t usbhid_declare(usbctrl_context_t *ctx);
-
-mbed_error_t usbhid_configure(usbctrl_context_t *ctx,
-                              usbhid_subclass_t hid_subclass,
-                              usbhid_protocol_t hid_protocol);
-
-#endif/*!LIBUSBHID*/
+#endif/*!USBHID_REQUESTS_H_*/

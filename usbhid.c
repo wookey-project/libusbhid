@@ -8,15 +8,15 @@
  *   - Philippe Trebuchet
  *
  * This package is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published
+ * it under the terms of the GNU General Public License as published
  * the Free Software Foundation; either version 2.1 of the License, or (at
  * ur option) any later version.
  *
  * This package is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- * PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License along
+ * You should have received a copy of the GNU General Public License along
  * with this package; if not, write to the Free Software Foundation, Inc., 51
  * Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
@@ -25,6 +25,7 @@
 
 #include "api/libusbhid.h"
 #include "libusbctrl.h"
+#include "usbhid_requests.h"
 
 static mbed_error_t usbhid_control_received(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
@@ -47,18 +48,6 @@ mbed_error_t usbhid_declare(usbctrl_context_t *ctx)
 {
     return usbctrl_declare(ctx);
 }
-
-static mbed_error_t usbhid_class_rqst_handler(usbctrl_context_t *ctx,
-                                              usbctrl_setup_pkt_t *inpkt)
-{
-    /*
-     * Here, we must handle the Get_Report class request
-     */
-    ctx = ctx;
-    inpkt = inpkt;
-    return MBED_ERROR_NONE;
-}
-
 
 mbed_error_t usbhid_configure(usbctrl_context_t *ctx,
                               usbhid_subclass_t hid_subclass,
