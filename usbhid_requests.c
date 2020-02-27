@@ -78,7 +78,6 @@ mbed_error_t usbhid_class_rqst_handler(usbctrl_context_t *ctx __attribute__((unu
             break;
         default:
             printf("Unhandled class request (%x)\n", packet->bRequest);
-            usbotghs_endpoint_stall(0, USBOTG_HS_EP_DIR_IN);
             goto err;
             break;
     }
