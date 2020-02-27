@@ -52,4 +52,8 @@ mbed_error_t usbhid_configure(usbctrl_context_t *ctx,
                               usbhid_subclass_t hid_subclass,
                               usbhid_protocol_t hid_protocol);
 
+mbed_error_t usbhid_send_report(uint8_t report_id,
+                                uint8_t *report_data,
+                                uint8_t report_data_len);
+
 #endif/*!LIBUSBHID*/

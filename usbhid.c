@@ -59,8 +59,6 @@ mbed_error_t usbhid_configure(usbctrl_context_t *ctx,
     iface.usb_protocol = hid_protocol; /* Protocol BBB (Bulk only) */
     iface.dedicated = false;
     iface.rqst_handler = usbhid_class_rqst_handler;
-    iface.func_desc = 0;
-    iface.func_desc_len = 0;
     iface.usb_ep_number = 2;
 
     /*
