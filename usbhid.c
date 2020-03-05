@@ -44,14 +44,9 @@ static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_
 }
 
 
-mbed_error_t usbhid_declare(void)
-{
-    return MBED_ERROR_NONE;
-}
-
-mbed_error_t usbhid_configure(uint32_t usbxdci_handler,
-                              usbhid_subclass_t hid_subclass,
-                              usbhid_protocol_t hid_protocol)
+mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
+                            usbhid_subclass_t hid_subclass,
+                            usbhid_protocol_t hid_protocol)
 {
     usbctrl_interface_t iface = { 0 };
     iface.usb_class = USB_CLASS_HID;
@@ -99,6 +94,12 @@ mbed_error_t usbhid_configure(uint32_t usbxdci_handler,
 
     usbctrl_declare_interface(usbxdci_handler, &iface);
 
+
+    return MBED_ERROR_NONE;
+}
+
+mbed_error_t usbhid_configure(void)
+{
     return MBED_ERROR_NONE;
 }
 

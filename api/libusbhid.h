@@ -46,11 +46,11 @@ typedef enum {
 } usbhid_protocol_t;
 
 
-mbed_error_t usbhid_declare(void);
+mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
+                            usbhid_subclass_t hid_subclass,
+                            usbhid_protocol_t hid_protocol);
 
-mbed_error_t usbhid_configure(uint32_t usbxdci_handler,
-                              usbhid_subclass_t hid_subclass,
-                              usbhid_protocol_t hid_protocol);
+mbed_error_t usbhid_configure(void);
 
 mbed_error_t usbhid_send_report(uint8_t report_id,
                                 uint8_t *report_data,
