@@ -39,7 +39,7 @@
  *
  * @param packet Setup packet
  */
-mbed_error_t usbhid_class_rqst_handler(usbctrl_context_t *ctx __attribute__((unused)),
+mbed_error_t usbhid_class_rqst_handler(uint32_t usbxdci_handler __attribute__((unused)),
                                        usbctrl_setup_pkt_t *packet)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;

@@ -44,12 +44,12 @@ static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_
 }
 
 
-mbed_error_t usbhid_declare(usbctrl_context_t *ctx)
+mbed_error_t usbhid_declare(void)
 {
-    return usbctrl_declare(ctx);
+    return MBED_ERROR_NONE;
 }
 
-mbed_error_t usbhid_configure(usbctrl_context_t *ctx,
+mbed_error_t usbhid_configure(uint32_t usbxdci_handler,
                               usbhid_subclass_t hid_subclass,
                               usbhid_protocol_t hid_protocol)
 {
@@ -97,9 +97,7 @@ mbed_error_t usbhid_configure(usbctrl_context_t *ctx,
     iface.eps[1].handler     = usbhid_data_sent;
 
 
-    usbctrl_initialize(ctx);
-    usbctrl_declare_interface(ctx, &iface);
-    usbctrl_start_device(ctx);
+    usbctrl_declare_interface(usbxdci_handler, &iface);
 
     return MBED_ERROR_NONE;
 }
