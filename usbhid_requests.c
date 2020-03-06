@@ -24,16 +24,105 @@
 #include "libusbctrl.h"
 #include "libc/types.h"
 #include "libc/stdio.h"
-#include "libusbotghs.h"
+#include "usbhid.h"
 #include "autoconf.h"
 
-/* USBHID class USB RQST */
-#define USB_RQST_HID_GET_DESCRIPTOR       0x06
+/* USBHID class specific request (i.e. bRequestType is Type (bit 5..6 = 1, bits 0..4 target current iface
+ * These values are set in bRequest field */
+#define USB_CLASS_RQST_GET_REPORT           0x01
+#define USB_CLASS_RQST_GET_IDLE             0x02
+#define USB_CLASS_RQST_GET_PROTOCOL         0x03
+#define USB_CLASS_RQST_SET_REPORT           0x09
+#define USB_CLASS_RQST_SET_IDLE             0x0A
+#define USB_CLASS_RQST_SET_PROTOCOL         0x0B
 
-#define USB_RQST_HID_GET_HID              0x21
-#define USB_RQST_HID_GET_REPORT	          0x22
-#define USB_RQST_HID_GET_PHYSICAL_DESC    0x23
+#define USB_STD_RQST_ACTION_GET_DESCRIPTOR 0x06
+#define USB_STD_RQST_ACTION_SET_DESCRIPTOR 0x07
 
+/* USBHID Get_Descriptor standard request targetting current interface.
+ * These values are set in wValue high byte, when request is *not* class specific */
+#define DESCRIPTOR_TYPE_HID             0x21
+#define DESCRIPTOR_TYPE_REPORT          0x22
+#define DESCRIPTOR_TYPE_PHYSICAL        0x23
+
+static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    /* get the high byte */
+    uint8_t action = pkt->bRequest;
+    uint8_t descriptor_type = pkt->wValue >> 0x8;
+    uint8_t descriptor_index = pkt->wValue & 0xff;
+    switch (action) {
+        case USB_STD_RQST_ACTION_GET_DESCRIPTOR:
+            switch (descriptor_type) {
+                case DESCRIPTOR_TYPE_HID:
+                    log_printf("[USBHID] get_descriptor: HID DESC w/index: %d\n", descriptor_index);
+#if 0
+                    /*1. configure descriptor */
+                    /*2. send data */
+                    usb_backend_drv_send_data(&desc, sizeof(max_lun), EP0);
+                    usb_backend_drv_endpoint_clear_nak(0, USBOTG_HS_EP_DIR_OUT);
+#endif
+                    break;
+                case DESCRIPTOR_TYPE_REPORT:
+                    log_printf("[USBHID] get_descriptor: REPORT DESC w/index: %d\n", descriptor_index);
+                    break;
+                case DESCRIPTOR_TYPE_PHYSICAL:
+                    log_printf("[USBHID] get_descriptor: PHYSICAL DESC w/index: %d\n", descriptor_index);
+                    break;
+                default:
+                    errcode = MBED_ERROR_INVPARAM;
+                    log_printf("[USBHID] Ubnupported requested desc %d\n", descriptor_type);
+                    goto err;
+            }
+            break;
+        case USB_STD_RQST_ACTION_SET_DESCRIPTOR:
+            switch (descriptor_type) {
+                case DESCRIPTOR_TYPE_HID:
+                    log_printf("[USBHID] set_descriptor: HID DESC w/index: %d\n", descriptor_index);
+                    break;
+                case DESCRIPTOR_TYPE_REPORT:
+                    log_printf("[USBHID] set_descriptor: REPORT DESC w/index: %d\n", descriptor_index);
+                    break;
+                case DESCRIPTOR_TYPE_PHYSICAL:
+                    log_printf("[USBHID] set_descriptor: PHYSICAL DESC w/index: %d\n", descriptor_index);
+                    break;
+                default:
+                    errcode = MBED_ERROR_INVPARAM;
+                    log_printf("[USBHID] Unsupported set_desc %d\n", descriptor_type);
+                    goto err;
+            }
+            break;
+        default:
+            log_printf("[USBHID] Unsupported class request action %x", action);
+    }
+err:
+    return errcode;
+}
+
+static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    uint8_t action = pkt->bRequest;
+    switch (action) {
+        case USB_CLASS_RQST_GET_REPORT:
+            break;
+        case USB_CLASS_RQST_GET_IDLE:
+            break;
+        case USB_CLASS_RQST_GET_PROTOCOL:
+            break;
+        case USB_CLASS_RQST_SET_REPORT:
+            break;
+        case USB_CLASS_RQST_SET_IDLE:
+            break;
+        case USB_CLASS_RQST_SET_PROTOCOL:
+            break;
+        default:
+            log_printf("[USBHID] Ubsupported class request action %x", action);
+    }
+
+    return errcode;
+}
 
 
 /**
@@ -47,53 +136,13 @@ mbed_error_t usbhid_class_rqst_handler(uint32_t usbxdci_handler __attribute__((u
     mbed_error_t errcode = MBED_ERROR_NONE;
 
     log_printf("[classRqst] handling HID class rqst\n");
-    switch (packet->bRequest) {
-        case USB_RQST_HID_GET_HID:
-            log_printf("[classRqst] handling Get HID\n");
-#if 0
-            /*1. configure descriptor */
-            /*2. send data */
-            usbotghs_send_data(&desc, sizeof(max_lun), EP0);
-            /*3. clear nak */
-            usbotghs_endpoint_clear_nak(0, USBOTG_HS_EP_DIR_OUT);
-#endif
-            break;
-        case USB_RQST_HID_GET_REPORT:
-            log_printf("[classRqst] handling get report\n");
-#if 0
-            /*1. configure descriptor */
-            /*2. send data */
-            usbotghs_send_data(&desc, sizeof(max_lun), EP0);
-            /*3. clear nak */
-            usbotghs_endpoint_clear_nak(0, USBOTG_HS_EP_DIR_OUT);
-#endif
-            break;
-        case USB_RQST_HID_GET_PHYSICAL_DESC:
-            log_printf("[classRqst] handling get physical descriptor\n");
-#if 0
-            /*1. configure descriptor */
-            /*2. send data */
-            usbotghs_send_data(&desc, sizeof(max_lun), EP0);
-            /*3. clear nak */
-            usbotghs_endpoint_clear_nak(0, USBOTG_HS_EP_DIR_OUT);
-#endif
-            break;
-        case USB_RQST_HID_GET_DESCRIPTOR:
-            log_printf("[classRqst] handling get descriptor\n");
-#if 0
-            /*1. configure descriptor */
-            /*2. send data */
-            usbotghs_send_data(&desc, sizeof(max_lun), EP0);
-            /*3. clear nak */
-            usbotghs_endpoint_clear_nak(0, USBOTG_HS_EP_DIR_OUT);
-#endif
-            break;
-        default:
-            log_printf("Unhandled class request (%x)\n", packet->bRequest);
-            goto err;
-            break;
+    if (((packet->bmRequestType >> 5) & 0x3) == 1) {
+        /* class request */
+        errcode = usbhid_handle_class_request(packet);
+    } else {
+        /* standard request targetting current iface */
+        errcode = usbhid_handle_std_request(packet);
     }
-err:
     return errcode;
 }
 
