@@ -25,7 +25,14 @@
 
 #include "api/libusbhid.h"
 #include "libusbctrl.h"
+#include "usbhid.h"
 #include "usbhid_requests.h"
+#include "usbhid_descriptor.h"
+
+
+#define MAX_HID_DESCRIPTORS 8
+
+static volatile usbhid_context_t usbhid_ctx = { 0 };
 
 static mbed_error_t usbhid_control_received(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
@@ -43,18 +50,44 @@ static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_
     return MBED_ERROR_NONE;
 }
 
+usbhid_context_t *usbhid_get_context(void)
+{
+    return (usbhid_context_t*)&usbhid_ctx;
+}
+
 
 mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
                             usbhid_subclass_t hid_subclass,
-                            usbhid_protocol_t hid_protocol)
+                            usbhid_protocol_t hid_protocol,
+                            uint8_t           num_descriptor,
+                            uint8_t           report_desc_len)
 {
-    usbctrl_interface_t iface = { 0 };
-    iface.usb_class = USB_CLASS_HID;
-    iface.usb_subclass = hid_subclass; /* SCSI transparent cmd set (i.e. use INQUIRY) */
-    iface.usb_protocol = hid_protocol; /* Protocol BBB (Bulk only) */
-    iface.dedicated = false;
-    iface.rqst_handler = usbhid_class_rqst_handler;
-    iface.usb_ep_number = 2;
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    /* sanitize */
+    if (num_descriptor == 0) {
+        log_printf("[USBHID] error ! at least one descriptor for report is required!\n");
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (num_descriptor > MAX_HID_DESCRIPTORS) {
+        log_printf("[USBHID] error ! too many class level descriptors!\n");
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (report_desc_len == 0)  {
+        log_printf("[USBHID] upper class report descriptor len must be non-zero!\n");
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    usbhid_ctx.report_descriptor_len = report_desc_len;
+    usbhid_ctx.num_descriptor = num_descriptor;
+    usbhid_ctx.iface.usb_class = USB_CLASS_HID;
+    usbhid_ctx.iface.usb_subclass = hid_subclass; /* SCSI transparent cmd set (i.e. use INQUIRY) */
+    usbhid_ctx.iface.usb_protocol = hid_protocol; /* Protocol BBB (Bulk only) */
+    usbhid_ctx.iface.dedicated = false;
+    usbhid_ctx.iface.rqst_handler = usbhid_class_rqst_handler;
+    usbhid_ctx.iface.class_desc_handler = usbhid_get_descriptor;
+    usbhid_ctx.iface.usb_ep_number = 2;
 
     /*
      * Hid handle 2 endpoints:
@@ -72,32 +105,35 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
      * Input class-level requests (and corresponding responses on EP0) will be handled
      * naturally by the usbhid_class_rqst_handler.
      */
-    iface.eps[0].type        = USB_EP_TYPE_CONTROL;
-    iface.eps[0].dir         = USB_EP_DIR_OUT;
-    iface.eps[0].attr        = USB_EP_ATTR_NO_SYNC;
-    iface.eps[0].usage       = USB_EP_USAGE_DATA;
-    iface.eps[0].pkt_maxsize = 64; /* mpsize on EP0, not considered by libusbctrl */
-    iface.eps[0].ep_num      = 0; /* not considered by libusbctrl for CONTROL EP */
-    iface.eps[0].handler     = usbhid_control_received;
+    usbhid_ctx.iface.eps[0].type        = USB_EP_TYPE_CONTROL;
+    usbhid_ctx.iface.eps[0].dir         = USB_EP_DIR_OUT;
+    usbhid_ctx.iface.eps[0].attr        = USB_EP_ATTR_NO_SYNC;
+    usbhid_ctx.iface.eps[0].usage       = USB_EP_USAGE_DATA;
+    usbhid_ctx.iface.eps[0].pkt_maxsize = 64; /* mpsize on EP0, not considered by libusbctrl */
+    usbhid_ctx.iface.eps[0].ep_num      = 0; /* not considered by libusbctrl for CONTROL EP */
+    usbhid_ctx.iface.eps[0].handler     = usbhid_control_received;
 
     /*
      * Other EP for low latency data transmission with the host
      */
-    iface.eps[1].type        = USB_EP_TYPE_INTERRUPT;
-    iface.eps[1].dir         = USB_EP_DIR_IN;
-    iface.eps[1].attr        = USB_EP_ATTR_NO_SYNC;
-    iface.eps[1].usage       = USB_EP_USAGE_DATA;
-    iface.eps[1].pkt_maxsize = 512; /* mpsize on EP2 */
-    iface.eps[1].ep_num      = 2; /* this may be updated by libctrl */
-    iface.eps[1].handler     = usbhid_data_sent;
+    usbhid_ctx.iface.eps[1].type        = USB_EP_TYPE_INTERRUPT;
+    usbhid_ctx.iface.eps[1].dir         = USB_EP_DIR_IN;
+    usbhid_ctx.iface.eps[1].attr        = USB_EP_ATTR_NO_SYNC;
+    usbhid_ctx.iface.eps[1].usage       = USB_EP_USAGE_DATA;
+    usbhid_ctx.iface.eps[1].pkt_maxsize = 512; /* mpsize on EP2 */
+    usbhid_ctx.iface.eps[1].ep_num      = 2; /* this may be updated by libctrl */
+    usbhid_ctx.iface.eps[1].handler     = usbhid_data_sent;
 
 
-    usbctrl_declare_interface(usbxdci_handler, &iface);
+    usbctrl_declare_interface(usbxdci_handler, (usbctrl_interface_t*)&(usbhid_ctx.iface));
 
-
-    return MBED_ERROR_NONE;
+err:
+    return errcode;
 }
 
+/*
+ * report descriptor
+ */
 mbed_error_t usbhid_configure(void)
 {
     return MBED_ERROR_NONE;

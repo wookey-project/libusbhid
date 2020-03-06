@@ -29,6 +29,11 @@
 #include "libusbctrl.h"
 #include "autoconf.h"
 
+
+#define HID_DESCRIPTOR_TYPE 0x21
+
+#define REPORT_DESCRIPTOR_TYPE 0x22
+
 /*
  * About HID global descriptor
  */
@@ -71,17 +76,6 @@ typedef enum {
     USBHID_COUNTRYCODE_TURKISH_F = 0x23,
 } usbhid_contry_code_t;
 
-/* USB HID descriptor header */
-typedef struct __packed {
-    uint8_t bLength;
-    uint8_t bDescriptorType;
-    uint16_t bcdHID;
-    uint8_t bCountryCoce;
-    uint8_t bNumDescriptors; /* num of class descriptors, at least 1 (report descriptor) */
-    /* hare are concatenated class descriptor info */
-    usbhid_content_descriptor_t report_descriptor; /* there is at least one desc: report */
-} usbhid_descriptor_t;
-
 /* USB HID content descriptor (report, physical) header, that is concatenated to
  * the HID descriptor header, just after the bNumDescriptor field. The number of
  * content descriptor headers is equal to the bNumDescriptors value */
@@ -89,6 +83,20 @@ typedef struct __packed {
     uint8_t bDescriptorType; /* type of decriptor */
     uint16_t wDescriptorLength; /* length (in bytes) of descriptor */
 } usbhid_content_descriptor_t;
+
+
+/* USB HID descriptor header */
+typedef struct __packed {
+    uint8_t bLength;
+    uint8_t bDescriptorType;
+    uint16_t bcdHID;
+    uint8_t bCountryCode;
+    uint8_t bNumDescriptors; /* num of class descriptors, at least 1 (report descriptor) */
+    /* hare are concatenated class descriptor info */
+    usbhid_content_descriptor_t report_descriptor; /* there is at least one desc: report */
+    /* other potential descriptors */
+    usbhid_content_descriptor_t optional_desc[];
+} usbhid_descriptor_t;
 
 
 /**********************************************************************************
@@ -172,14 +180,16 @@ typedef struct __packed {
     uint8_t  bDataSize;
     uint8_t  bLongItemTag;
     uint8_t  data[]; /* CAUTION: not allocated here. Data size depends on the item */
-} usbhid_short_item_t;
+} usbhid_long_item_t;
 
 /*
  * TODO: enumerate of item tags (global, local, etc. See chap. 6.2.2.4 and below of USB HI
  * 1.11 specifications)
  */
 
-
+mbed_error_t      usbhid_get_descriptor(uint8_t            *buf,
+                                        uint32_t           *desc_size,
+                                        uint32_t            usbdci_handler __attribute__((unused)));
 
 
 #endif/*!USBHID_DESCRIPTOR_H_*/

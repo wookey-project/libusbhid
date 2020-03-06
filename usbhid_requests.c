@@ -28,6 +28,8 @@
 #include "autoconf.h"
 
 /* USBHID class USB RQST */
+#define USB_RQST_HID_GET_DESCRIPTOR       0x06
+
 #define USB_RQST_HID_GET_HID              0x21
 #define USB_RQST_HID_GET_REPORT	          0x22
 #define USB_RQST_HID_GET_PHYSICAL_DESC    0x23
@@ -44,10 +46,10 @@ mbed_error_t usbhid_class_rqst_handler(uint32_t usbxdci_handler __attribute__((u
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
 
-    printf("[classRqst] handling HID class rqst\n");
+    log_printf("[classRqst] handling HID class rqst\n");
     switch (packet->bRequest) {
         case USB_RQST_HID_GET_HID:
-            printf("[classRqst] handling Get HID\n");
+            log_printf("[classRqst] handling Get HID\n");
 #if 0
             /*1. configure descriptor */
             /*2. send data */
@@ -57,7 +59,7 @@ mbed_error_t usbhid_class_rqst_handler(uint32_t usbxdci_handler __attribute__((u
 #endif
             break;
         case USB_RQST_HID_GET_REPORT:
-            printf("[classRqst] handling get report\n");
+            log_printf("[classRqst] handling get report\n");
 #if 0
             /*1. configure descriptor */
             /*2. send data */
@@ -67,7 +69,17 @@ mbed_error_t usbhid_class_rqst_handler(uint32_t usbxdci_handler __attribute__((u
 #endif
             break;
         case USB_RQST_HID_GET_PHYSICAL_DESC:
-            printf("[classRqst] handling get physical descriptor\n");
+            log_printf("[classRqst] handling get physical descriptor\n");
+#if 0
+            /*1. configure descriptor */
+            /*2. send data */
+            usbotghs_send_data(&desc, sizeof(max_lun), EP0);
+            /*3. clear nak */
+            usbotghs_endpoint_clear_nak(0, USBOTG_HS_EP_DIR_OUT);
+#endif
+            break;
+        case USB_RQST_HID_GET_DESCRIPTOR:
+            log_printf("[classRqst] handling get descriptor\n");
 #if 0
             /*1. configure descriptor */
             /*2. send data */
@@ -77,7 +89,7 @@ mbed_error_t usbhid_class_rqst_handler(uint32_t usbxdci_handler __attribute__((u
 #endif
             break;
         default:
-            printf("Unhandled class request (%x)\n", packet->bRequest);
+            log_printf("Unhandled class request (%x)\n", packet->bRequest);
             goto err;
             break;
     }

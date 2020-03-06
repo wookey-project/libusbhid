@@ -48,7 +48,9 @@ typedef enum {
 
 mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
                             usbhid_subclass_t hid_subclass,
-                            usbhid_protocol_t hid_protocol);
+                            usbhid_protocol_t hid_protocol,
+                            uint8_t           num_descriptor,
+                            uint8_t           report_desc_len);
 
 mbed_error_t usbhid_configure(void);
 
