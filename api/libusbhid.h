@@ -29,6 +29,7 @@
 #include "libusbctrl.h"
 #include "autoconf.h"
 
+
 /*
  * USB HID class is defined here:
  * https://www.usb.org/sites/default/files/documents/hid1_11.pdf
@@ -46,6 +47,87 @@ typedef enum {
 } usbhid_protocol_t;
 
 
+/**********
+ * About item tagging and typing
+ * This enumerates permate to upper layers to generate their collections without taking into
+ * account the way items are encoded in the HID stack.
+ * Collection are passed to the HID layer, which handle the correct encoding based on each
+ * successive item tag, type, length and data.
+ */
+/* TODO: to complete... */
+typedef enum {
+    USBHID_ITEM_TYPE_MAIN = 0,
+    USBHID_ITEM_TYPE_GLOBAL = 1,
+    USBHID_ITEM_TYPE_LOCAL = 2,
+    USBHID_ITEM_TYPE_RESERVED = 3
+} usbhid_item_type_t;
+
+
+typedef enum {
+    /* global item, typed GLOBAL : XXXX 01 NN where XXXX is
+     * global item tag, and NN the item size */
+    USBHID_ITEM_GLOBAL_TAG_USAGE_PAGE   = 0x0,
+    USBHID_ITEM_GLOBAL_TAG_LOGICAL_MIN  = 0x1,
+    USBHID_ITEM_GLOBAL_TAG_LOGICAL_MAX  = 0x2,
+    USBHID_ITEM_GLOBAL_TAG_PHYSICAL_MIN = 0x3,
+    USBHID_ITEM_GLOBAL_TAG_PHYSICAL_MAX = 0x4,
+    USBHID_ITEM_GLOBAL_TAG_UNIT_EXPONENT = 0x5,
+    USBHID_ITEM_GLOBAL_TAG_UNIT          = 0x6,
+    USBHID_ITEM_GLOBAL_TAG_REPORT_SIZE   = 0x7,
+    USBHID_ITEM_GLOBAL_TAG_REPORT_ID     = 0x8,
+    USBHID_ITEM_GLOBAL_TAG_REPORT_COUNT  = 0x9,
+    USBHID_ITEM_GLOBAL_TAG_PUSH          = 0xa,
+    USBHID_ITEM_GLOBAL_TAG_POP           = 0xb,
+    /* other are reserved */
+} usbhid_item_tag_global_t;
+
+
+typedef enum {
+    /* main item, typed MAIN : XXXX 00 NN where XXXX is
+     * main item tag, and NN the item size */
+    USBHID_ITEM_MAIN_TAG_INPUT = 0x8,
+    USBHID_ITEM_MAIN_TAG_OUTPUT = 0x9,
+    USBHID_ITEM_MAIN_TAG_FEATURE = 0xb,
+    USBHID_ITEM_MAIN_TAG_COLLECTION = 0xa,
+    USBHID_ITEM_MAIN_TAG_END_COLLECTION = 0xc
+    /* other are reserved */
+} usbhid_item_tag_main_t;
+
+
+typedef enum {
+    /* local item, typed MAIN : XXXX 10 NN where XXXX is
+     * local item tag, and NN the item size */
+    USBHID_ITEM_LOCAL_TAG_USAGE = 0x0,
+    USBHID_ITEM_LOCAL_TAG_USAGE_MIN = 0x1,
+    USBHID_ITEM_LOCAL_TAG_USAGE_MAX = 0x2,
+    USBHID_ITEM_LOCAL_TAG_DESIGNATOR_IDX = 0x3,
+    USBHID_ITEM_LOCAL_TAG_DESIGNATOR_MIN = 0x4,
+    USBHID_ITEM_LOCAL_TAG_DESIGNATOR_MAX = 0x5,
+    USBHID_ITEM_LOCAL_TAG_STRING_IDX     = 0x7,
+    USBHID_ITEM_LOCAL_TAG_STRING_MIN     = 0x8,
+    USBHID_ITEM_LOCAL_TAG_STRING_MAX     = 0x9,
+    USBHID_ITEM_LOCAL_TAG_DELIMITER      = 0xa,
+    /* other are reserved */
+} usbhid_item_tag_local_t;
+
+/*
+ * A collection is an ordered set of items.
+ * Each item is defined by its type, tag, size (0, 1 or 2 bytes) and data
+ */
+typedef struct {
+    uint8_t type;
+    uint8_t tag;
+    uint8_t size;
+    uint8_t data1;
+    uint8_t data2;
+} usbhid_item_info_t;
+
+usbhid_item_info_t *usbhid_get_collection(uint8_t index);
+
+
+/*
+ * USB HID API
+ */
 mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
                             usbhid_subclass_t hid_subclass,
                             usbhid_protocol_t hid_protocol,

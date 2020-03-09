@@ -138,9 +138,6 @@ typedef struct __packed {
 } usbhid_content_physical_descriptor_data_t;
 
 
-/* TODO: to complete... */
-
-
 /*
  * About HID items
  */
@@ -150,14 +147,6 @@ typedef enum {
   USBHID_ITEM_DATA_SIZE_2BYTES = 2,
   USBHID_ITEM_DATA_SIZE_4BYTES = 3,
 } usbhid_item_data_size_t;
-
-typedef enum {
-  USBHID_ITEM_TYPE_MAIN = 0,
-  USBHID_ITEM_TYPE_GLOBAL = 1,
-  USBHID_ITEM_TYPE_LOCAL = 2,
-  USBHID_ITEM_TYPE_RESERVED = 3,
-} usbhid_item_type_t;
-
 
 
 typedef struct __packed {
