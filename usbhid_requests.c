@@ -61,7 +61,6 @@ uint8_t usbhid_get_report_len(uint8_t index)
 
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         /* first byte is handling type, tag and size of the item */
-        offset++;
         /* there can be one to three more bytes, depending on the item */
         if (report->items[iterator].size == 0) {
             offset += 1;
@@ -202,10 +201,13 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
     uint8_t action = pkt->bRequest;
     switch (action) {
         case USB_CLASS_RQST_GET_REPORT:
+            /*TODO*/
             break;
         case USB_CLASS_RQST_GET_IDLE:
+            /*TODO*/
             break;
         case USB_CLASS_RQST_GET_PROTOCOL:
+            /*TODO*/
             break;
         case USB_CLASS_RQST_SET_REPORT:
             /* acknowledge current report (TODO) */
@@ -216,6 +218,7 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
             usb_backend_drv_send_zlp(0);
             break;
         case USB_CLASS_RQST_SET_PROTOCOL:
+            /*TODO*/
             break;
         default:
             log_printf("[USBHID] Ubsupported class request action %x", action);
