@@ -122,8 +122,28 @@ typedef struct {
     uint8_t data2;
 } usbhid_item_info_t;
 
-usbhid_item_info_t *usbhid_get_collection(uint8_t index);
+typedef struct {
+    uint32_t num_items;
+    uint32_t report_id;
+    usbhid_item_info_t items[];
+} usbhid_report_t;
 
+/*
+ * A HID stack handle collections of items (at least one)
+ * Collections are a homogeneous set of items handling a given content
+ * For this, the upper stack must define two functions compatible with
+ * the following API.
+ * Again, we use linker timer resolution instead of callbacks for security
+ * reasons, as those API are not hotpluggable ones.
+ */
+
+/*
+ * The upper stack handles collection(s) of item. These collections are
+ * identified by their index, and transmitted to the host through the
+ * Get_Report request. This function returns the corresponding collection
+ * pointer, of usbhid_item_info_t type.
+ */
+usbhid_report_t *usbhid_get_report(uint8_t index);
 
 /*
  * USB HID API
@@ -131,10 +151,9 @@ usbhid_item_info_t *usbhid_get_collection(uint8_t index);
 mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
                             usbhid_subclass_t hid_subclass,
                             usbhid_protocol_t hid_protocol,
-                            uint8_t           num_descriptor,
-                            uint8_t           report_desc_len);
+                            uint8_t           num_descriptor);
 
-mbed_error_t usbhid_configure(void);
+mbed_error_t usbhid_configure(uint8_t num_reports);
 
 mbed_error_t usbhid_send_report(uint8_t report_id,
                                 uint8_t *report_data,

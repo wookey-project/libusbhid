@@ -40,8 +40,7 @@
 
 typedef struct {
     usbctrl_interface_t iface;
-    uint8_t             num_descriptor;
-    uint8_t             report_descriptor_len;
+    uint8_t             num_reports; /* number of reports */
 } usbhid_context_t;
 
 

@@ -32,4 +32,6 @@
 mbed_error_t usbhid_class_rqst_handler(uint32_t             usbxdci_handler,
                                        usbctrl_setup_pkt_t *packet);
 
+uint8_t usbhid_get_report_len(uint8_t index);
+
 #endif/*!USBHID_REQUESTS_H_*/

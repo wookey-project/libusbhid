@@ -59,8 +59,7 @@ usbhid_context_t *usbhid_get_context(void)
 mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
                             usbhid_subclass_t hid_subclass,
                             usbhid_protocol_t hid_protocol,
-                            uint8_t           num_descriptor,
-                            uint8_t           report_desc_len)
+                            uint8_t           num_descriptor)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     /* sanitize */
@@ -74,13 +73,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    if (report_desc_len == 0)  {
-        log_printf("[USBHID] upper class report descriptor len must be non-zero!\n");
-        errcode = MBED_ERROR_INVPARAM;
-        goto err;
-    }
-    usbhid_ctx.report_descriptor_len = report_desc_len;
-    usbhid_ctx.num_descriptor = num_descriptor;
+    usbhid_ctx.num_reports = 0;
     usbhid_ctx.iface.usb_class = USB_CLASS_HID;
     usbhid_ctx.iface.usb_subclass = hid_subclass; /* SCSI transparent cmd set (i.e. use INQUIRY) */
     usbhid_ctx.iface.usb_protocol = hid_protocol; /* Protocol BBB (Bulk only) */
@@ -134,8 +127,10 @@ err:
 /*
  * report descriptor
  */
-mbed_error_t usbhid_configure(void)
+mbed_error_t usbhid_configure(uint8_t num_reports)
 {
+    /* TODO: physical descriptors can be added to report descriptors */
+    usbhid_ctx.num_reports = num_reports;
     return MBED_ERROR_NONE;
 }
 

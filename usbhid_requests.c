@@ -48,6 +48,88 @@
 #define DESCRIPTOR_TYPE_REPORT          0x22
 #define DESCRIPTOR_TYPE_PHYSICAL        0x23
 
+
+#define USBHID_STD_ITEM_LEN             4
+
+uint8_t usbhid_get_report_len(uint8_t index)
+{
+    usbhid_report_t *report = usbhid_get_report(index);
+    if (report == NULL) {
+        return 0;
+    }
+    uint32_t offset = 0;
+
+    for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
+        /* first byte is handling type, tag and size of the item */
+        offset++;
+        /* there can be one to three more bytes, depending on the item */
+        if (report->items[iterator].size == 0) {
+            offset += 1;
+        } else if (report->items[iterator].size == 1) {
+            offset += 2;
+        } else if (report->items[iterator].size == 2) {
+            offset += 3;
+        } else {
+            log_printf("[USBHID] invalid item size %d!\n", report->items[iterator].size);
+            goto err;
+        }
+    }
+err:
+    return offset;
+}
+
+static mbed_error_t usbhid_forge_report(uint8_t *buf, uint32_t *bufsize, uint8_t index)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    /* define a buffer of num_items x max item size
+     * these informations should be rodata content, defining the number of
+     * item of collections and reports, specific to each upper stack profile
+     * (FIDO, keyboard, etc.), they should not be dynamic content */
+
+    if (buf == NULL || bufsize == NULL) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    uint32_t offset = 0;
+    uint32_t iterator = 0;
+    usbhid_report_t *report = usbhid_get_report(index);
+    if (report == NULL) {
+        log_printf("[USBHID] report for index %d not found!\n", index);
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (*bufsize < (report->num_items * USBHID_STD_ITEM_LEN)) {
+        log_printf("[USBHID] potential report size %d too big for buffer (%d bytes)\n",
+                (report->num_items * USBHID_STD_ITEM_LEN), *bufsize);
+    }
+
+    /* let's forge the report */
+    log_printf("[USBHID] collection size is %d\n", report->num_items);
+    for (iterator = 0; iterator < report->num_items; ++iterator) {
+        usbhid_short_item_t *item = (usbhid_short_item_t*)&(buf[offset]);
+        item->bSize =  report->items[iterator].size;
+        item->bType =  report->items[iterator].type;
+        item->bTag =  report->items[iterator].tag;
+        if (report->items[iterator].size == 0) {
+            offset += 1;
+        } else if (report->items[iterator].size == 1) {
+            item->data1 =  report->items[iterator].data1;
+            offset += 2;
+        } else if (report->items[iterator].size == 2) {
+            item->data1 =  report->items[iterator].data1;
+            item->data2 =  report->items[iterator].data2;
+            offset += 3;
+        } else {
+            log_printf("[USBHID] invalid item size %d!\n", report->items[iterator].size);
+            goto err;
+        }
+    }
+    /* and update the size with the report one */
+    *bufsize = offset;
+err:
+    return errcode;
+}
+
 static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -64,50 +146,20 @@ static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
                     break;
                 }
                 case DESCRIPTOR_TYPE_REPORT: {
-                    usbhid_item_info_t *coll = usbhid_get_collection(descriptor_index);
-                    if (coll == NULL) {
-                        goto err;
-                    }
                     log_printf("[USBHID] get_descriptor: REPORT DESC w/index: %d\n", descriptor_index);
                     /* getting back the collection size */
-                    uint32_t i = 0;
-                    do {
-                        i++;
-                    } while (coll[i].type != 0 || coll[i].tag != 0 || coll[i].size != 0 || coll[i].data1 != 0 || coll[i].data2 != 0);
 
-                    log_printf("[USBHID] collection size is %d\n", i);
-
-                    uint8_t desc[i * 4];
-                    uint32_t offset = 0;
-
-                    /* for each collection element, forge the collection item */
-                    for (uint8_t j = 0; j < i; ++j) {
-                        usbhid_short_item_t *item = (usbhid_short_item_t*)&(desc[offset]);
-                        item->bSize =  coll[j].size;
-                        item->bType =  coll[j].type;
-                        item->bTag =  coll[j].tag;
-                        if (coll[j].size == 0) {
-                            offset += 1;
-                        } else if (coll[j].size == 1) {
-                            item->data1 =  coll[j].data1;
-                            offset += 2;
-                        } else if (coll[j].size == 2) {
-                            item->data1 =  coll[j].data1;
-                            item->data2 =  coll[j].data2;
-                            offset += 3;
-                        } else {
-                            log_printf("[USBHID] invalid item size %d!\n", coll[j].size);
-                            goto err;
-                        }
-                    }
-
-                    log_printf("[USBHID] written %d byte in descriptor\n", offset);
+                    /* FIXME: to be replaced by calculated*/
+                    uint8_t desc[256];
+                    uint32_t size = 256;
+                    usbhid_forge_report(&desc[0], &size, descriptor_index);
+                    log_printf("[USBHID] written %d byte in descriptor\n", size);
                     /* now, offset define the collection size, desc handle it, we can send it */
                     /*1. configure descriptor */
                     /*2. send data */
-                    usb_backend_drv_send_data(&(desc[0]), maxlen > offset ? offset : maxlen, EP0);
+                    usb_backend_drv_send_data(&(desc[0]), maxlen >= size ? size : maxlen, EP0);
 //                    usb_backend_drv_ack(1, USB_BACKEND_DRV_EP_DIR_OUT);
-//                    usb_backend_drv_ack(0, USB_BACKEND_DRV_EP_DIR_OUT);
+                    usb_backend_drv_ack(0, USB_BACKEND_DRV_EP_DIR_OUT);
                     break;
                 }
                 case DESCRIPTOR_TYPE_PHYSICAL:
@@ -155,15 +207,18 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
         case USB_CLASS_RQST_GET_PROTOCOL:
             break;
         case USB_CLASS_RQST_SET_REPORT:
+            /* acknowledge current report (TODO) */
+            usb_backend_drv_send_zlp(0);
             break;
         case USB_CLASS_RQST_SET_IDLE:
+            /* acknowledge SET IDLE */
+            usb_backend_drv_send_zlp(0);
             break;
         case USB_CLASS_RQST_SET_PROTOCOL:
             break;
         default:
             log_printf("[USBHID] Ubsupported class request action %x", action);
     }
-
     return errcode;
 }
 

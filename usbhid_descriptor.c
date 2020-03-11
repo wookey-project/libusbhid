@@ -26,6 +26,7 @@
 #include "autoconf.h"
 #include "usbhid.h"
 #include "usbhid_descriptor.h"
+#include "usbhid_requests.h"
 
 
 /* This is the HID class descriptor content. This descriptor is returned at GetConfiguration time.
@@ -50,7 +51,7 @@ mbed_error_t      usbhid_get_descriptor(uint8_t            *buf,
     }
     /* desc size is usbhid_descriptor_t size plus usbhid_content_descriptor_t size
      * for each additional optional content descriptor (report descriptor is requested) */
-    uint32_t size = sizeof(usbhid_descriptor_t) + ((ctx->num_descriptor - 1) * sizeof (usbhid_content_descriptor_t));
+    uint32_t size = sizeof(usbhid_descriptor_t) + (ctx->num_reports * sizeof (usbhid_content_descriptor_t));
     if (*desc_size < size) {
         log_printf("[USBHID] invalid param buffers\n");
         errcode = MBED_ERROR_NOMEM;
@@ -63,12 +64,10 @@ mbed_error_t      usbhid_get_descriptor(uint8_t            *buf,
     desc->bDescriptorType = HID_DESCRIPTOR_TYPE; /* HID descriptor type, set by USB consortium */
     desc->bcdHID = 0x111; /* HID class specification release 1.11 */
     desc->bCountryCode = 0;  /* contry code : 0x0 = not supported */
-    desc->bNumDescriptors = ctx->num_descriptor; /* number of class descriptor, including report descriptor (at least one) */
-    desc->report_descriptor.bDescriptorType = REPORT_DESCRIPTOR_TYPE; /* HID class report descriptor type */
-    desc->report_descriptor.wDescriptorLength = ctx->report_descriptor_len; /* ... and length */
-    for (uint8_t i = 0; i < (ctx->num_descriptor - 1); ++i) {
-        desc->optional_desc[i].bDescriptorType = 0; /* TODO: must be declared by upper stack */
-        desc->optional_desc[i].wDescriptorLength = 0; /* TODO: must be declared by upper stack */
+    desc->bNumDescriptors = ctx->num_reports; /* number of class descriptor, including report descriptor (at least one) */
+    for (uint8_t i = 0; i < ctx->num_reports; ++i) {
+        desc->descriptors[i].bDescriptorType = REPORT_DESCRIPTOR_TYPE;
+        desc->descriptors[i].wDescriptorLength = usbhid_get_report_len(i);
     }
     *desc_size = size;
 err:

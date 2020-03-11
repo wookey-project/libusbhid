@@ -92,10 +92,8 @@ typedef struct __packed {
     uint16_t bcdHID;
     uint8_t bCountryCode;
     uint8_t bNumDescriptors; /* num of class descriptors, at least 1 (report descriptor) */
-    /* hare are concatenated class descriptor info */
-    usbhid_content_descriptor_t report_descriptor; /* there is at least one desc: report */
     /* other potential descriptors */
-    usbhid_content_descriptor_t optional_desc[];
+    usbhid_content_descriptor_t descriptors[];
 } usbhid_descriptor_t;
 
 
