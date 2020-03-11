@@ -134,4 +134,12 @@ mbed_error_t usbhid_configure(uint8_t num_reports)
     return MBED_ERROR_NONE;
 }
 
+mbed_error_t usbhid_send_report(usbhid_report_t* report,
+                                uint32_t report_len)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
 
+    usb_backend_drv_send_data((uint8_t*)report, report_len, usbhid_ctx.iface.eps[1].ep_num);
+//    usb_backend_drv_ack(usbhid_ctx.iface.eps[1].ep_num, USB_BACKEND_DRV_EP_DIR_IN);
+    return errcode;
+}

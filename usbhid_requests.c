@@ -53,7 +53,7 @@
 
 uint8_t usbhid_get_report_len(uint8_t index)
 {
-    usbhid_report_t *report = usbhid_get_report(index);
+    usbhid_report_infos_t *report = usbhid_get_report(index);
     if (report == NULL) {
         return 0;
     }
@@ -92,7 +92,7 @@ static mbed_error_t usbhid_forge_report(uint8_t *buf, uint32_t *bufsize, uint8_t
     }
     uint32_t offset = 0;
     uint32_t iterator = 0;
-    usbhid_report_t *report = usbhid_get_report(index);
+    usbhid_report_infos_t *report = usbhid_get_report(index);
     if (report == NULL) {
         log_printf("[USBHID] report for index %d not found!\n", index);
         errcode = MBED_ERROR_INVPARAM;
@@ -124,6 +124,7 @@ static mbed_error_t usbhid_forge_report(uint8_t *buf, uint32_t *bufsize, uint8_t
             goto err;
         }
     }
+    usbhid_report_sent(index);
     /* and update the size with the report one */
     *bufsize = offset;
 err:

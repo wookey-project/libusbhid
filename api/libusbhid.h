@@ -126,6 +126,14 @@ typedef struct {
     uint32_t num_items;
     uint32_t report_id;
     usbhid_item_info_t items[];
+} usbhid_report_infos_t;
+
+
+/* This is the reports that are sent to the host asynchronously on the
+ * IN interrupt pipe */
+typedef struct {
+    uint8_t id;
+    uint8_t data[1];
 } usbhid_report_t;
 
 /*
@@ -143,7 +151,7 @@ typedef struct {
  * Get_Report request. This function returns the corresponding collection
  * pointer, of usbhid_item_info_t type.
  */
-usbhid_report_t *usbhid_get_report(uint8_t index);
+usbhid_report_infos_t *usbhid_get_report(uint8_t index);
 
 /*
  * USB HID API
@@ -155,8 +163,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
 
 mbed_error_t usbhid_configure(uint8_t num_reports);
 
-mbed_error_t usbhid_send_report(uint8_t report_id,
-                                uint8_t *report_data,
-                                uint8_t report_data_len);
+mbed_error_t usbhid_send_report(usbhid_report_t *report,
+                                uint32_t report_len);
 
 #endif/*!LIBUSBHID*/
