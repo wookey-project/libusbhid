@@ -28,6 +28,7 @@
 #include "libc/stdio.h"
 #include "usbhid.h"
 #include "usbhid_descriptor.h"
+#include "usbhid_reports.h"
 #include "autoconf.h"
 
 /* USBHID class specific request (i.e. bRequestType is Type (bit 5..6 = 1, bits 0..4 target current iface
@@ -49,86 +50,6 @@
 #define DESCRIPTOR_TYPE_PHYSICAL        0x23
 
 
-#define USBHID_STD_ITEM_LEN             4
-
-uint8_t usbhid_get_report_len(uint8_t index)
-{
-    usbhid_report_infos_t *report = usbhid_get_report(index);
-    if (report == NULL) {
-        return 0;
-    }
-    uint32_t offset = 0;
-
-    for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
-        /* first byte is handling type, tag and size of the item */
-        /* there can be one to three more bytes, depending on the item */
-        if (report->items[iterator].size == 0) {
-            offset += 1;
-        } else if (report->items[iterator].size == 1) {
-            offset += 2;
-        } else if (report->items[iterator].size == 2) {
-            offset += 3;
-        } else {
-            log_printf("[USBHID] invalid item size %d!\n", report->items[iterator].size);
-            goto err;
-        }
-    }
-err:
-    return offset;
-}
-
-static mbed_error_t usbhid_forge_report(uint8_t *buf, uint32_t *bufsize, uint8_t index)
-{
-    mbed_error_t errcode = MBED_ERROR_NONE;
-    /* define a buffer of num_items x max item size
-     * these informations should be rodata content, defining the number of
-     * item of collections and reports, specific to each upper stack profile
-     * (FIDO, keyboard, etc.), they should not be dynamic content */
-
-    if (buf == NULL || bufsize == NULL) {
-        errcode = MBED_ERROR_INVPARAM;
-        goto err;
-    }
-    uint32_t offset = 0;
-    uint32_t iterator = 0;
-    usbhid_report_infos_t *report = usbhid_get_report(index);
-    if (report == NULL) {
-        log_printf("[USBHID] report for index %d not found!\n", index);
-        errcode = MBED_ERROR_INVPARAM;
-        goto err;
-    }
-    if (*bufsize < (report->num_items * USBHID_STD_ITEM_LEN)) {
-        log_printf("[USBHID] potential report size %d too big for buffer (%d bytes)\n",
-                (report->num_items * USBHID_STD_ITEM_LEN), *bufsize);
-    }
-
-    /* let's forge the report */
-    log_printf("[USBHID] collection size is %d\n", report->num_items);
-    for (iterator = 0; iterator < report->num_items; ++iterator) {
-        usbhid_short_item_t *item = (usbhid_short_item_t*)&(buf[offset]);
-        item->bSize =  report->items[iterator].size;
-        item->bType =  report->items[iterator].type;
-        item->bTag =  report->items[iterator].tag;
-        if (report->items[iterator].size == 0) {
-            offset += 1;
-        } else if (report->items[iterator].size == 1) {
-            item->data1 =  report->items[iterator].data1;
-            offset += 2;
-        } else if (report->items[iterator].size == 2) {
-            item->data1 =  report->items[iterator].data1;
-            item->data2 =  report->items[iterator].data2;
-            offset += 3;
-        } else {
-            log_printf("[USBHID] invalid item size %d!\n", report->items[iterator].size);
-            goto err;
-        }
-    }
-    usbhid_report_sent(index);
-    /* and update the size with the report one */
-    *bufsize = offset;
-err:
-    return errcode;
-}
 
 static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
 {
@@ -152,7 +73,7 @@ static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
                     /* FIXME: to be replaced by calculated*/
                     uint8_t desc[256];
                     uint32_t size = 256;
-                    usbhid_forge_report(&desc[0], &size, descriptor_index);
+                    usbhid_forge_report_descriptor(&desc[0], &size, descriptor_index);
                     log_printf("[USBHID] written %d byte in descriptor\n", size);
                     /* now, offset define the collection size, desc handle it, we can send it */
                     /*1. configure descriptor */

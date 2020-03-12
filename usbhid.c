@@ -42,11 +42,16 @@ static mbed_error_t usbhid_control_received(uint32_t dev_id, uint32_t size, uint
     return MBED_ERROR_NONE;
 }
 
+/*
+ * TODO HID state must be handled by report send/sent pair to handle properly busy state
+ * Moreover, set_idle require a state automaton at usbhid level to lock IN Endpoint transmission
+ * for time given in SET_IDLE requests
+ */
 static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
+    printf("[USBHID] data sent on EP %d\n", ep_id);
     dev_id = dev_id;
     size = size;
-    ep_id = ep_id;
     return MBED_ERROR_NONE;
 }
 
@@ -113,7 +118,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     usbhid_ctx.iface.eps[1].dir         = USB_EP_DIR_IN;
     usbhid_ctx.iface.eps[1].attr        = USB_EP_ATTR_NO_SYNC;
     usbhid_ctx.iface.eps[1].usage       = USB_EP_USAGE_DATA;
-    usbhid_ctx.iface.eps[1].pkt_maxsize = 512; /* mpsize on EP2 */
+    usbhid_ctx.iface.eps[1].pkt_maxsize = 8; /* mpsize on EP2 */
     usbhid_ctx.iface.eps[1].ep_num      = 2; /* this may be updated by libctrl */
     usbhid_ctx.iface.eps[1].handler     = usbhid_data_sent;
 
@@ -134,12 +139,12 @@ mbed_error_t usbhid_configure(uint8_t num_reports)
     return MBED_ERROR_NONE;
 }
 
-mbed_error_t usbhid_send_report(usbhid_report_t* report,
+mbed_error_t usbhid_send_report(uint8_t* report,
                                 uint32_t report_len)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
 
-    usb_backend_drv_send_data((uint8_t*)report, report_len, usbhid_ctx.iface.eps[1].ep_num);
+    usb_backend_drv_send_data(report, report_len, usbhid_ctx.iface.eps[1].ep_num);
     usb_backend_drv_ack(usbhid_ctx.iface.eps[1].ep_num, USB_BACKEND_DRV_EP_DIR_IN);
     return errcode;
 }

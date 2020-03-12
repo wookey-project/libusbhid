@@ -21,15 +21,25 @@
  * Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
-#ifndef USBHID_REQUESTS_H_
-#define USBHID_REQUESTS_H_
+#ifndef USBHID_REPORTS_H_
+#define USBHID_REPORTS_H_
 
 #include "libc/types.h"
 #include "libc/syscall.h"
-#include "libusbctrl.h"
 #include "autoconf.h"
 
-mbed_error_t usbhid_class_rqst_handler(uint32_t             usbxdci_handler,
-                                       usbctrl_setup_pkt_t *packet);
+/*
+ * Return the report descriptor length associated to the descriptor identifier given in
+ * argument length is encoded in a 8 bits field in the HID descriptor. As a consequence,
+ * its size can't be bigger than 255.
+ */
+uint8_t usbhid_get_report_desc_len(uint8_t index);
 
-#endif/*!USBHID_REQUESTS_H_*/
+/*
+ * forge report descriptor based on the upper stack item lists of the given report id.
+ * The upper stack handle its own item list, but not the HID item encoding, which is
+ * handled by this function.
+ */
+mbed_error_t usbhid_forge_report_descriptor(uint8_t *buf, uint32_t *bufsize, uint8_t index);
+
+#endif/*!USBHID_REPORTS_H_*/

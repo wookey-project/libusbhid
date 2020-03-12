@@ -26,6 +26,7 @@
 #include "autoconf.h"
 #include "usbhid.h"
 #include "usbhid_descriptor.h"
+#include "usbhid_reports.h"
 #include "usbhid_requests.h"
 
 
@@ -67,7 +68,7 @@ mbed_error_t      usbhid_get_descriptor(uint8_t            *buf,
     desc->bNumDescriptors = ctx->num_reports; /* number of class descriptor, including report descriptor (at least one) */
     for (uint8_t i = 0; i < ctx->num_reports; ++i) {
         desc->descriptors[i].bDescriptorType = REPORT_DESCRIPTOR_TYPE;
-        desc->descriptors[i].wDescriptorLength = usbhid_get_report_len(i);
+        desc->descriptors[i].wDescriptorLength = usbhid_get_report_desc_len(i);
     }
     *desc_size = size;
 err:
