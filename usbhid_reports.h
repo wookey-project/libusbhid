@@ -42,4 +42,12 @@ uint8_t usbhid_get_report_desc_len(uint8_t index);
  */
 mbed_error_t usbhid_forge_report_descriptor(uint8_t *buf, uint32_t *bufsize, uint8_t index);
 
+
+/*
+ * Return report length from report descriptor identifier. For a given report descriptor
+ * identifier, all reports have the same size, based on two global tags: REPORT_SIZE and
+ * REPORT_COUNT.
+ */
+uint32_t usbhid_get_report_len(uint8_t index);
+
 #endif/*!USBHID_REPORTS_H_*/

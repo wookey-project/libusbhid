@@ -163,7 +163,13 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
 
 mbed_error_t usbhid_configure(uint8_t num_reports);
 
-mbed_error_t usbhid_send_report(uint8_t *report,
-                                uint32_t report_len);
+mbed_error_t usbhid_send_report(uint8_t *report);
+
+/**
+ * triggers
+ */
+void usbhid_report_sent(uint8_t index);
+
+
 
 #endif/*!LIBUSBHID*/

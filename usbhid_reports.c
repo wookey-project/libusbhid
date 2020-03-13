@@ -32,9 +32,13 @@
 
 #define USBHID_STD_ITEM_LEN             4
 
-uint8_t usbhid_get_report_len(uint8_t index)
+
+uint32_t usbhid_get_report_len(uint8_t index)
 {
     usbhid_report_infos_t *report = usbhid_get_report(index);
+    uint8_t report_size = 0;
+    uint8_t report_count = 0;
+    uint32_t report_len = 0;
     if (report == NULL) {
         return 0;
     }
@@ -49,9 +53,16 @@ uint8_t usbhid_get_report_len(uint8_t index)
      * different REPORT_SIZE/REPORT_COUNT pairs, they must be declared
      * as a part of independent reports */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
-        ;
+        if (report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_SIZE) {
+            report_size = report->items[iterator].data1;
+        }
+        if (report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_COUNT) {
+            report_count = report->items[iterator].data1;
+        }
     }
-    return 0;
+
+    report_len = report_size * report_count;
+    return report_len;
 }
 
 /*
