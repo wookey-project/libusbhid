@@ -33,13 +33,6 @@
 
 /* USBHID class specific request (i.e. bRequestType is Type (bit 5..6 = 1, bits 0..4 target current iface
  * These values are set in bRequest field */
-#define USB_CLASS_RQST_GET_REPORT           0x01
-#define USB_CLASS_RQST_GET_IDLE             0x02
-#define USB_CLASS_RQST_GET_PROTOCOL         0x03
-#define USB_CLASS_RQST_SET_REPORT           0x09
-#define USB_CLASS_RQST_SET_IDLE             0x0A
-#define USB_CLASS_RQST_SET_PROTOCOL         0x0B
-
 #define USB_STD_RQST_ACTION_GET_DESCRIPTOR 0x06
 #define USB_STD_RQST_ACTION_SET_DESCRIPTOR 0x07
 
@@ -49,6 +42,53 @@
 #define DESCRIPTOR_TYPE_REPORT          0x22
 #define DESCRIPTOR_TYPE_PHYSICAL        0x23
 
+/*
+ * weak trigger, to be replaced by upper stack trigger implementation at link time
+ */
+__attribute__((weak)) mbed_error_t usbhid_request_trigger(uint8_t hid_req __attribute__((unused)))
+{
+    return MBED_ERROR_NONE;
+}
+
+
+static mbed_error_t usbhid_handle_set_idle(usbctrl_setup_pkt_t *pkt)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    usbhid_context_t *ctx = usbhid_get_context();
+    if (ctx == NULL) {
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
+    uint16_t idle_ms = 0;
+    uint16_t wvalue = pkt->wValue;
+    uint8_t hbyte = ((wvalue >> 4) & 0xff);
+    uint8_t lbyte = wvalue & 0xff;
+    if (hbyte == 0) {
+        /* duration_ms to 0, no limit to IDLE time, do not send */
+        idle_ms = 0;
+    } else {
+        /* duration in ms */
+        idle_ms = hbyte * 4;
+    }
+    if (lbyte == 0) {
+        /* applicable to all reports */
+        for (uint8_t i = 0; i < MAX_REPORTS; ++i) {
+            ctx->reports[i].idle_ms = idle_ms;
+            if (idle_ms == 0) {
+                ctx->reports[i].silence = true;
+            }
+        }
+    } else {
+        /* applicable to report given by lbyte only */
+        ctx->reports[lbyte].idle_ms = idle_ms;
+        if (idle_ms == 0) {
+            ctx->reports[lbyte].silence = true;
+        }
+    }
+    usbhid_request_trigger(USB_CLASS_RQST_SET_IDLE);
+err:
+    return errcode;
+}
 
 
 static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
@@ -59,6 +99,11 @@ static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
     uint8_t action = pkt->bRequest;
     uint8_t descriptor_type = pkt->wValue >> 0x8;
     uint8_t descriptor_index = pkt->wValue & 0xff;
+    usbhid_context_t *ctx = usbhid_get_context();
+    if (ctx == NULL) {
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
     switch (action) {
         case USB_STD_RQST_ACTION_GET_DESCRIPTOR:
             switch (descriptor_type) {
@@ -81,6 +126,9 @@ static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
                     usb_backend_drv_send_data(&(desc[0]), maxlen >= size ? size : maxlen, EP0);
 //                    usb_backend_drv_ack(1, USB_BACKEND_DRV_EP_DIR_OUT);
                     usb_backend_drv_ack(0, USB_BACKEND_DRV_EP_DIR_OUT);
+                    /* this is a new event on descriptor_index, cleaning silence request */
+                    ctx->reports[descriptor_index].silence = false;
+
                     break;
                 }
                 case DESCRIPTOR_TYPE_PHYSICAL:
@@ -135,6 +183,7 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
             usb_backend_drv_send_zlp(0);
             break;
         case USB_CLASS_RQST_SET_IDLE:
+            usbhid_handle_set_idle(pkt);
             /* acknowledge SET IDLE */
             usb_backend_drv_send_zlp(0);
             break;

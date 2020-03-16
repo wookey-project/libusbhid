@@ -34,6 +34,8 @@
 
 #define MAX_HID_DESCRIPTORS 8
 
+volatile bool data_being_sent = false;
+
 static volatile usbhid_context_t usbhid_ctx = { 0 };
 
 static mbed_error_t usbhid_control_received(uint32_t dev_id, uint32_t size, uint8_t ep_id)
@@ -52,6 +54,7 @@ static mbed_error_t usbhid_control_received(uint32_t dev_id, uint32_t size, uint
 static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
     log_printf("[USBHID] data (%d bytes) sent on EP %d\n", size, ep_id);
+    data_being_sent = false;
     dev_id = dev_id;
     size = size;
     return MBED_ERROR_NONE;
@@ -122,7 +125,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     usbhid_ctx.iface.eps[1].attr        = USB_EP_ATTR_NO_SYNC;
     usbhid_ctx.iface.eps[1].usage       = USB_EP_USAGE_DATA;
     usbhid_ctx.iface.eps[1].pkt_maxsize = 128; /* mpsize on EP2 */
-    usbhid_ctx.iface.eps[1].ep_num      = 2; /* this may be updated by libctrl */
+    usbhid_ctx.iface.eps[1].ep_num      = 1; /* this may be updated by libctrl */
     usbhid_ctx.iface.eps[1].handler     = usbhid_data_sent;
 
 
@@ -156,9 +159,36 @@ mbed_error_t usbhid_send_report(uint8_t* report)
     if (len == 0) {
         log_printf("[USBHID] unable to get back report len for idx %d\n", idx);
     }
-    log_printf("[USBHID] sending report on EP %d (len %d)\n", usbhid_ctx.iface.eps[1].ep_num, len);
-    usb_backend_drv_send_data(report, len, usbhid_ctx.iface.eps[1].ep_num);
+    /* wait for previous data to be fully transmitted */
+    while (data_being_sent == true) {
+        ;
+    }
+    data_being_sent = true;
+    /* total size is report + report id (one byte) */
+    log_printf("[USBHID] sending report on EP %d (len %d)\n", usbhid_ctx.iface.eps[1].ep_num, len+1);
+    usb_backend_drv_endpoint_disable(usbhid_ctx.iface.eps[1].ep_num, USB_EP_DIR_IN);
+    usb_backend_drv_send_data(report, len+1, usbhid_ctx.iface.eps[1].ep_num);
+//    usb_backend_drv_endpoint_enable(usbhid_ctx.iface.eps[1].ep_num, USB_EP_DIR_IN);
     //usb_backend_drv_ack(usbhid_ctx.iface.eps[1].ep_num, USB_BACKEND_DRV_EP_DIR_IN);
 err:
     return errcode;
 }
+
+bool usbhid_silence_requested(uint8_t index)
+{
+    if (index >= MAX_REPORTS) {
+        return true;
+    }
+    /* when setting idle_ms to 0, silence is requested while no event arrise on the
+     * corresponding report index */
+    return usbhid_ctx.reports[index].silence;
+}
+
+uint16_t usbhid_get_requested_idle(uint8_t index)
+{
+    if (index >= MAX_REPORTS) {
+        return 0;
+    }
+    return usbhid_ctx.reports[index].idle_ms;
+}
+

@@ -37,10 +37,18 @@
 #endif
 
 
+#define MAX_REPORTS    8
 
 typedef struct {
-    usbctrl_interface_t iface;
-    uint8_t             num_reports; /* number of reports */
+    uint8_t  id;
+    uint16_t idle_ms;
+    bool     silence;
+} usbhid_report_state_t;
+
+typedef struct {
+    usbctrl_interface_t   iface;
+    uint8_t               num_reports; /* number of reports */
+    usbhid_report_state_t reports[MAX_REPORTS]; /* start at 1 (descriptor id start at 1) */
 } usbhid_context_t;
 
 

@@ -29,6 +29,15 @@
 #include "libusbctrl.h"
 #include "autoconf.h"
 
+/******************
+ * Triggers various standard HID requests to upper stack
+ */
+#define USB_CLASS_RQST_GET_REPORT           0x01
+#define USB_CLASS_RQST_GET_IDLE             0x02
+#define USB_CLASS_RQST_GET_PROTOCOL         0x03
+#define USB_CLASS_RQST_SET_REPORT           0x09
+#define USB_CLASS_RQST_SET_IDLE             0x0A
+#define USB_CLASS_RQST_SET_PROTOCOL         0x0B
 
 /*
  * USB HID class is defined here:
@@ -165,10 +174,29 @@ mbed_error_t usbhid_configure(uint8_t num_reports);
 
 mbed_error_t usbhid_send_report(uint8_t *report);
 
+/*
+ * get back requested values from standard HID requests. These functions return the
+ * values of the host requested:
+ * IDLE (Set_Idle command)
+ * PROTOCOL (Set_Procotol command)
+ */
+uint16_t usbhid_get_requested_idle(uint8_t index);
+
+uint16_t usbhid_get_requested_protocol(void);
+
+bool usbhid_silence_requested(uint8_t index);
+
 /**
  * triggers
  */
-void usbhid_report_sent(uint8_t index);
+void usbhid_report_sent_trigger(uint8_t index);
+
+/*
+ * This trigger is called for each of the above HID requests, when received.
+ * This function must be defined by the upper stack in order to be triggered.
+ * A weak symbol is defined if no trigger is used.
+ */
+mbed_error_t usbhid_request_trigger(uint8_t hid_req);
 
 
 

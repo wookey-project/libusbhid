@@ -148,7 +148,7 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t *buf, uint32_t *bufsize, uin
             goto err;
         }
     }
-    usbhid_report_sent(index);
+    usbhid_report_sent_trigger(index);
     /* and update the size with the report one */
     *bufsize = offset;
 err:
