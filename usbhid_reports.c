@@ -32,6 +32,34 @@
 
 #define USBHID_STD_ITEM_LEN             4
 
+bool usbhid_report_needs_id(uint8_t index)
+{
+    usbhid_report_infos_t *report = usbhid_get_report(index);
+
+    for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
+        if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
+            report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) {
+            return true;
+        }
+    }
+    return false;
+}
+
+uint8_t usbhid_report_get_id(uint8_t index)
+{
+    usbhid_report_infos_t *report = usbhid_get_report(index);
+    uint8_t id = 0;
+
+    for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
+        if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
+            report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) {
+            id = report->items[iterator].data1;
+        }
+    }
+    return id;
+}
+
+
 
 uint32_t usbhid_get_report_len(uint8_t index)
 {
@@ -47,11 +75,21 @@ uint32_t usbhid_get_report_len(uint8_t index)
      * This length is based of the number of data, multiplied by the size
      * of each of them.
      *
-     * for a given unique report identifier, even if there is multiple
-     * collections with multiple REPORT_SIZE and REPORT_COUNT, these field
-     * must handle the same values. If multiple collections handle
-     * different REPORT_SIZE/REPORT_COUNT pairs, they must be declared
-     * as a part of independent reports */
+     * for a given descriptor identifier, even if there is multiple
+     * input/output/features with multiple REPORT_SIZE and REPORT_COUNT, these field
+     * are handled by (count/size) pairs. If multiple collections handle
+     * different REPORT_SIZE/REPORT_COUNT pairs, they are separated by
+     * a global INPUT/OUTPUT or FEATURE main item.
+     * Here, we use these three items as separator for each SIZE/COUNT report
+     * pairs, to calculate the global report size, which is the
+     * addition of earch local report size/count.
+     * if main item doesn't update one of the report count or size, we consider
+     * the previous one as valid, as it is a global item.
+     * TODO: there is a constraint here: MAIN items (INPUT, OUTPUT, FEATURE) must
+     * be declared *after* their specifications (report size, count, logical values
+     * and so on)
+     */
+    uint32_t local_report_len = 0;
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_SIZE) {
             report_size = report->items[iterator].data1;
@@ -59,9 +97,22 @@ uint32_t usbhid_get_report_len(uint8_t index)
         if (report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_COUNT) {
             report_count = report->items[iterator].data1;
         }
+        if (report->items[iterator].type ==USBHID_ITEM_TYPE_MAIN &&
+            (   report->items[iterator].tag == USBHID_ITEM_MAIN_TAG_INPUT
+             || report->items[iterator].tag == USBHID_ITEM_MAIN_TAG_OUTPUT
+             || report->items[iterator].tag == USBHID_ITEM_MAIN_TAG_FEATURE)) {
+            /* report len, in bits */
+            local_report_len = report_size * report_count;
+            /* padd to upper byte size  */
+            if (local_report_len % 8) {
+                local_report_len += (8 - (local_report_len % 8));
+            }
+            /* ... going back to byte size */
+            local_report_len = local_report_len / 8;
+            /* add local MAIN item report size to current global report size */
+            report_len += local_report_len;
+        }
     }
-
-    report_len = report_size * report_count;
     return report_len;
 }
 

@@ -119,6 +119,16 @@ typedef enum {
     /* other are reserved */
 } usbhid_item_tag_local_t;
 
+typedef enum {
+    USBHID_INPUT_TYPE_CONSTANT = 0x01,
+    USBHID_INPUT_TYPE_VARIABLE = 0x01 << 1,
+    USBHID_INPUT_TYPE_COOR_ABS = 0x01 << 2,
+    USBHID_INPUT_TYPE_MINMAXWR = 0x01 << 3,
+    USBHID_INPUT_TYPE_PHYSREL  = 0x01 << 4,
+    USBHID_INPUT_TYPE_PREFSTATE= 0x01 << 5,
+    USBHID_INPUT_TYPE_NONULL   = 0x01 << 6,
+} usbhid_input_data_type_t;
+
 /*
  * A collection is an ordered set of items.
  * Each item is defined by its type, tag, size (0, 1 or 2 bytes) and data
@@ -172,7 +182,13 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
 
 mbed_error_t usbhid_configure(uint8_t num_reports);
 
-mbed_error_t usbhid_send_report(uint8_t *report);
+
+/*
+ * sending an HID report. report index is the index of the
+ * report in the report descriptor, starting with 0
+ */
+mbed_error_t usbhid_send_report(uint8_t *report,
+                                uint8_t report_index);
 
 /*
  * get back requested values from standard HID requests. These functions return the

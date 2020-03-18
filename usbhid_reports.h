@@ -50,4 +50,14 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t *buf, uint32_t *bufsize, uin
  */
 uint32_t usbhid_get_report_len(uint8_t index);
 
+/*
+ * is report to send needs to be prefixed by its Report Identifier ?
+ */
+bool usbhid_report_needs_id(uint8_t index);
+
+/*
+ * get back report identifier for report based on its index
+ */
+uint8_t usbhid_report_get_id(uint8_t index);
+
 #endif/*!USBHID_REPORTS_H_*/

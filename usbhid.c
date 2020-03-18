@@ -54,11 +54,12 @@ static mbed_error_t usbhid_control_received(uint32_t dev_id, uint32_t size, uint
 static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
     log_printf("[USBHID] data (%d bytes) sent on EP %d\n", size, ep_id);
+    ep_id = ep_id;
     data_being_sent = false;
     dev_id = dev_id;
     size = size;
 
-    usb_backend_drv_ack(usbhid_ctx.iface.eps[1].ep_num, USB_BACKEND_DRV_EP_DIR_IN);
+    //usb_backend_drv_ack(usbhid_ctx.iface.eps[1].ep_num, USB_BACKEND_DRV_EP_DIR_IN);
     return MBED_ERROR_NONE;
 }
 
@@ -147,7 +148,8 @@ mbed_error_t usbhid_configure(uint8_t num_reports)
     return MBED_ERROR_NONE;
 }
 
-mbed_error_t usbhid_send_report(uint8_t* report)
+mbed_error_t usbhid_send_report(uint8_t* report,
+                                uint8_t  report_index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint32_t len = 0;
@@ -157,6 +159,7 @@ mbed_error_t usbhid_send_report(uint8_t* report)
     }
     /* first field is the report index */
     uint8_t idx = report[0];
+    uint8_t buf[256] = { 0 };
     len = usbhid_get_report_len(idx);
     if (len == 0) {
         log_printf("[USBHID] unable to get back report len for idx %d\n", idx);
@@ -166,10 +169,21 @@ mbed_error_t usbhid_send_report(uint8_t* report)
         ;
     }
     data_being_sent = true;
+    /* is a report id needed ? if a REPORT_ID is defined in the report descriptor, it is added,
+     * otherwise, items are sent directly */
+    if (usbhid_report_needs_id(report_index)) {
+        buf[0] = usbhid_report_get_id(report_index);
+        memcpy((void*)&buf[1], (void*)report, len);
+        len++;
+    } else {
+        memcpy((void*)&buf[0], (void*)report, len);
+    }
+
     /* total size is report + report id (one byte) */
-    log_printf("[USBHID] sending report on EP %d (len %d)\n", usbhid_ctx.iface.eps[1].ep_num, len+1);
+    log_printf("[USBHID] sending report on EP %d (len %d)\n", usbhid_ctx.iface.eps[1].ep_num, len);
     //usb_backend_drv_endpoint_disable(usbhid_ctx.iface.eps[1].ep_num, USB_EP_DIR_IN);
-    usb_backend_drv_send_data(report, len+1, usbhid_ctx.iface.eps[1].ep_num);
+    usb_backend_drv_send_data(buf, len, usbhid_ctx.iface.eps[1].ep_num);
+    usb_backend_drv_send_zlp(usbhid_ctx.iface.eps[1].ep_num);
 //    usb_backend_drv_endpoint_enable(usbhid_ctx.iface.eps[1].ep_num, USB_EP_DIR_IN);
 err:
     return errcode;
