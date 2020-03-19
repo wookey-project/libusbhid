@@ -72,7 +72,8 @@ usbhid_context_t *usbhid_get_context(void)
 mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
                             usbhid_subclass_t hid_subclass,
                             usbhid_protocol_t hid_protocol,
-                            uint8_t           num_descriptor)
+                            uint8_t           num_descriptor,
+                            uint8_t           poll_time)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     /* sanitize */
@@ -130,6 +131,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     usbhid_ctx.iface.eps[1].pkt_maxsize = 16; /* mpsize on EP1 */
     usbhid_ctx.iface.eps[1].ep_num      = 1; /* this may be updated by libctrl */
     usbhid_ctx.iface.eps[1].handler     = usbhid_data_sent;
+    usbhid_ctx.iface.eps[1].poll_interval = poll_time;
 
 
     usbctrl_declare_interface(usbxdci_handler, (usbctrl_interface_t*)&(usbhid_ctx.iface));

@@ -178,7 +178,8 @@ usbhid_report_infos_t *usbhid_get_report(uint8_t index);
 mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
                             usbhid_subclass_t hid_subclass,
                             usbhid_protocol_t hid_protocol,
-                            uint8_t           num_descriptor);
+                            uint8_t           num_descriptor,
+                            uint8_t           poll_time);
 
 mbed_error_t usbhid_configure(uint8_t num_reports);
 
