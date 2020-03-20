@@ -37,18 +37,41 @@
 #endif
 
 
-#define MAX_REPORTS    8
+#define MAX_USBHID_IFACES    4
+#define MAX_HID_REPORTS 8
 
 typedef struct {
-    uint8_t  id;
-    uint16_t idle_ms;
-    bool     silence;
-} usbhid_report_state_t;
+    uint8_t  id;      /* IN EP identifier */
+    uint16_t idle_ms[MAX_HID_REPORTS]; /* per report (or global): idle time in ms  */
+    bool     silence[MAX_HID_REPORTS]; /* per report (or global): is silence requested ?
+                                        * a new event associated to this EP unlock it
+                                        * (typically a Get_Report request for the
+                                        * associated iface) */
+} usbhid_inep_t;
 
+/*
+ * Each USB HID interface is composed of:
+ * - an interface id (used to determine which interface is called by the host), set by libxDCI,
+ *   as other classes may declare interfaces to libxDCI
+ * - a usbctrl_interface_t structure, passed to the lower libxDCI interface
+ * - an IN EP specific HID level meta-properties, associated to the IN EP declared in the
+ *   usbctrl_interface_t
+ */
 typedef struct {
+    uint8_t id;
+    usbhid_inep_t         inep; /* start at 1 (descriptor id start at 1) */
     usbctrl_interface_t   iface;
-    uint8_t               num_reports; /* number of reports */
-    usbhid_report_state_t reports[MAX_REPORTS]; /* start at 1 (descriptor id start at 1) */
+    uint8_t               num_descriptors;
+} usbhid_iface_t;
+
+
+/*
+ * A USB HID context may have one or more concurrent HID interface(s).
+ * These interfaces are declared successively.
+ */
+typedef struct {
+    uint8_t               num_iface; /* number of reports */
+    usbhid_iface_t        hid_ifaces[MAX_USBHID_IFACES];
 } usbhid_context_t;
 
 

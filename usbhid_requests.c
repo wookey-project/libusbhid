@@ -45,11 +45,49 @@
 /*
  * weak trigger, to be replaced by upper stack trigger implementation at link time
  */
-__attribute__((weak)) mbed_error_t usbhid_request_trigger(uint8_t hid_req __attribute__((unused)))
+__attribute__((weak)) mbed_error_t usbhid_request_trigger(uint8_t hid_handler __attribute__((unused)),
+                                                          uint8_t hid_req __attribute__((unused)))
 {
     return MBED_ERROR_NONE;
 }
 
+static inline uint8_t get_hid_handler_from_iface(uint8_t iface)
+{
+    /* ctx checked by parent function */
+    usbhid_context_t *ctx = usbhid_get_context();
+    for (uint8_t i = 0; i < ctx->num_iface; ++i) {
+        if (ctx->hid_ifaces[i].iface.id == iface) {
+            return i;
+        }
+    }
+    return 0;
+}
+
+
+static mbed_error_t usbhid_handle_set_protocol(usbctrl_setup_pkt_t *pkt)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    usbhid_context_t *ctx = usbhid_get_context();
+    if (ctx == NULL) {
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
+    uint16_t proto = pkt->wValue;
+    uint8_t iface = pkt->wIndex;
+    uint8_t hid_handler = get_hid_handler_from_iface(iface);
+
+    switch (proto) {
+        case 0:
+            log_printf("[USBHID] requesting boot protocol on iface %d\n", iface);
+            break;
+        case 1:
+            log_printf("[USBHID] requesting report protocol on iface %d\n", iface);
+            break;
+    }
+    usbhid_request_trigger(hid_handler, USB_CLASS_RQST_SET_PROTOCOL);
+err:
+    return errcode;
+}
 
 static mbed_error_t usbhid_handle_set_idle(usbctrl_setup_pkt_t *pkt)
 {
@@ -63,6 +101,10 @@ static mbed_error_t usbhid_handle_set_idle(usbctrl_setup_pkt_t *pkt)
     uint16_t wvalue = pkt->wValue;
     uint8_t hbyte = ((wvalue >> 4) & 0xff);
     uint8_t lbyte = wvalue & 0xff;
+
+    uint8_t iface = pkt->wIndex;
+    uint8_t hid_handler = get_hid_handler_from_iface(iface);
+
     if (hbyte == 0) {
         /* duration_ms to 0, no limit to IDLE time, do not send */
         idle_ms = 0;
@@ -72,20 +114,20 @@ static mbed_error_t usbhid_handle_set_idle(usbctrl_setup_pkt_t *pkt)
     }
     if (lbyte == 0) {
         /* applicable to all reports */
-        for (uint8_t i = 0; i < MAX_REPORTS; ++i) {
-            ctx->reports[i].idle_ms = idle_ms;
+        for (uint8_t i = 0; i < MAX_HID_REPORTS; ++i) {
+            ctx->hid_ifaces[hid_handler].inep.idle_ms[i] = idle_ms;
             if (idle_ms == 0) {
-                ctx->reports[i].silence = true;
+                ctx->hid_ifaces[hid_handler].inep.silence[i] = true;
             }
         }
     } else {
         /* applicable to report given by lbyte only */
-        ctx->reports[lbyte].idle_ms = idle_ms;
+        ctx->hid_ifaces[hid_handler].inep.idle_ms[lbyte] = idle_ms;
         if (idle_ms == 0) {
-            ctx->reports[lbyte].silence = true;
+            ctx->hid_ifaces[hid_handler].inep.silence[lbyte] = true;
         }
     }
-    usbhid_request_trigger(USB_CLASS_RQST_SET_IDLE);
+    usbhid_request_trigger(hid_handler, USB_CLASS_RQST_SET_IDLE);
 err:
     return errcode;
 }
@@ -114,11 +156,15 @@ static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
                 case DESCRIPTOR_TYPE_REPORT: {
                     log_printf("[USBHID] get_descriptor: REPORT DESC w/index: %d\n", descriptor_index);
                     /* getting back the collection size */
-
                     /* FIXME: to be replaced by calculated*/
                     uint8_t desc[256];
                     uint32_t size = 256;
-                    usbhid_forge_report_descriptor(&desc[0], &size, descriptor_index);
+
+                    /* get back hid iface handler from targetted iface */
+                    uint8_t iface = pkt->wIndex;
+                    uint8_t hid_handler = get_hid_handler_from_iface(iface);
+                    /* forge the descriptor */
+                    usbhid_forge_report_descriptor(hid_handler, &desc[0], &size, descriptor_index);
                     log_printf("[USBHID] written %d byte in descriptor\n", size);
                     /* now, offset define the collection size, desc handle it, we can send it */
                     /*1. configure descriptor */
@@ -127,7 +173,7 @@ static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
 //                    usb_backend_drv_ack(1, USB_BACKEND_DRV_EP_DIR_OUT);
                     usb_backend_drv_ack(0, USB_BACKEND_DRV_EP_DIR_OUT);
                     /* this is a new event on descriptor_index, cleaning silence request */
-                    ctx->reports[descriptor_index].silence = false;
+                    ctx->hid_ifaces[hid_handler].inep.silence[descriptor_index] = false;
 
                     break;
                 }

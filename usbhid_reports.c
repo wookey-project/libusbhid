@@ -32,9 +32,9 @@
 
 #define USBHID_STD_ITEM_LEN             4
 
-bool usbhid_report_needs_id(uint8_t index)
+bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
 {
-    usbhid_report_infos_t *report = usbhid_get_report(index);
+    usbhid_report_infos_t *report = usbhid_get_report(hid_handler, index);
 
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
@@ -45,9 +45,9 @@ bool usbhid_report_needs_id(uint8_t index)
     return false;
 }
 
-uint8_t usbhid_report_get_id(uint8_t index)
+uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index)
 {
-    usbhid_report_infos_t *report = usbhid_get_report(index);
+    usbhid_report_infos_t *report = usbhid_get_report(hid_handler, index);
     uint8_t id = 0;
 
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
@@ -61,9 +61,9 @@ uint8_t usbhid_report_get_id(uint8_t index)
 
 
 
-uint32_t usbhid_get_report_len(uint8_t index)
+uint32_t usbhid_get_report_len(uint8_t hid_handler, uint8_t index)
 {
-    usbhid_report_infos_t *report = usbhid_get_report(index);
+    usbhid_report_infos_t *report = usbhid_get_report(hid_handler, index);
     uint8_t report_size = 0;
     uint8_t report_count = 0;
     uint32_t report_len = 0;
@@ -119,9 +119,9 @@ uint32_t usbhid_get_report_len(uint8_t index)
 /*
  * TODO: return mbed_error_t type, to handle errcode
  */
-uint8_t usbhid_get_report_desc_len(uint8_t index)
+uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
 {
-    usbhid_report_infos_t *report = usbhid_get_report(index);
+    usbhid_report_infos_t *report = usbhid_get_report(hid_handler, index);
     if (report == NULL) {
         return 0;
     }
@@ -153,7 +153,7 @@ err:
 
 
 
-mbed_error_t usbhid_forge_report_descriptor(uint8_t *buf, uint32_t *bufsize, uint8_t index)
+mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, uint32_t *bufsize, uint8_t index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     /* define a buffer of num_items x max item size
@@ -167,9 +167,9 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t *buf, uint32_t *bufsize, uin
     }
     uint32_t offset = 0;
     uint32_t iterator = 0;
-    usbhid_report_infos_t *report = usbhid_get_report(index);
+    usbhid_report_infos_t *report = usbhid_get_report(hid_handler, index);
     if (report == NULL) {
-        log_printf("[USBHID] report for index %d not found!\n", index);
+        log_printf("[USBHID] report for handler %d/index %d not found!\n", hid_handler, index);
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
@@ -199,11 +199,9 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t *buf, uint32_t *bufsize, uin
             goto err;
         }
     }
-    usbhid_report_sent_trigger(index);
+    usbhid_report_sent_trigger(hid_handler, index);
     /* and update the size with the report one */
     *bufsize = offset;
 err:
     return errcode;
 }
-
-

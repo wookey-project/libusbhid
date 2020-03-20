@@ -155,6 +155,10 @@ typedef struct {
     uint8_t data[1];
 } usbhid_report_t;
 
+/*********************************************************************
+ * Upper layer-defined functions
+ */
+
 /*
  * A HID stack handle collections of items (at least one)
  * Collections are a homogeneous set of items handling a given content
@@ -170,26 +174,48 @@ typedef struct {
  * Get_Report request. This function returns the corresponding collection
  * pointer, of usbhid_item_info_t type.
  */
-usbhid_report_infos_t *usbhid_get_report(uint8_t index);
+usbhid_report_infos_t *usbhid_get_report(uint8_t hid_handler,
+                                         uint8_t index);
+
+/*************************************************
+ * USB HID stack API
+ */
 
 /*
- * USB HID API
+ * Declaring a new USB HID interface. This HID interface is associated to a given
+ * HID device type. This interface is composed of a:
+ * EP0 IN & OUT control plane
+ * EPx IN INTERRUPT plane
+ *
+ * The upper stack declare the HID specific properties:
+ * - subclass
+ * - protocol
+ * - descriptors number (including one report descriptor and potential physical descriptors)
+ * - IN EP polling period
+ *
+ * the USB HID stack return a handler to interact with this interface
  */
-mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
+mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
                             usbhid_subclass_t hid_subclass,
                             usbhid_protocol_t hid_protocol,
                             uint8_t           num_descriptor,
-                            uint8_t           poll_time);
+                            uint8_t           poll_time,
+                            uint8_t          *hid_handler);
 
-mbed_error_t usbhid_configure(uint8_t num_reports);
 
 
 /*
  * sending an HID report. report index is the index of the
  * report in the report descriptor, starting with 0
  */
-mbed_error_t usbhid_send_report(uint8_t *report,
+mbed_error_t usbhid_send_report(uint8_t hid_handler,
+                                uint8_t *report,
                                 uint8_t report_index);
+
+
+/*
+ * USB HID getter (get back the current HID states information
+ */
 
 /*
  * get back requested values from standard HID requests. These functions return the
@@ -197,23 +223,34 @@ mbed_error_t usbhid_send_report(uint8_t *report,
  * IDLE (Set_Idle command)
  * PROTOCOL (Set_Procotol command)
  */
-uint16_t usbhid_get_requested_idle(uint8_t index);
+uint16_t usbhid_get_requested_idle(uint8_t hid_handler, uint8_t index);
 
-uint16_t usbhid_get_requested_protocol(void);
+uint16_t usbhid_get_requested_protocol(uint8_t hid_handler);
 
-bool usbhid_silence_requested(uint8_t index);
+bool     usbhid_silence_requested(uint8_t hid_handler, uint8_t index);
 
-/**
+/***********************************************************
  * triggers
+ *
+ * On some HID specific events (received requests or transmition complete,
+ * the upper stack may wish to receive event acknowledgement. They can
+ * react to this events the way they want, using the upper API or just by
+ * doing nothing.
+ * There is two types of triggers:
+ * - transmition done trigger (when HID data has been sent asynchronously
+ *   on the IN interrupt EP)
+ * - request received trigger (when the host has requested a HID specific information,
+ *   handled at HID stack level). These requests may impact the upper stack which can,
+ *   in consequence, react in the trigger.
  */
-void usbhid_report_sent_trigger(uint8_t index);
+void usbhid_report_sent_trigger(uint8_t hid_handler, uint8_t index);
 
 /*
  * This trigger is called for each of the above HID requests, when received.
  * This function must be defined by the upper stack in order to be triggered.
  * A weak symbol is defined if no trigger is used.
  */
-mbed_error_t usbhid_request_trigger(uint8_t hid_req);
+mbed_error_t usbhid_request_trigger(uint8_t hid_handler, uint8_t hid_req);
 
 
 

@@ -33,7 +33,8 @@
 /* This is the HID class descriptor content. This descriptor is returned at GetConfiguration time.
  * Each other class-level descriptor (report descriptor and others) are returned to
  * GetDescriptor class level requests, handled by the class-level handler */
-mbed_error_t      usbhid_get_descriptor(uint8_t            *buf,
+mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
+                                        uint8_t            *buf,
                                         uint32_t           *desc_size,
                                         uint32_t            usbdci_handler __attribute__((unused)))
 {
@@ -52,7 +53,16 @@ mbed_error_t      usbhid_get_descriptor(uint8_t            *buf,
     }
     /* desc size is usbhid_descriptor_t size plus usbhid_content_descriptor_t size
      * for each additional optional content descriptor (report descriptor is requested) */
-    uint32_t size = sizeof(usbhid_descriptor_t) + (ctx->num_reports * sizeof (usbhid_content_descriptor_t));
+    uint32_t size = 0;
+    uint8_t i;
+    /* descriptor number is a per-interface information. We get back the iface based on the
+     * identifier passed by libxDCI */
+    for (i = 0; i < ctx->num_iface; ++i) {
+        if (ctx->hid_ifaces[i].id == iface_id) {
+            size = sizeof(usbhid_descriptor_t) + (ctx->hid_ifaces[i].num_descriptors * sizeof (usbhid_content_descriptor_t));
+            break;
+        }
+    }
     if (*desc_size < size) {
         log_printf("[USBHID] invalid param buffers\n");
         errcode = MBED_ERROR_NOMEM;
@@ -65,10 +75,10 @@ mbed_error_t      usbhid_get_descriptor(uint8_t            *buf,
     desc->bDescriptorType = HID_DESCRIPTOR_TYPE; /* HID descriptor type, set by USB consortium */
     desc->bcdHID = 0x111; /* HID class specification release 1.11 */
     desc->bCountryCode = 0;  /* contry code : 0x0 = not supported */
-    desc->bNumDescriptors = ctx->num_reports; /* number of class descriptor, including report descriptor (at least one) */
-    for (uint8_t i = 0; i < ctx->num_reports; ++i) {
-        desc->descriptors[i].bDescriptorType = REPORT_DESCRIPTOR_TYPE;
-        desc->descriptors[i].wDescriptorLength = usbhid_get_report_desc_len(i);
+    desc->bNumDescriptors = ctx->hid_ifaces[i].num_descriptors; /* number of class descriptor, including report descriptor (at least one) */
+    for (uint8_t descid = 0; descid < ctx->hid_ifaces[i].num_descriptors; ++descid) {
+        desc->descriptors[descid].bDescriptorType = REPORT_DESCRIPTOR_TYPE;
+        desc->descriptors[descid].wDescriptorLength = usbhid_get_report_desc_len(i, descid);
     }
     *desc_size = size;
 err:

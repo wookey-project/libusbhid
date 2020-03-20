@@ -33,14 +33,14 @@
  * argument length is encoded in a 8 bits field in the HID descriptor. As a consequence,
  * its size can't be bigger than 255.
  */
-uint8_t usbhid_get_report_desc_len(uint8_t index);
+uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index);
 
 /*
  * forge report descriptor based on the upper stack item lists of the given report id.
  * The upper stack handle its own item list, but not the HID item encoding, which is
  * handled by this function.
  */
-mbed_error_t usbhid_forge_report_descriptor(uint8_t *buf, uint32_t *bufsize, uint8_t index);
+mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, uint32_t *bufsize, uint8_t index);
 
 
 /*
@@ -48,16 +48,16 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t *buf, uint32_t *bufsize, uin
  * identifier, all reports have the same size, based on two global tags: REPORT_SIZE and
  * REPORT_COUNT.
  */
-uint32_t usbhid_get_report_len(uint8_t index);
+uint32_t usbhid_get_report_len(uint8_t hid_handler, uint8_t index);
 
 /*
  * is report to send needs to be prefixed by its Report Identifier ?
  */
-bool usbhid_report_needs_id(uint8_t index);
+bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index);
 
 /*
  * get back report identifier for report based on its index
  */
-uint8_t usbhid_report_get_id(uint8_t index);
+uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index);
 
 #endif/*!USBHID_REPORTS_H_*/
