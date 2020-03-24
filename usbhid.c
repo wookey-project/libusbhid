@@ -208,7 +208,7 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
     }
 
     /* total size is report + report id (one byte) */
-    log_printf("[USBHID] sending report on EP %d (len %d)\n", usbhid_ctx.iface.eps[1].ep_num, len);
+    log_printf("[USBHID] sending report on EP %d (len %d)\n", usbhid_ctx.hid_ifaces[hid_handler].iface.eps[1].ep_num, len);
     uint8_t epid = usbhid_ctx.hid_ifaces[hid_handler].iface.usb_ep_number - 1;
     usb_backend_drv_send_data(buf, len, usbhid_ctx.hid_ifaces[hid_handler].iface.eps[epid].ep_num);
     usb_backend_drv_send_zlp(usbhid_ctx.hid_ifaces[hid_handler].iface.eps[epid].ep_num);
