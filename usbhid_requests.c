@@ -51,6 +51,22 @@ __attribute__((weak)) mbed_error_t usbhid_request_trigger(uint8_t hid_handler __
     return MBED_ERROR_NONE;
 }
 
+static inline uint8_t is_iface_using_out_ep(uint8_t iface)
+{
+    /* ctx checked by parent function */
+    usbhid_context_t *ctx = usbhid_get_context();
+    for (uint8_t i = 0; i < ctx->num_iface; ++i) {
+        if (ctx->hid_ifaces[i].iface.id == iface) {
+            for (uint8_t j = 0; j < ctx->hid_ifaces[i].iface.usb_ep_number; ++j) {
+                if (ctx->hid_ifaces[i].iface.eps[j].dir == USB_EP_DIR_OUT) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 static inline uint8_t get_hid_handler_from_iface(uint8_t iface)
 {
     /* ctx checked by parent function */
@@ -213,6 +229,13 @@ err:
 static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
+    usbhid_context_t *ctx = usbhid_get_context();
+    if (ctx == NULL) {
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
+    uint8_t iface = pkt->wIndex;
+
     uint8_t action = pkt->bRequest;
     switch (action) {
         case USB_CLASS_RQST_GET_REPORT:
@@ -225,8 +248,17 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
             /*TODO*/
             break;
         case USB_CLASS_RQST_SET_REPORT:
-            /* acknowledge current report (TODO) */
-            usb_backend_drv_send_zlp(0);
+            /* receiving report on EP0 (when no EP OUT declared) */
+            if (is_iface_using_out_ep(iface)) {
+                log_printf("[USBHID] iface %d is using OUT EP, Set_Report class request should not be received!\n", iface);
+                /* Set_Report is replaced by sending report directly to OUT EP */
+                usb_backend_drv_stall(0, USB_EP_DIR_OUT);
+            } else {
+                /* 1. get back report content */
+                /* 2. push it to the upper stack */
+                /* 3. and acknowledge */
+                usb_backend_drv_send_zlp(0);
+            }
             break;
         case USB_CLASS_RQST_SET_IDLE:
             usbhid_handle_set_idle(pkt);
@@ -239,6 +271,7 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
         default:
             log_printf("[USBHID] Ubsupported class request action %x", action);
     }
+err:
     return errcode;
 }
 

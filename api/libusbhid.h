@@ -184,14 +184,21 @@ usbhid_report_infos_t *usbhid_get_report(uint8_t hid_handler,
 /*
  * Declaring a new USB HID interface. This HID interface is associated to a given
  * HID device type. This interface is composed of a:
- * EP0 IN & OUT control plane
+ * EP0 IN control plane
  * EPx IN INTERRUPT plane
+ * EPx+1 OUT INTERRUPT plane *or* EP0 OUT control plane (see below)
+ *
+ * The upper stack must pass the USB Control (libxDCI) handler that have been previously
+ * declared by the application, as there may have multiple stacks being executed over the
+ * same control plane. See the libxDCI API documentation for details.
  *
  * The upper stack declare the HID specific properties:
  * - subclass
  * - protocol
  * - descriptors number (including one report descriptor and potential physical descriptors)
- * - IN EP polling period
+ * - IN EP polling period (in milliseconds)
+ * - wether the application requests a dedicated IN and OUT endpoint, or only IN Endpoint
+ *   (out is optional in HID class specification, replaced by control Endpoint)
  *
  * the USB HID stack return a handler to interact with this interface
  */
@@ -200,6 +207,7 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
                             usbhid_protocol_t hid_protocol,
                             uint8_t           num_descriptor,
                             uint8_t           poll_time,
+                            bool              dedicated_out_ep,
                             uint8_t          *hid_handler);
 
 

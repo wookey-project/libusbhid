@@ -38,7 +38,37 @@ volatile bool data_being_sent = false;
 
 static volatile usbhid_context_t usbhid_ctx = { 0 };
 
-static mbed_error_t usbhid_control_received(uint32_t dev_id, uint32_t size, uint8_t ep_id)
+static inline uint8_t get_in_epid(volatile usbctrl_interface_t *iface)
+{
+    /* sanitize */
+    if (iface == NULL) {
+        return 0;
+    }
+    for (uint8_t i = 0; i < iface->usb_ep_number; ++i) {
+        if (iface->eps[i].dir == USB_EP_DIR_IN) {
+            log_printf("[USBHID] IN EP is %d\n", iface->eps[i].ep_num);
+            return iface->eps[i].ep_num;
+        }
+    }
+    return 0;
+}
+
+static inline uint8_t get_out_epid(volatile usbctrl_interface_t *iface)
+{
+    /* sanitize */
+    if (iface == NULL) {
+        return 0;
+    }
+    for (uint8_t i = 0; i < iface->usb_ep_number; ++i) {
+        if (iface->eps[i].dir == USB_EP_DIR_OUT) {
+            log_printf("[USBHID] OUT EP is %d\n", iface->eps[i].ep_num);
+            return iface->eps[i].ep_num;
+        }
+    }
+    return 0;
+}
+
+static mbed_error_t usbhid_received(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
     dev_id = dev_id;
     size = size;
@@ -74,6 +104,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
                             usbhid_protocol_t hid_protocol,
                             uint8_t           num_descriptor,
                             uint8_t           poll_time,
+                            bool              dedicated_out_ep,
                             uint8_t          *hid_handler)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -112,31 +143,8 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
      */
 
     uint8_t curr_ep = 0;
-    if (i == 0) {
-        /*
-         * This is the first HID interface we declare, we request an access to EP0
-         * if this is a second (or a third...) we already have a EP0 handler, and this
-         * EP is not requested :-)
-         *
-         * We request EP0 as control pipe in OUT mode (receiving) in order to receive data
-         * from the host. Here, we inform the libusbctrl that we are the target of input
-         * DATA content on EP0.
-         *
-         * Input class-level requests (and corresponding responses on EP0) will be handled
-         * naturally by the usbhid_class_rqst_handler.
-         */
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].type        = USB_EP_TYPE_CONTROL;
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_OUT;
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].attr        = USB_EP_ATTR_NO_SYNC;
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].usage       = USB_EP_USAGE_DATA;
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = 64; /* mpsize on EP0, not considered by libusbctrl */
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].ep_num      = 0; /* not considered by libusbctrl for CONTROL EP */
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].handler     = usbhid_control_received;
-        curr_ep++;
-    }
-
     /*
-     * Other EP for low latency data transmission with the host
+     * IN EP for low latency data transmission with the host
      */
     usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].type        = USB_EP_TYPE_INTERRUPT;
     usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_IN;
@@ -148,7 +156,50 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].poll_interval = poll_time;
     curr_ep++;
 
+
+    if (dedicated_out_ep == false) {
+        /* using control EP out as OUT EP instead of dedicated. This EP should be
+         * declared once when declaring multiple interfaces */
+        if (i == 0) {
+            /*
+             * This is the first HID interface we declare, we request an access to EP0
+             * if this is a second (or a third...) we already have a EP0 handler, and this
+             * EP is not requested :-)
+             *
+             * We request EP0 as control pipe in OUT mode (receiving) in order to receive data
+             * from the host. Here, we inform the libusbctrl that we are the target of input
+             * DATA content on EP0.
+             *
+             * Input class-level requests (and corresponding responses on EP0) will be handled
+             * naturally by the usbhid_class_rqst_handler.
+             */
+            usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].type        = USB_EP_TYPE_CONTROL;
+            usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_OUT;
+            usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].attr        = USB_EP_ATTR_NO_SYNC;
+            usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].usage       = USB_EP_USAGE_DATA;
+            usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = 64; /* mpsize on EP0, not considered by libusbctrl */
+            usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].ep_num      = 0; /* not considered by libusbctrl for CONTROL EP */
+            usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].handler     = usbhid_received;
+            curr_ep++;
+        }
+    } else {
+        /*
+         * OUT EP for low latency data transmission with the host
+         */
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].type        = USB_EP_TYPE_INTERRUPT;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_OUT;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].attr        = USB_EP_ATTR_NO_SYNC;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].usage       = USB_EP_USAGE_DATA;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = 16; /* mpsize on EP1 */
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].ep_num      = 2; /* this may be updated by libctrl */
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].handler     = usbhid_received;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].poll_interval = poll_time;
+        curr_ep++;
+
+    }
+
     usbhid_ctx.hid_ifaces[i].iface.usb_ep_number = curr_ep;
+
 
     errcode = usbctrl_declare_interface(usbxdci_handler, (usbctrl_interface_t*)&(usbhid_ctx.hid_ifaces[i].iface));
     if (errcode != MBED_ERROR_NONE) {
@@ -157,7 +208,8 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     }
 
     /* set IN EP real identifier */
-    usbhid_ctx.hid_ifaces[i].inep.id = usbhid_ctx.hid_ifaces[i].iface.eps[usbhid_ctx.hid_ifaces[i].iface.usb_ep_number - 1].ep_num;
+    uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[i].iface);
+    usbhid_ctx.hid_ifaces[i].inep.id = epid;
     for (uint8_t j = 0; j < MAX_HID_REPORTS; ++j) {
         usbhid_ctx.hid_ifaces[i].inep.idle_ms[j] = 0;
         usbhid_ctx.hid_ifaces[i].inep.silence[j] = true; /* silent while no event associated to this EP is received */
@@ -208,10 +260,10 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
     }
 
     /* total size is report + report id (one byte) */
-    log_printf("[USBHID] sending report on EP %d (len %d)\n", usbhid_ctx.hid_ifaces[hid_handler].iface.eps[1].ep_num, len);
-    uint8_t epid = usbhid_ctx.hid_ifaces[hid_handler].iface.usb_ep_number - 1;
-    usb_backend_drv_send_data(buf, len, usbhid_ctx.hid_ifaces[hid_handler].iface.eps[epid].ep_num);
-    usb_backend_drv_send_zlp(usbhid_ctx.hid_ifaces[hid_handler].iface.eps[epid].ep_num);
+    uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[hid_handler].iface);
+    log_printf("[USBHID] sending report on EP %d (len %d)\n", epid, len);
+    usb_backend_drv_send_data(buf, len, epid);
+    usb_backend_drv_send_zlp(epid);
 err:
     return errcode;
 }
