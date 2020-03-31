@@ -30,6 +30,7 @@
 #include "usbhid_requests.h"
 #include "usbhid_reports.h"
 #include "usbhid_descriptor.h"
+#include "usbhid_default_handlers.h"
 
 
 #define MAX_HID_DESCRIPTORS 8
@@ -97,6 +98,16 @@ usbhid_context_t *usbhid_get_context(void)
 {
     return (usbhid_context_t*)&usbhid_ctx;
 }
+
+bool usbhid_interface_exists(uint8_t hid_handler)
+{
+    usbhid_context_t *ctx = usbhid_get_context();
+    if (hid_handler < ctx->num_iface) {
+        return true;
+    }
+    return false;
+}
+
 
 
 mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
@@ -217,7 +228,8 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     /* set current interface effective identifier */
     usbhid_ctx.hid_ifaces[i].id   = usbhid_ctx.hid_ifaces[i].iface.id;
     usbhid_ctx.hid_ifaces[i].num_descriptors = num_descriptor;
-
+    /* the configuration step not yet passed */
+    usbhid_ctx.hid_ifaces[i].configured = false;
 
     *hid_handler = usbhid_ctx.num_iface;
     usbhid_ctx.num_iface++;
@@ -225,6 +237,54 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
 err:
     return errcode;
 }
+
+mbed_error_t usbhid_configure(uint8_t               hid_handler,
+                              usbhid_get_report_t   get_report_cb,
+                              usbhid_set_report_t   set_report_cb,
+                              usbhid_set_protocol_t set_proto_cb,
+                              usbhid_set_idle_t     set_idle_cb)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    usbhid_context_t *ctx = usbhid_get_context();
+    /* sanitize */
+    if (!usbhid_interface_exists(hid_handler)) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (get_report_cb == NULL) {
+        /* At least this one must be set! */
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+
+    /* set each of the interface callbacks */
+    ctx->hid_ifaces[hid_handler].get_report_cb = get_report_cb;
+
+    if (set_report_cb != NULL) {
+        ctx->hid_ifaces[hid_handler].set_report_cb = set_report_cb;
+    } else {
+        ctx->hid_ifaces[hid_handler].set_report_cb = usbhid_dflt_set_report;
+    }
+
+    if (set_proto_cb != NULL) {
+        ctx->hid_ifaces[hid_handler].set_proto_cb = set_proto_cb;
+    } else {
+        ctx->hid_ifaces[hid_handler].set_proto_cb = usbhid_dflt_set_protocol;
+    }
+
+    if (set_idle_cb != NULL) {
+        ctx->hid_ifaces[hid_handler].set_idle_cb = set_idle_cb;
+    } else {
+        ctx->hid_ifaces[hid_handler].set_idle_cb = usbhid_dflt_set_idle;
+    }
+
+    /* set interface as configured */
+    ctx->hid_ifaces[hid_handler].configured = true;
+err:
+    return errcode;
+}
+
+
 
 
 mbed_error_t usbhid_send_report(uint8_t hid_handler,
@@ -234,6 +294,10 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint32_t len = 0;
     if (report == NULL) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (!usbhid_interface_exists(hid_handler)) {
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
@@ -268,7 +332,7 @@ err:
     return errcode;
 }
 
-bool usbhid_silence_requested(uint8_t hid_handler, uint8_t index)
+bool usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index)
 {
     if (index >= MAX_HID_REPORTS) {
         return true;

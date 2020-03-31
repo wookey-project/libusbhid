@@ -34,7 +34,15 @@
 
 bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
 {
-    usbhid_report_infos_t *report = usbhid_get_report(hid_handler, index);
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    usbhid_context_t *ctx = usbhid_get_context();
+    /* sanitize */
+    if (!usbhid_interface_exists(hid_handler)) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+
+    usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
@@ -42,20 +50,32 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
             return true;
         }
     }
+err:
     return false;
 }
 
 uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index)
 {
-    usbhid_report_infos_t *report = usbhid_get_report(hid_handler, index);
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    usbhid_context_t *ctx = usbhid_get_context();
     uint8_t id = 0;
+
+    /* sanitize */
+    if (!usbhid_interface_exists(hid_handler)) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+
+    usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
             report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) {
             id = report->items[iterator].data1;
+            return id;
         }
     }
+err:
     return id;
 }
 
@@ -63,12 +83,22 @@ uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index)
 
 uint32_t usbhid_get_report_len(uint8_t hid_handler, uint8_t index)
 {
-    usbhid_report_infos_t *report = usbhid_get_report(hid_handler, index);
+
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    usbhid_context_t *ctx = usbhid_get_context();
+    uint32_t report_len = 0;
+
+    /* sanitize */
+    if (!usbhid_interface_exists(hid_handler)) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+
+    usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
     uint8_t report_size = 0;
     uint8_t report_count = 0;
-    uint32_t report_len = 0;
     if (report == NULL) {
-        return 0;
+        goto err;
     }
     /* The report len defines the length (in bits in USB HID 1.11) of
      * the data sent after the report identifier.
@@ -113,6 +143,7 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, uint8_t index)
             report_len += local_report_len;
         }
     }
+err:
     return report_len;
 }
 
@@ -121,11 +152,21 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, uint8_t index)
  */
 uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
 {
-    usbhid_report_infos_t *report = usbhid_get_report(hid_handler, index);
-    if (report == NULL) {
-        return 0;
-    }
+    mbed_error_t errcode = MBED_ERROR_NONE;
     uint32_t offset = 0;
+    usbhid_context_t *ctx = usbhid_get_context();
+
+    /* sanitize */
+    if (!usbhid_interface_exists(hid_handler)) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+
+    usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
+
+    if (report == NULL) {
+        goto err;
+    }
 
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         /* first byte is handling type, tag and size of the item */
@@ -138,16 +179,15 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
             offset += 3;
         } else {
             log_printf("[USBHID] invalid item size %d!\n", report->items[iterator].size);
-            goto err;
         }
     }
-err:
     if (offset > 255) {
         /* descriptor size is encoded in 8bits field in the HID descriptor
          * (USB 2.0 standard) and can't be bigger than 255 bytes */
         log_printf("[USBHID] invalid descriptor size: %d!\n", offset);
         offset = 0;
     }
+err:
     return offset;
 }
 
@@ -156,6 +196,13 @@ err:
 mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, uint32_t *bufsize, uint8_t index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
+    usbhid_context_t *ctx = usbhid_get_context();
+    /* sanitize */
+    if (!usbhid_interface_exists(hid_handler)) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+
     /* define a buffer of num_items x max item size
      * these informations should be rodata content, defining the number of
      * item of collections and reports, specific to each upper stack profile
@@ -167,7 +214,7 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
     }
     uint32_t offset = 0;
     uint32_t iterator = 0;
-    usbhid_report_infos_t *report = usbhid_get_report(hid_handler, index);
+    usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
     if (report == NULL) {
         log_printf("[USBHID] report for handler %d/index %d not found!\n", hid_handler, index);
         errcode = MBED_ERROR_INVPARAM;

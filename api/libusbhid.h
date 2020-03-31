@@ -155,27 +155,105 @@ typedef struct {
     uint8_t data[1];
 } usbhid_report_t;
 
-/*********************************************************************
- * Upper layer-defined functions
+
+/***********************************************************
+ * Upper layer-defined callbacks
+ *
+ * On HID devices, it is complicated to handle upper layer functions as protoypes,
+ * because such paradigm implies that there is a single upper HID stack being
+ * executed in the same time.
+ *
+ * When using a hybrid HID device, for e.g. a device handling the following services:
+ *
+ * - FIDO device, for U2F service
+ * - keyboard device
+ *
+ * As a consequence, the HID stack must handle upper layer calls through registered
+ * callbacks, based on the interface registration. The HID stack will then
+ * call, in the upper example, the FIDO callbacks or the keyboard callbacks when
+ * receiving events:
+ *
+ *
+ * [KBD(1)][ FIDO(2) ]
+ *      ^    ^
+ *      |    |
+ * [   USB HID(1+2)  ]
+ *    ^          ^
+ *    |          |
+ * [ driver   ][ xDCI]
+ *
+ * Above the HID stack, multiple callbacks are required. They are strictly typed
+ * for security reason.
  */
 
 /*
- * A HID stack handle collections of items (at least one)
- * Collections are a homogeneous set of items handling a given content
- * For this, the upper stack must define two functions compatible with
- * the following API.
- * Again, we use linker timer resolution instead of callbacks for security
- * reasons, as those API are not hotpluggable ones.
+ * A Get_Report request has been received by the device.
+ * The upper stack must return the report structure reference,
+ * define by the usbhid_report_info_t type. This report is a list of items which
+ * is strictly stack-specific.
+ * Although, each item is composed of attributes defined by the HID standard.
+ * See the usbhid_report_info_t type declaration for more information.
  */
+typedef usbhid_report_infos_t *(*usbhid_get_report_t)(uint8_t hid_handler,
+                                                     uint8_t index);
+
+
 
 /*
- * The upper stack handles collection(s) of item. These collections are
- * identified by their index, and transmitted to the host through the
- * Get_Report request. This function returns the corresponding collection
- * pointer, of usbhid_item_info_t type.
+ * A Set_Report() request has been received by the device. This can be
+ * a request received on EP0 (when the interface only using one IN EP endpoint)
+ * or directly a command received on the OUT EP endpoint.
+ * The USB HID stack abstract the way the report is sent by the host and
+ * call the upper stack in the same way, as the semantic of the request is
+ * the same (see HID 1.11 specifications).
  */
-usbhid_report_infos_t *usbhid_get_report(uint8_t hid_handler,
-                                         uint8_t index);
+typedef mbed_error_t          (*usbhid_set_report_t)(uint8_t hid_handler,
+                                                    uint8_t index);
+
+
+/*
+ * For some specific device, a protocol swich may be requested. This is a typical
+ * case of keyboards, which handle both Boot mode (BIOS compatibility) and standard
+ * mode. For this type of devices, the host can request a protocol set.
+ * As this request is a pure upper stack modification, the information is passed to it
+ * directly.
+ */
+typedef mbed_error_t          (*usbhid_set_protocol_t)(uint8_t hid_handler,
+                                                      uint8_t proto);
+
+
+/*
+ * The host may requires a non-zero IDLE time which differs from the one
+ * previously declared. This value impact the upper layer loop period, which
+ * is based on this idle_ms value to handle the periodic transmissions
+ * (for stacks sending periodic content) or to handle minimum period between sporadic
+ * tranmissions.
+ * The upper stack is responsible, for a given interface, to respect the given idle_ms
+ * time as a minimum.
+ *
+ * There is a complex mechansim in HID stack handling silent mode. To avoid too much
+ * complexity in the upper stacks, the HID stack abstract the association between
+ * idle_ms value, events, and silent mode, and return set_idle only if the value is
+ * *non-zero*.
+ * In the meantime, the HID stack provides a dedicated API to handle silent mode:
+ *
+ * bool usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index)
+ *
+ * if this function return true, the upper stack must silent on the IN EP interface.
+ */
+typedef mbed_error_t          (*usbhid_set_idle_t)(uint8_t hid_handler,
+                                                  uint8_t idle_ms);
+
+
+/*
+ * INFO:
+ *
+ * Get_Idle handling is directly returned by the HID stack, which keeps a copy of the
+ * idle_ms value declared by the upper stack and potentially updated by the host.
+ * This is required to handle silent mode during the HID device lifetime.
+ *
+ * As a consequence, the Get_Idle() event is not pushed to upper stacks.
+ */
 
 /*************************************************
  * USB HID stack API
@@ -210,7 +288,20 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
                             bool              dedicated_out_ep,
                             uint8_t          *hid_handler);
 
-
+/*
+ * Configure callbacks for the given HID interface, identified by its
+ * HID handler.
+ *
+ * INFO: all callbacks are set using empty basic functions at HID level,
+ * allowing the upper stack to leave some of the callback empty.
+ * This allow, for HID stacks that do not handle some specific requests like
+ * Set_Protocol(), to let the libUSBHID handle the default response.
+ */
+mbed_error_t usbhid_configure(uint8_t               hid_handler,
+                              usbhid_get_report_t   get_report_cb,
+                              usbhid_set_report_t   set_report_cb,
+                              usbhid_set_protocol_t set_proto_cb,
+                              usbhid_set_idle_t     set_idle_cb);
 
 /*
  * sending an HID report. report index is the index of the
@@ -231,11 +322,7 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
  * IDLE (Set_Idle command)
  * PROTOCOL (Set_Procotol command)
  */
-uint16_t usbhid_get_requested_idle(uint8_t hid_handler, uint8_t index);
-
-uint16_t usbhid_get_requested_protocol(uint8_t hid_handler);
-
-bool     usbhid_silence_requested(uint8_t hid_handler, uint8_t index);
+bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
 
 /***********************************************************
  * triggers
@@ -259,6 +346,7 @@ void usbhid_report_sent_trigger(uint8_t hid_handler, uint8_t index);
  * A weak symbol is defined if no trigger is used.
  */
 mbed_error_t usbhid_request_trigger(uint8_t hid_handler, uint8_t hid_req);
+
 
 
 

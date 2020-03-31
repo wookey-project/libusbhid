@@ -27,6 +27,7 @@
 #include "libc/types.h"
 #include "libc/stdio.h"
 #include "libc/syscall.h"
+#include "api/libusbhid.h"
 #include "libusbctrl.h"
 #include "autoconf.h"
 
@@ -56,12 +57,20 @@ typedef struct {
  * - a usbctrl_interface_t structure, passed to the lower libxDCI interface
  * - an IN EP specific HID level meta-properties, associated to the IN EP declared in the
  *   usbctrl_interface_t
+ * - various callbacks for standard HID requests
+ * - a 'configured' flag, which control that the interface has been properly set and
+ *   configured.
  */
 typedef struct {
     uint8_t id;
     usbhid_inep_t         inep; /* start at 1 (descriptor id start at 1) */
     usbctrl_interface_t   iface;
     uint8_t               num_descriptors;
+    usbhid_get_report_t   get_report_cb;
+    usbhid_set_report_t   set_report_cb;
+    usbhid_set_protocol_t set_proto_cb;
+    usbhid_set_idle_t     set_idle_cb;
+    bool                  configured;
 } usbhid_iface_t;
 
 
@@ -76,5 +85,7 @@ typedef struct {
 
 
 usbhid_context_t *usbhid_get_context(void);
+
+bool usbhid_interface_exists(uint8_t hid_handler);
 
 #endif/*!USBHID_H_*/
