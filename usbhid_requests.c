@@ -277,7 +277,18 @@ err:
 
 
 /**
- * \brief Class request handling for bulk mode.
+ * \brief Class request handling
+ *
+ * There is two ways requests can be received at this level:
+ * through a class level request:
+ *  - the bmRequestType class bit is set to 1, indicating that the request is targetting
+ *    the current class. In this first case, all the HID requests are possible.
+ * through a standard request, targeting one of our (HID) interfaces.
+ *  - in that case, the setup packet respect the USB standard, and two USB requests
+ *    can target the HID level: Get_Descriptor() and Set_Descriptor().
+ *
+ * The below function discriminate the way request is passed to HID level, and calls the
+ * appropriate handler.
  *
  * @param packet Setup packet
  */
