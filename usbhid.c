@@ -31,6 +31,7 @@
 #include "usbhid_reports.h"
 #include "usbhid_descriptor.h"
 #include "usbhid_default_handlers.h"
+#include "libc/sanhandlers.h"
 
 
 #define MAX_HID_DESCRIPTORS 8
@@ -138,6 +139,12 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
 
     uint8_t i = usbhid_ctx.num_iface;
     memset((void*)&usbhid_ctx.hid_ifaces[i], 0x0, sizeof(usbctrl_interface_t));
+
+    ADD_LOC_HANDLER(usbhid_class_rqst_handler);
+    ADD_LOC_HANDLER(usbhid_get_descriptor);
+    ADD_LOC_HANDLER(usbhid_data_sent);
+    ADD_LOC_HANDLER(usbhid_received);
+
     usbhid_ctx.hid_ifaces[i].iface.usb_class = USB_CLASS_HID;
     usbhid_ctx.hid_ifaces[i].iface.usb_subclass = hid_subclass; /* SCSI transparent cmd set (i.e. use INQUIRY) */
     usbhid_ctx.hid_ifaces[i].iface.usb_protocol = hid_protocol; /* Protocol BBB (Bulk only) */
