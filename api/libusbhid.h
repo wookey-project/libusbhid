@@ -64,6 +64,25 @@ typedef enum {
  * successive item tag, type, length and data.
  */
 /* TODO: to complete... */
+
+/* usage page defined item, see USB HID usage page table doc 1.12 */
+typedef enum {
+    USBHID_ITEM_USAGE_PAGE_UNDEFINED = 0x0,
+    USBHID_ITEM_USAGE_PAGE_GENERIC_DESKOP = 0x1,
+    USBHID_ITEM_USAGE_PAGE_SIMULATION_CTRL = 0x2,
+    USBHID_ITEM_USAGE_PAGE_VR_CTRL         = 0x3,
+    USBHID_ITEM_USAGE_PAGE_SPORT_CTRL      = 0x4,
+    USBHID_ITEM_USAGE_PAGE_GAME_CTRL       = 0x5,
+    USBHID_ITEM_USAGE_PAGE_GENERIC_DEV_CTRL= 0x6,
+    USBHID_ITEM_USAGE_PAGE_KEYBOARD_KEYPAD = 0x7,
+    USBHID_ITEM_USAGE_PAGE_LEDS            = 0x8,
+    USBHID_ITEM_USAGE_PAGE_BUTTONS         = 0x9,
+    USBHID_ITEM_USAGE_PAGE_ORDINAL         = 0xa,
+    USBHID_ITEM_USAGE_PAGE_TELEPHONY       = 0xb,
+    USBHID_ITEM_USAGE_PAGE_CONSUMER        = 0xc,
+    /* to continue, the list is huge */
+} usbhid_item_usage_page_t;
+
 typedef enum {
     USBHID_ITEM_TYPE_MAIN = 0,
     USBHID_ITEM_TYPE_GLOBAL = 1,
@@ -102,6 +121,34 @@ typedef enum {
     /* other are reserved */
 } usbhid_item_tag_main_t;
 
+/* About input, output and feature main item tag (bitfield) */
+#define USBHID_IOF_ITEM_DATA        0x0
+#define USBHID_IOF_ITEM_CONST       0x1
+#define USBHID_IOF_ITEM_ARRAY       0x2
+#define USBHID_IOF_ITEM_VARIABLE    0x3
+#define USBHID_IOF_ITEM_ABSOLUTE    0x4
+#define USBHID_IOF_ITEM_RELATIVE    0x5
+#define USBHID_IOF_ITEM_NOWRAP      0x6
+#define USBHID_IOF_ITEM_WRAP        0x7
+#define USBHID_IOF_ITEM_LINEAR      0x8
+#define USBHID_IOF_ITEM_NONLINEAR   0x9
+#define USBHID_IOF_ITEM_PREFSTATE   0xa
+#define USBHID_IOF_ITEM_NOPREF      0xb
+#define USBHID_IOF_ITEM_NONULLPOS   0xc
+#define USBHID_IOF_ITEM_NULLSTATE   0xd
+#define USBHID_IOF_ITEM_NONVOLATILE 0xe /* Output item specific */
+#define USBHID_IOF_ITEM_VOLATILE    0xf /* Output item specific */
+#define USBHID_IOF_ITEM_BITFIELD    0x10
+#define USBHID_IOF_ITEM_BUFFBYTES   0x11
+
+/* collection tag type (mutually exclusive) */
+#define USBHID_COLL_ITEM_PHYSICAL       0x0 /* group of axex */
+#define USBHID_COLL_ITEM_APPLICATION    0x1 /* mouse, keyboard */
+#define USBHID_COLL_ITEM_LOGICAL        0x2 /* interrrelated data */
+#define USBHID_COLL_ITEM_REPORT         0x3
+#define USBHID_COLL_ITEM_NAMED_ARRAY    0x4
+#define USBHID_COLL_ITEM_USAGE_SWITCH   0x5
+#define USBHID_COLL_ITEM_USAGE_MODIFIER 0x6
 
 typedef enum {
     /* local item, typed MAIN : XXXX 10 NN where XXXX is
