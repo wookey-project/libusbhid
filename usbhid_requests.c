@@ -239,12 +239,15 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
     uint8_t action = pkt->bRequest;
     switch (action) {
         case USB_CLASS_RQST_GET_REPORT:
+            log_printf("[USBHID] Get_Report class request (TODO)\n");
             /*TODO*/
             break;
         case USB_CLASS_RQST_GET_IDLE:
+            log_printf("[USBHID] Get_Idle class request (TODO)\n");
             /*TODO*/
             break;
         case USB_CLASS_RQST_GET_PROTOCOL:
+            log_printf("[USBHID] Get_Protocol class request (TODO)\n");
             /*TODO*/
             break;
         case USB_CLASS_RQST_SET_REPORT:
@@ -266,6 +269,7 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
             usb_backend_drv_send_zlp(0);
             break;
         case USB_CLASS_RQST_SET_PROTOCOL:
+            log_printf("[USBHID] Set_Protocol class request (TODO)\n");
             /*TODO*/
             break;
         default:

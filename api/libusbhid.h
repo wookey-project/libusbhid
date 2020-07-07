@@ -324,6 +324,7 @@ typedef mbed_error_t          (*usbhid_set_idle_t)(uint8_t hid_handler,
  * - IN EP polling period (in milliseconds)
  * - wether the application requests a dedicated IN and OUT endpoint, or only IN Endpoint
  *   (out is optional in HID class specification, replaced by control Endpoint)
+ * - Max packet size for IN (& potential dedicated OUT) EPs
  *
  * the USB HID stack return a handler to interact with this interface
  */
@@ -333,6 +334,7 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
                             uint8_t           num_descriptor,
                             uint8_t           poll_time,
                             bool              dedicated_out_ep,
+                            uint16_t          ep_mpsize,
                             uint8_t          *hid_handler);
 
 /*
@@ -359,6 +361,17 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
                                 uint8_t report_index);
 
 
+/*
+ * Asynchronous report reception call. This API set the OUT Endpoint in order to
+ * be ready to receive a HID report on the HID OUT Endpoint of the corresponding
+ * HID interface associated to the given HID handler.
+ *
+ * When an effective reception arise, the usbhid_report_received_trigger is
+ * triggered, the data being accessible directly in the report argument buffer.
+ */
+mbed_error_t usbhid_recv_report(uint8_t hid_handler,
+                                uint8_t *report,
+                                uint16_t size);
 /*
  * USB HID getter (get back the current HID states information
  */
@@ -395,6 +408,17 @@ void usbhid_report_sent_trigger(uint8_t hid_handler, uint8_t index);
 mbed_error_t usbhid_request_trigger(uint8_t hid_handler, uint8_t hid_req);
 
 
+/*
+ * This trigger is called for each received HID request on DATA EP.
+ * The difference with the request trigger is that requests are SETUP
+ * packets, handled as class requests or standard requests targetting
+ * HID interface. This handler is made for DATA packets (typically
+ * reports sent from the hosts (OUT reports).
+ * the hid_handler identifier permits to differenciate potential
+ * multiple HID classes on the same HID library of the same application.
+ * (e.g. CTAPHID+Keyboard+...)
+ */
+mbed_error_t usbhid_report_received_trigger(uint8_t hid_handler, uint16_t size);
 
 
 #endif/*!LIBUSBHID*/
