@@ -115,9 +115,9 @@ static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_
 {
     log_printf("[USBHID] data (%d B) sent on EP %d\n", size, ep_id);
     ep_id = ep_id;
-    data_being_sent = false;
     dev_id = dev_id;
     size = size;
+    data_being_sent = false;
 
     //usb_backend_drv_ack(usbhid_ctx.iface.eps[1].ep_num, USB_BACKEND_DRV_EP_DIR_IN);
     return MBED_ERROR_NONE;
@@ -323,9 +323,10 @@ err:
 
 
 
-mbed_error_t usbhid_send_report(uint8_t hid_handler,
-                                uint8_t* report,
-                                uint8_t  report_index)
+mbed_error_t usbhid_send_report(uint8_t              hid_handler,
+                                uint8_t*             report,
+                                usbhid_report_type_t type,
+                                uint8_t              report_index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint32_t len = 0;
@@ -338,11 +339,10 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
         goto err;
     }
     /* first field is the report index */
-    uint8_t idx = report[0];
     uint8_t buf[256] = { 0 };
-    len = usbhid_get_report_len(hid_handler, idx);
+    len = usbhid_get_report_len(hid_handler, type, report_index);
     if (len == 0) {
-        log_printf("[USBHID] unable to get back report len for iface %d/idx %d\n", hid_handler, idx);
+        log_printf("[USBHID] unable to get back report len for iface %d/idx %d\n", hid_handler, report_index);
     }
     /* wait for previous data to be fully transmitted */
     while (data_being_sent == true) {
@@ -362,8 +362,17 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
     /* total size is report + report id (one byte) */
     uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[hid_handler].iface);
     log_printf("[USBHID] sending report on EP %d (len %d)\n", epid, len);
+
+    data_being_sent = true;
     usb_backend_drv_send_data(buf, len, epid);
+    /* wait for end of transmission */
+    while (data_being_sent == true) {
+        ;
+    }
+    /* finishing with ZLP */
     usb_backend_drv_send_zlp(epid);
+    /* XXX: needed ? */
+    data_being_sent = false;
 err:
     return errcode;
 }

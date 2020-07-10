@@ -121,6 +121,15 @@ typedef enum {
     /* other are reserved */
 } usbhid_item_tag_main_t;
 
+/*
+ * Types of reports that can be sent
+ */
+typedef enum {
+    USBHID_INTPUT_REPORT  = USBHID_ITEM_MAIN_TAG_INPUT,
+    USBHID_OUTPUT_REPORT  = USBHID_ITEM_MAIN_TAG_OUTPUT,
+    USBHID_FEATURE_REPORT = USBHID_ITEM_MAIN_TAG_FEATURE
+} usbhid_report_type_t;
+
 /* About input, output and feature main item tag (bitfield) */
 #define USBHID_IOF_ITEM_DATA        0x0
 #define USBHID_IOF_ITEM_CONST       0x1
@@ -358,6 +367,7 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
  */
 mbed_error_t usbhid_send_report(uint8_t hid_handler,
                                 uint8_t *report,
+                                usbhid_report_type_t type,
                                 uint8_t report_index);
 
 

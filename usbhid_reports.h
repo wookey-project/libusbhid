@@ -48,7 +48,7 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
  * identifier, all reports have the same size, based on two global tags: REPORT_SIZE and
  * REPORT_COUNT.
  */
-uint32_t usbhid_get_report_len(uint8_t hid_handler, uint8_t index);
+uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index);
 
 /*
  * is report to send needs to be prefixed by its Report Identifier ?
