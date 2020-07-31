@@ -81,7 +81,7 @@ err:
 
 
 
-uint32_t usbhid_get_report_len(uint8_t hid_handler, uint8_t index)
+uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index)
 {
 
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -100,6 +100,7 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, uint8_t index)
     if (report == NULL) {
         goto err;
     }
+    log_printf("[USBHID] get report length for HID report type %x\n", type);
     /* The report len defines the length (in bits in USB HID 1.11) of
      * the data sent after the report identifier.
      * This length is based of the number of data, multiplied by the size
@@ -121,24 +122,31 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, uint8_t index)
      */
     uint32_t local_report_len = 0;
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
-        if (report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_SIZE) {
+        if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
+            report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_SIZE) {
             report_size = report->items[iterator].data1;
+            log_printf("[USBHID] found report size %d\n", report_size);
         }
-        if (report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_COUNT) {
+        if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
+            report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_COUNT) {
             report_count = report->items[iterator].data1;
+            log_printf("[USBHID] found report count %d\n", report_count);
         }
+        /* add current report size to global report size only if it match the
+         * report type that is to be sent */
         if (report->items[iterator].type ==USBHID_ITEM_TYPE_MAIN &&
-            (   report->items[iterator].tag == USBHID_ITEM_MAIN_TAG_INPUT
-             || report->items[iterator].tag == USBHID_ITEM_MAIN_TAG_OUTPUT
-             || report->items[iterator].tag == USBHID_ITEM_MAIN_TAG_FEATURE)) {
+            report->items[iterator].tag == type) {
+            log_printf("[USBHID] current report type matches. Add its size\n");
             /* report len, in bits */
             local_report_len = report_size * report_count;
+            log_printf("[USBHID] current report size in bits: %d\n", local_report_len);
             /* padd to upper byte size  */
             if (local_report_len % 8) {
                 local_report_len += (8 - (local_report_len % 8));
             }
             /* ... going back to byte size */
             local_report_len = local_report_len / 8;
+            log_printf("[USBHID] current report size in bbytes: %d\n", local_report_len);
             /* add local MAIN item report size to current global report size */
             report_len += local_report_len;
         }

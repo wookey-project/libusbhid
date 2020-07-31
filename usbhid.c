@@ -40,6 +40,16 @@ volatile bool data_being_sent = false;
 
 static volatile usbhid_context_t usbhid_ctx = { 0 };
 
+
+/*
+ * Only if trigger not defined in the above stack.
+ */
+__attribute__((weak)) mbed_error_t usbhid_report_received_trigger(uint8_t hid_handler __attribute__((unused)),
+                                                                  uint16_t size __attribute__((unused)))
+{
+    return MBED_ERROR_NONE;
+}
+
 static inline uint8_t get_in_epid(volatile usbctrl_interface_t *iface)
 {
     /* sanitize */
@@ -70,11 +80,29 @@ static inline uint8_t get_out_epid(volatile usbctrl_interface_t *iface)
     return 0;
 }
 
+/*
+ * A HID packet has been received on a dedicated (or not) OUTPUT Endpoint.
+ * This HID packet is considered as a RAW HID packet. The HID layer is treated here and
+ * if there is an upper layer registered against the HID stack, the decapsulated HID
+ * packet is transmitted to the upper layer.
+ * HID report should respect the declared report size for the corresponding report id.
+ * for e.g. FIDO reports are typically upto 64 bytes length.
+ */
 static mbed_error_t usbhid_received(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
+    log_printf("[USBHID] HID packet (%d B) received on ep %d\n", size, ep_id);
+    for (uint8_t iface = 0; iface < usbhid_ctx.num_iface; ++iface)
+    {
+        for (uint8_t ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
+        {
+
+            if (usbhid_ctx.hid_ifaces[iface].iface.eps[ep].ep_num == ep_id)
+            {
+                usbhid_report_received_trigger(iface, size);
+            }
+        }
+    }
     dev_id = dev_id;
-    size = size;
-    ep_id = ep_id;
     return MBED_ERROR_NONE;
 }
 
@@ -85,11 +113,11 @@ static mbed_error_t usbhid_received(uint32_t dev_id, uint32_t size, uint8_t ep_i
  */
 static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
-    log_printf("[USBHID] data (%d bytes) sent on EP %d\n", size, ep_id);
+    log_printf("[USBHID] data (%d B) sent on EP %d\n", size, ep_id);
     ep_id = ep_id;
-    data_being_sent = false;
     dev_id = dev_id;
     size = size;
+    data_being_sent = false;
 
     //usb_backend_drv_ack(usbhid_ctx.iface.eps[1].ep_num, USB_BACKEND_DRV_EP_DIR_IN);
     return MBED_ERROR_NONE;
@@ -117,6 +145,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
                             uint8_t           num_descriptor,
                             uint8_t           poll_time,
                             bool              dedicated_out_ep,
+                            uint16_t          ep_mpsize,
                             uint8_t          *hid_handler)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -168,7 +197,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_IN;
     usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].attr        = USB_EP_ATTR_NO_SYNC;
     usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].usage       = USB_EP_USAGE_DATA;
-    usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = 16; /* mpsize on EP1 */
+    usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = ep_mpsize; /* mpsize on EP1 */
     usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].ep_num      = 1; /* this may be updated by libctrl */
     usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].handler     = usbhid_data_sent;
     usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].poll_interval = poll_time;
@@ -195,7 +224,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
             usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_OUT;
             usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].attr        = USB_EP_ATTR_NO_SYNC;
             usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].usage       = USB_EP_USAGE_DATA;
-            usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = 64; /* mpsize on EP0, not considered by libusbctrl */
+            usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = ep_mpsize; /* mpsize on EP0, not considered by libusbctrl */
             usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].ep_num      = 0; /* not considered by libusbctrl for CONTROL EP */
             usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].handler     = usbhid_received;
             curr_ep++;
@@ -208,7 +237,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_OUT;
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].attr        = USB_EP_ATTR_NO_SYNC;
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].usage       = USB_EP_USAGE_DATA;
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = 16; /* mpsize on EP1 */
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = ep_mpsize; /* mpsize on EP1 */
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].ep_num      = 2; /* this may be updated by libctrl */
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].handler     = usbhid_received;
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].poll_interval = poll_time;
@@ -294,9 +323,10 @@ err:
 
 
 
-mbed_error_t usbhid_send_report(uint8_t hid_handler,
-                                uint8_t* report,
-                                uint8_t  report_index)
+mbed_error_t usbhid_send_report(uint8_t              hid_handler,
+                                uint8_t*             report,
+                                usbhid_report_type_t type,
+                                uint8_t              report_index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint32_t len = 0;
@@ -309,11 +339,10 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
         goto err;
     }
     /* first field is the report index */
-    uint8_t idx = report[0];
     uint8_t buf[256] = { 0 };
-    len = usbhid_get_report_len(hid_handler, idx);
+    len = usbhid_get_report_len(hid_handler, type, report_index);
     if (len == 0) {
-        log_printf("[USBHID] unable to get back report len for iface %d/idx %d\n", hid_handler, idx);
+        log_printf("[USBHID] unable to get back report len for iface %d/idx %d\n", hid_handler, report_index);
     }
     /* wait for previous data to be fully transmitted */
     while (data_being_sent == true) {
@@ -333,8 +362,17 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
     /* total size is report + report id (one byte) */
     uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[hid_handler].iface);
     log_printf("[USBHID] sending report on EP %d (len %d)\n", epid, len);
+
+    data_being_sent = true;
     usb_backend_drv_send_data(buf, len, epid);
+    /* wait for end of transmission */
+    while (data_being_sent == true) {
+        ;
+    }
+    /* finishing with ZLP */
     usb_backend_drv_send_zlp(epid);
+    /* XXX: needed ? */
+    data_being_sent = false;
 err:
     return errcode;
 }
@@ -357,3 +395,50 @@ uint16_t usbhid_get_requested_idle(uint8_t hid_handler, uint8_t index)
     return usbhid_ctx.hid_ifaces[hid_handler].inep.idle_ms[index];
 }
 
+
+/*
+ * HID DATA OUT endpoint may be:
+ * 1. EP0, updated to handle data content
+ * 2. EPx dedicated EP
+ *
+ * In the first case, the recv FIFO must be updated each time the device actively wait for
+ * an effective DATA content. This is done at the end of a setup stage when a non-zero data stage is
+ * configued
+ * In the second case, the recv FIFO is dedicated in the corresponding EP. Though it should be
+ * configured each time the device application is ready to receive data from host
+ */
+mbed_error_t usbhid_recv_report(uint8_t hid_handler, uint8_t *report, uint16_t size)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    uint8_t ep_id = 0;
+    /* get back EP identifier from HID handler */
+    for (uint8_t iface = 0; iface < usbhid_ctx.num_iface; ++iface)
+    {
+        for (uint8_t ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
+        {
+
+            if (usbhid_ctx.hid_ifaces[iface].iface.eps[ep].dir == USB_EP_DIR_OUT)
+            {
+                ep_id = usbhid_ctx.hid_ifaces[iface].iface.eps[ep].ep_num;
+                goto set_fifo;
+            }
+        }
+    }
+
+    /* OUT EP not found */
+    log_printf("[USBHID] OUT EP not found for HID handler %d\n", hid_handler);
+    errcode = MBED_ERROR_UNKNOWN;
+    goto err;
+
+set_fifo:
+    /* set recv FIFO */
+    errcode = usb_backend_drv_set_recv_fifo(report, size, ep_id);
+    /* activate Endpoint (Ack sent, ready to recv) */
+    /*XXX: is this is required for EP0 ? Compare with DFU implementation to check */
+    usb_backend_drv_activate_endpoint(ep_id, USB_BACKEND_DRV_EP_DIR_OUT);
+    /* no automaton at HID state. This is handled by upper class if needed */
+    log_printf("[USBHID] OUT EP %d set and ready to receive at most %d bytes\n", ep_id, size);
+
+err:
+    return errcode;
+}
