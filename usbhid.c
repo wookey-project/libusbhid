@@ -353,9 +353,11 @@ mbed_error_t usbhid_send_report(uint8_t              hid_handler,
      * otherwise, items are sent directly */
     if (usbhid_report_needs_id(hid_handler, report_index)) {
         buf[0] = usbhid_report_get_id(hid_handler, report_index);
+        log_printf("[USBHID] this report requires its ID (0x%x) to be sent\n", buf[0]);
         memcpy((void*)&buf[1], (void*)report, len);
         len++;
     } else {
+        log_printf("[USBHID] sending report without ID\n");
         memcpy((void*)&buf[0], (void*)report, len);
     }
 

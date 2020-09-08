@@ -203,6 +203,7 @@ err:
 
 mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, uint32_t *bufsize, uint8_t index)
 {
+    log_printf("[USBHID] forging report descriptor\n");
     mbed_error_t errcode = MBED_ERROR_NONE;
     usbhid_context_t *ctx = usbhid_get_context();
     /* sanitize */
