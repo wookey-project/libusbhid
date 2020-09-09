@@ -251,6 +251,7 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
             /*TODO*/
             break;
         case USB_CLASS_RQST_SET_REPORT:
+            log_printf("[USBHID] Set_Report class request (TODO)\n");
             /* receiving report on EP0 (when no EP OUT declared) */
             if (is_iface_using_out_ep(iface)) {
                 log_printf("[USBHID] iface %d is using OUT EP, Set_Report class request should not be received!\n", iface);
@@ -301,12 +302,14 @@ mbed_error_t usbhid_class_rqst_handler(uint32_t usbxdci_handler __attribute__((u
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
 
-    log_printf("[classRqst] handling HID class rqst\n");
+    log_printf("[classRqst] handling HID rqst\n");
     if (((packet->bmRequestType >> 5) & 0x3) == 1) {
         /* class request */
+        log_printf("[classRqst] handling HID class rqst\n");
         errcode = usbhid_handle_class_request(packet);
     } else {
         /* standard request targetting current iface */
+        log_printf("[classRqst] handling HID std rqst\n");
         errcode = usbhid_handle_std_request(packet);
     }
     return errcode;

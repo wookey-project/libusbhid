@@ -146,7 +146,9 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
                             uint8_t           poll_time,
                             bool              dedicated_out_ep,
                             uint16_t          ep_mpsize,
-                            uint8_t          *hid_handler)
+                            uint8_t          *hid_handler,
+                            uint8_t          *in_buff,
+                            uint32_t          in_buff_len)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     /* sanitize */
@@ -264,6 +266,10 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     /* set current interface effective identifier */
     usbhid_ctx.hid_ifaces[i].id   = usbhid_ctx.hid_ifaces[i].iface.id;
     usbhid_ctx.hid_ifaces[i].num_descriptors = num_descriptor;
+    usbhid_ctx.hid_ifaces[i].dedicated_out_ep = dedicated_out_ep;
+    usbhid_ctx.hid_ifaces[i].in_buff = in_buff;
+    usbhid_ctx.hid_ifaces[i].in_buff_len = in_buff_len;
+
     /* the configuration step not yet passed */
     usbhid_ctx.hid_ifaces[i].configured = false;
 
@@ -316,6 +322,11 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
 
     /* set interface as configured */
     ctx->hid_ifaces[hid_handler].configured = true;
+#if 0 // TODO
+    if (ctx->hid_ifaces[hid_handler].dedicated_out_ep == true) {
+        usbhid_recv_report(ctx->hid_ifaces[hid_handler].get_report_cb, ctx->hid_ifaces[hid_handler].get_report_cb);
+    }
+#endif
 err:
     return errcode;
 }

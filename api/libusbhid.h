@@ -344,7 +344,9 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
                             uint8_t           poll_time,
                             bool              dedicated_out_ep,
                             uint16_t          ep_mpsize,
-                            uint8_t          *hid_handler);
+                            uint8_t          *hid_handler,
+                            uint8_t          *in_buff,
+                            uint32_t          in_buff_len);
 
 /*
  * Configure callbacks for the given HID interface, identified by its

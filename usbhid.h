@@ -66,6 +66,9 @@ typedef struct {
     usbhid_inep_t         inep; /* start at 1 (descriptor id start at 1) */
     usbctrl_interface_t   iface;
     uint8_t               num_descriptors;
+    bool                  dedicated_out_ep;
+    uint8_t              *in_buff;
+    uint32_t              in_buff_len;
     usbhid_get_report_t   get_report_cb;
     usbhid_set_report_t   set_report_cb;
     usbhid_set_protocol_t set_proto_cb;
