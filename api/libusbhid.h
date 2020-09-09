@@ -264,7 +264,7 @@ typedef usbhid_report_infos_t *(*usbhid_get_report_t)(uint8_t hid_handler,
  * the same (see HID 1.11 specifications).
  */
 typedef mbed_error_t          (*usbhid_set_report_t)(uint8_t hid_handler,
-                                                    uint8_t index);
+                                                    uint8_t  index);
 
 
 /*

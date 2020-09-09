@@ -322,11 +322,6 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
 
     /* set interface as configured */
     ctx->hid_ifaces[hid_handler].configured = true;
-#if 0 // TODO
-    if (ctx->hid_ifaces[hid_handler].dedicated_out_ep == true) {
-        usbhid_recv_report(ctx->hid_ifaces[hid_handler].get_report_cb, ctx->hid_ifaces[hid_handler].get_report_cb);
-    }
-#endif
 err:
     return errcode;
 }
