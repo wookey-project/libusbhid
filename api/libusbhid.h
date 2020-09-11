@@ -396,6 +396,16 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler,
  */
 bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
 
+
+/*
+ * When a HID data has been received from the host and require a response from the
+ * device, the response is not a report and is to be sent directly without parsing
+ * report specific format.
+ */
+mbed_error_t usbhid_send_response(uint8_t              hid_handler,
+                                  uint8_t*             response,
+                                  uint8_t              response_len);
+
 /***********************************************************
  * triggers
  *

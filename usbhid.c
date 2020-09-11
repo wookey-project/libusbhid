@@ -327,6 +327,42 @@ err:
 }
 
 
+mbed_error_t usbhid_send_response(uint8_t              hid_handler,
+                                  uint8_t*             response,
+                                  uint8_t              response_len)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    if (response == NULL) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (!usbhid_interface_exists(hid_handler)) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    /* first field is the report index */
+    /* wait for previous data to be fully transmitted */
+    while (data_being_sent == true) {
+        ;
+    }
+    data_being_sent = true;
+    /* total size is report + report id (one byte) */
+    uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[hid_handler].iface);
+    log_printf("[USBHID] sending response on EP %d (len %d)\n", epid, response_len);
+
+    usb_backend_drv_send_data(response, response_len, epid);
+    /* wait for end of transmission */
+    while (data_being_sent == true) {
+        ;
+    }
+    /* finishing with ZLP */
+    usb_backend_drv_send_zlp(epid);
+    /* XXX: needed ? */
+    data_being_sent = false;
+err:
+    return errcode;
+}
+
 
 
 mbed_error_t usbhid_send_report(uint8_t              hid_handler,
