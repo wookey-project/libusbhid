@@ -355,8 +355,7 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
     while (data_being_sent == true) {
         ;
     }
-    /* finishing with ZLP */
-    usb_backend_drv_send_zlp(epid);
+    /* ZLP should not be automatically sent, as the fragmentation is handled also in upper stack */
     /* XXX: needed ? */
     data_being_sent = false;
 err:
