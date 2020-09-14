@@ -57,7 +57,7 @@ static inline uint8_t get_in_epid(volatile usbctrl_interface_t *iface)
         return 0;
     }
     for (uint8_t i = 0; i < iface->usb_ep_number; ++i) {
-        if (iface->eps[i].dir == USB_EP_DIR_IN) {
+        if (iface->eps[i].dir == USB_EP_DIR_IN || iface->eps[i].dir == USB_EP_DIR_BOTH) {
             log_printf("[USBHID] IN EP is %d\n", iface->eps[i].ep_num);
             return iface->eps[i].ep_num;
         }
@@ -72,13 +72,14 @@ static inline uint8_t get_out_epid(volatile usbctrl_interface_t *iface)
         return 0;
     }
     for (uint8_t i = 0; i < iface->usb_ep_number; ++i) {
-        if (iface->eps[i].dir == USB_EP_DIR_OUT) {
+        if (iface->eps[i].dir == USB_EP_DIR_OUT || iface->eps[i].dir == USB_EP_DIR_BOTH) {
             log_printf("[USBHID] OUT EP is %d\n", iface->eps[i].ep_num);
             return iface->eps[i].ep_num;
         }
     }
     return 0;
 }
+
 
 /*
  * A HID packet has been received on a dedicated (or not) OUTPUT Endpoint.
@@ -95,9 +96,9 @@ static mbed_error_t usbhid_received(uint32_t dev_id, uint32_t size, uint8_t ep_i
     {
         for (uint8_t ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
         {
-
             if (usbhid_ctx.hid_ifaces[iface].iface.eps[ep].ep_num == ep_id)
             {
+                log_printf("[USBHID] executing trigger for EP %d\n", ep_id);
                 usbhid_report_received_trigger(iface, size);
             }
         }
@@ -137,6 +138,42 @@ bool usbhid_interface_exists(uint8_t hid_handler)
     return false;
 }
 
+static mbed_error_t usbhid_ep_trigger(uint32_t dev_id, uint32_t size, uint8_t ep_id)
+{
+    /* full duplex trigger, detect if the event on the EP is a IN event or an OUT event,
+     * and call the corresponding function */
+
+    usb_ep_dir_t dir;
+    usb_backend_drv_ep_state_t state;
+    mbed_error_t errcode;
+
+    log_printf("[USBHID] triggered on IN or OUT event\n");
+    /* are we currently receiving content (DATA_OUT state ? */
+    state = usb_backend_drv_get_ep_state(ep_id, USB_BACKEND_DRV_EP_DIR_OUT);
+    if (state == USB_BACKEND_DRV_EP_STATE_DATA_OUT) {
+        dir = USB_EP_DIR_OUT;
+    } else {
+        dir = USB_EP_DIR_IN;
+    }
+    /* otherwhise, we have been triggering on data sent */
+
+    switch (dir) {
+        case USB_EP_DIR_IN:
+            log_printf("[USBHID] triggered on IN event\n");
+            errcode = usbhid_data_sent(dev_id, size, ep_id);
+            break;
+        case USB_EP_DIR_OUT:
+            log_printf("[USBHID] triggered on OUT event\n");
+            errcode = usbhid_received(dev_id, size, ep_id);
+            break;
+        default:
+            /* should never happend (dead block) */
+            break;
+    }
+    return errcode;
+}
+
+
 
 
 mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
@@ -173,8 +210,12 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
 
     ADD_LOC_HANDLER(usbhid_class_rqst_handler);
     ADD_LOC_HANDLER(usbhid_get_descriptor);
-    ADD_LOC_HANDLER(usbhid_data_sent);
-    ADD_LOC_HANDLER(usbhid_received);
+    if (dedicated_out_ep == false) {
+        ADD_LOC_HANDLER(usbhid_data_sent);
+        ADD_LOC_HANDLER(usbhid_received);
+    } else {
+        ADD_LOC_HANDLER(usbhid_ep_trigger);
+    }
 
     usbhid_ctx.hid_ifaces[i].iface.usb_class = USB_CLASS_HID;
     usbhid_ctx.hid_ifaces[i].iface.usb_subclass = hid_subclass; /* SCSI transparent cmd set (i.e. use INQUIRY) */
@@ -192,21 +233,22 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
      */
 
     uint8_t curr_ep = 0;
-    /*
-     * IN EP for low latency data transmission with the host
-     */
-    usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].type        = USB_EP_TYPE_INTERRUPT;
-    usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_IN;
-    usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].attr        = USB_EP_ATTR_NO_SYNC;
-    usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].usage       = USB_EP_USAGE_DATA;
-    usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = ep_mpsize; /* mpsize on EP1 */
-    usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].ep_num      = 1; /* this may be updated by libctrl */
-    usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].handler     = usbhid_data_sent;
-    usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].poll_interval = poll_time;
-    curr_ep++;
-
 
     if (dedicated_out_ep == false) {
+        /*
+         * IN EP for low latency data transmission with the host
+         */
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].type        = USB_EP_TYPE_INTERRUPT;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_IN;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].attr        = USB_EP_ATTR_NO_SYNC;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].usage       = USB_EP_USAGE_DATA;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = ep_mpsize; /* mpsize on EP1 */
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].ep_num      = 1; /* this may be updated by libctrl */
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].handler     = usbhid_data_sent;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].poll_interval = poll_time;
+        curr_ep++;
+
+
         /* using control EP out as OUT EP instead of dedicated. This EP should be
          * declared once when declaring multiple interfaces */
         if (i == 0) {
@@ -233,15 +275,15 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
         }
     } else {
         /*
-         * OUT EP for low latency data transmission with the host
+         * IN & OUT dedicated EP for low latency data transmission with the host
          */
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].type        = USB_EP_TYPE_INTERRUPT;
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_OUT;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].dir         = USB_EP_DIR_BOTH;
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].attr        = USB_EP_ATTR_NO_SYNC;
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].usage       = USB_EP_USAGE_DATA;
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].pkt_maxsize = ep_mpsize; /* mpsize on EP1 */
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].ep_num      = 2; /* this may be updated by libctrl */
-        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].handler     = usbhid_received;
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].ep_num      = 1; /* this may be updated by libctrl */
+        usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].handler     = usbhid_ep_trigger;
         usbhid_ctx.hid_ifaces[i].iface.eps[curr_ep].poll_interval = poll_time;
         curr_ep++;
 
@@ -326,6 +368,18 @@ err:
     return errcode;
 }
 
+mbed_error_t usbhid_response_done(uint8_t hid_handler)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    if (!usbhid_interface_exists(hid_handler)) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[hid_handler].iface);
+    usb_backend_drv_send_zlp(epid);
+err:
+    return errcode;
+}
 
 mbed_error_t usbhid_send_response(uint8_t              hid_handler,
                                   uint8_t*             response,
@@ -460,7 +514,7 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)), uin
         for (uint8_t ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
         {
 
-            if (usbhid_ctx.hid_ifaces[iface].iface.eps[ep].dir == USB_EP_DIR_OUT)
+            if (usbhid_ctx.hid_ifaces[iface].iface.eps[ep].dir == USB_EP_DIR_OUT || usbhid_ctx.hid_ifaces[iface].iface.eps[ep].dir == USB_EP_DIR_BOTH)
             {
                 ep_id = usbhid_ctx.hid_ifaces[iface].iface.eps[ep].ep_num;
                 goto set_fifo;

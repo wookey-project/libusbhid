@@ -406,6 +406,8 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
                                   uint8_t*             response,
                                   uint8_t              response_len);
 
+mbed_error_t usbhid_response_done(uint8_t hid_handler);
+
 /***********************************************************
  * triggers
  *
