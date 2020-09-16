@@ -15,6 +15,7 @@
  * Support for Frama-C testing
  */
 
+uint8_t my_report[256] = { 0 };
 /* sample, non-empty, report */
 #if 0
 static usbhid_report_infos_t report = {
@@ -44,7 +45,7 @@ static usbhid_report_infos_t report = {
 
 
 
-usbhid_report_infos_t   *get_report(void)
+usbhid_report_infos_t   *get_report(uint8_t hid_handler, uint8_t index)
 {
     return NULL;
 }
@@ -154,40 +155,39 @@ uint32_t Frama_C_interval_32(uint32_t min, uint32_t max)
 
 uint8_t recv_buf[65535];
 
+void usbhid_report_sent_trigger(uint8_t hid_handler,
+                                       uint8_t index) {
+    hid_handler = hid_handler;
+    index = index;
+    return;
+}
+
+mbed_error_t usbhid_request_trigger(uint8_t hid_handler,
+                                    uint8_t hid_req) {
+    hid_handler = hid_handler;
+    hid_req = hid_req;
+    /* FIXME: replace with interval on mbed_error_t */
+    return MBED_ERROR_NONE;
+}
+
+mbed_error_t usbhid_report_received_trigger(uint8_t hid_handler,
+                                            uint16_t size) {
+    hid_handler = hid_handler;
+    size = size;
+    /* FIXME: replace with interval on mbed_error_t */
+    return MBED_ERROR_NONE;
+}
+
 void test_fcn_usbhid(){
-
-
-    uint32_t dev_id = (uint32_t)Frama_C_interval_32(0,4294967295) ;
-    uint32_t size = Frama_C_interval_32(0,4294967295) ;
-    uint32_t handler ;
-    uint8_t ep = Frama_C_interval_8(0,255);
-    uint8_t iface = Frama_C_interval_8(0,MAX_INTERFACES_PER_DEVICE-1);
-    uint8_t ep_number = Frama_C_interval_8(0,MAX_EP_PER_INTERFACE);
-    uint8_t EP_type = Frama_C_interval_8(0,3);
-    uint8_t EP_dir = Frama_C_interval_8(0,2);
-    uint8_t USB_class = Frama_C_interval_8(0,17);
-    uint32_t USBdci_handler = Frama_C_interval_32(0,4294967295) ;
-    usb_device_trans_t transition = Frama_C_interval_8(0,MAX_TRANSITION_STATE-1) ;
-    usb_device_state_t current_state = Frama_C_interval_8(0,9);
-    usbctrl_request_code_t request = Frama_C_interval_8(0x0,0xc);
-    uint8_t interval = Frama_C_interval_8(0,255);
-    //uint8_t class_descriptor_size = Frama_C_interval_8(0,255);
-
-
-
 
 /*
     def d'une nouvelle interface pour test de la fonction usbctrl_declare_interface
     Déclaration d'une structure usb_rqst_handler_t utilisée dans les interfaces, qui nécessite aussi une structure usbctrl_setup_pkt_t
 */
 
-    uint8_t RequestType = Frama_C_interval_8(0,255);
-    uint8_t Request = Frama_C_interval_8(0,0xd);
-    uint16_t Value = Frama_C_interval_16(0,65535);
-    uint16_t Index = Frama_C_interval_16(0,65535);
-    uint16_t Length = Frama_C_interval_16(0,65535);
 
-
+    uint8_t USB_subclass = Frama_C_interval_8(0,255);
+    uint8_t USB_protocol = Frama_C_interval_8(0,255);
     uint16_t mpsize = Frama_C_interval_16(0,65535);
     uint16_t maxlen = Frama_C_interval_16(0,65535);
     uint8_t poll = Frama_C_interval_8(0,255);
@@ -215,9 +215,8 @@ void test_fcn_usbhid(){
     usbctrl_initialize(ctxh1);
     /*@ assert ctxh1 == 0 ; */
 
-    //usbctrl_get_context(dev_id, &ctx1);
     errcode = usbhid_declare(ctxh1,
-            USBHID_SUBCLASS_NONE, USBHID_PROTOCOL_NONE,
+            USB_subclass, USB_protocol,
             1, poll, dedicated_out,
             mpsize, &(hid_handler),
             recv_buf,
@@ -230,7 +229,15 @@ void test_fcn_usbhid(){
     if(errcode == MBED_ERROR_NONE){
         usbhid_recv_report(hid_handler, recv_buf, maxlen);
     }
+    usbhid_is_silence_requested(hid_handler, 0);
 
+    usbhid_report_type_t my_report_type = Frama_C_interval_8(0, 2);
+    uint8_t my_report_index = 0;
+    uint8_t my_response_len = Frama_C_interval_8(0, 255);
+
+    usbhid_send_report(hid_handler, my_report, my_report_type, my_report_index);
+    usbhid_send_response(hid_handler, my_report, my_response_len);
+    usbhid_response_done(hid_handler);
 
 }
 
