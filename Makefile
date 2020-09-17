@@ -182,9 +182,7 @@ FRAMAC_EVA_FLAGS:=\
 		    -eva-use-spec usbotghs_send_data \
 		    -eva-use-spec usbotghs_send_zlp \
 		    -eva-use-spec usbotghs_endpoint_stall \
-		    -eva-use-spec usbotghs_endpoint_stall_clear \
 		    -eva-use-spec usbotghs_endpoint_set_nak \
-		    -eva-use-spec usbotghs_activate_endpoint \
 		    -eva-log a:frama-c-rte-eva.log
 
 FRAMAC_WP_FLAGS:=\
