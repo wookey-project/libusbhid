@@ -63,12 +63,28 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
     uint8_t i;
     /* descriptor number is a per-interface information. We get back the iface based on the
      * identifier passed by libxDCI */
+
+    /*@ assert \valid(ctx->hid_ifaces + (0 .. ctx->num_iface)) ; */
+    /*@
+      @ loop invariant 0 <= i <= ctx->num_iface ;
+      @ loop assigns i, size ;
+      @ loop variant (ctx->num_iface - i) ;
+      */
     for (i = 0; i < ctx->num_iface; ++i) {
         if (ctx->hid_ifaces[i].id == iface_id) {
             size = sizeof(usbhid_descriptor_t) + (ctx->hid_ifaces[i].num_descriptors * sizeof (usbhid_content_descriptor_t));
             break;
         }
     }
+    if (i >= ctx->num_iface) {
+        log_printf("[USBHID] iface not found\n");
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    /* @ assert i < ctx->num_iface ; */
+    /* @ assert i < MAX_USBHID_IFACES ; */
+
+    /* @ assert \valid_read(*desc_size) ; */
     if (*desc_size < size) {
         log_printf("[USBHID] invalid param buffers\n");
         errcode = MBED_ERROR_NOMEM;
@@ -82,7 +98,17 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
     desc->bcdHID = 0x111; /* HID class specification release 1.11 */
     desc->bCountryCode = 0;  /* contry code : 0x0 = not supported */
     desc->bNumDescriptors = ctx->hid_ifaces[i].num_descriptors; /* number of class descriptor, including report descriptor (at least one) */
-    for (uint8_t descid = 0; descid < ctx->hid_ifaces[i].num_descriptors; ++descid) {
+
+    uint8_t descid = 0;
+    /* @ assert ctx->hid_ifaces[i].num_descriptors < MAX_HID_DESCRIPTORS; */
+    /*@
+      @ loop invariant 0 <= descid <= ctx->hid_ifaces[i].num_descriptors ;
+      @ loop assigns descid ;
+      @ loop assigns desc->descriptors[descid].bDescriptorType ;
+      @ loop assigns desc->descriptors[descid].wDescriptorLength ;
+      @ loop variant (ctx->num_iface - i) ;
+      */
+    for (descid = 0; descid < ctx->hid_ifaces[i].num_descriptors; ++descid) {
         desc->descriptors[descid].bDescriptorType = REPORT_DESCRIPTOR_TYPE;
         desc->descriptors[descid].wDescriptorLength = usbhid_get_report_desc_len(i, descid);
     }

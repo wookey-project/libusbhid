@@ -26,6 +26,10 @@
 #include "api/libusbhid.h"
 #include "usbhid_default_handlers.h"
 
+/*@
+  @ assigns \nothing;
+  @ ensures \result == MBED_ERROR_UNSUPORTED_CMD;
+ */
 mbed_error_t          usbhid_dflt_set_report(uint8_t hid_handler __attribute__((unused)),
                                              uint8_t index __attribute__((unused)))
 {
@@ -33,6 +37,10 @@ mbed_error_t          usbhid_dflt_set_report(uint8_t hid_handler __attribute__((
     return MBED_ERROR_UNSUPORTED_CMD;
 }
 
+/*@
+  @ assigns \nothing;
+  @ ensures \result == MBED_ERROR_UNSUPORTED_CMD;
+ */
 mbed_error_t          usbhid_dflt_set_protocol(uint8_t hid_handler __attribute__((unused)),
                                                uint8_t proto __attribute__((unused)))
 {
@@ -40,6 +48,10 @@ mbed_error_t          usbhid_dflt_set_protocol(uint8_t hid_handler __attribute__
     return MBED_ERROR_UNSUPORTED_CMD;
 }
 
+/*@
+  @ assigns \nothing;
+  @ ensures \result == MBED_ERROR_NONE;
+ */
 mbed_error_t          usbhid_dflt_set_idle(uint8_t hid_handler __attribute__((unused)),
                                            uint8_t idle_ms __attribute((unused)))
 {

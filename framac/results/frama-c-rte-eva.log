@@ -51,9 +51,9 @@ function usbctrl_declare_interface
 /home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:592:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_interface_t
 /home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:593:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_context_t
 usbhid.c:77:[eva:alarm] warning: assertion 'rte,index_bound' got status invalid (stopping propagation).
-usbhid.c:583:[eva:alarm] warning: assertion got status unknown.
-usbhid.c:592:[eva:alarm] warning: assertion 'rte,index_bound' got status invalid (stopping propagation).
-usbhid.c:607:[eva:alarm] warning: function usbotghs_set_recv_fifo: precondition epid < 3 got status unknown.
+usbhid.c:688:[eva:alarm] warning: assertion got status unknown.
+usbhid.c:697:[eva:alarm] warning: assertion 'rte,index_bound' got status invalid (stopping propagation).
+usbhid.c:712:[eva:alarm] warning: function usbotghs_set_recv_fifo: precondition epid < 3 got status unknown.
 [eva] using specification for function printf_va_6
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/sync.h:63:[eva:alarm] warning: function set_bool_with_membarrier__fc_inline_0: postcondition got status unknown.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:518:[eva:alarm] warning: assertion 'rte,unsigned_downcast' got status unknown.
@@ -76,9 +76,9 @@ function usbotghs_send_zlp
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:790:[eva] warning: no \from part for clause 'assigns *((uint32_t *)(0x40040000 .. 0x40044000));'
 framac/entrypoint.c:346:[eva] Trace partitioning superposing up to 100 states
 framac/entrypoint.c:363:[eva] Trace partitioning superposing up to 200 states
-usbhid.c:594:[eva] Trace partitioning superposing up to 100 states
-usbhid.c:610:[eva] Trace partitioning superposing up to 800 states
-usbhid.c:610:[eva] Trace partitioning superposing up to 700 states
+usbhid.c:699:[eva] Trace partitioning superposing up to 100 states
+usbhid.c:715:[eva] Trace partitioning superposing up to 800 states
+usbhid.c:715:[eva] Trace partitioning superposing up to 700 states
 framac/entrypoint.c:371:[eva] Trace partitioning superposing up to 400 states
 framac/entrypoint.c:378:[eva] Trace partitioning superposing up to 500 states
 /home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:577:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_interface_t
@@ -86,33 +86,20 @@ framac/entrypoint.c:378:[eva] Trace partitioning superposing up to 500 states
 framac/entrypoint.c:466:[eva:alarm] warning: assertion 'rte,signed_overflow' got status unknown.
 framac/entrypoint.c:466:[eva:alarm] warning: assertion 'rte,unsigned_downcast' got status unknown.
 framac/entrypoint.c:466:[eva:alarm] warning: accessing uninitialized left-value. assert \initialized(&hid_handler_err);
-usbhid.c:589:[eva] Trace partitioning superposing up to 100 states
-usbhid.c:589:[eva] Trace partitioning superposing up to 200 states
-usbhid.c:589:[eva] Trace partitioning superposing up to 300 states
-usbhid.c:589:[eva] Trace partitioning superposing up to 400 states
-usbhid.c:589:[eva] Trace partitioning superposing up to 500 states
-usbhid.c:589:[eva] starting to merge loop iterations
-usbhid.c:585:[eva:alarm] warning: loop invariant got status unknown.
-usbhid.c:592:[eva:alarm] warning: assertion 'rte,index_bound' got status unknown.
-usbhid.c:594:[eva] Trace partitioning superposing up to 900 states
-usbhid.c:610:[eva] Trace partitioning superposing up to 900 states
+usbhid.c:694:[eva] Trace partitioning superposing up to 100 states
+usbhid.c:694:[eva] Trace partitioning superposing up to 200 states
+usbhid.c:694:[eva] Trace partitioning superposing up to 300 states
+usbhid.c:694:[eva] Trace partitioning superposing up to 400 states
+usbhid.c:694:[eva] Trace partitioning superposing up to 500 states
+usbhid.c:694:[eva] starting to merge loop iterations
+usbhid.c:690:[eva:alarm] warning: loop invariant got status unknown.
+usbhid.c:697:[eva:alarm] warning: assertion 'rte,index_bound' got status unknown.
+usbhid.c:699:[eva] Trace partitioning superposing up to 900 states
+usbhid.c:715:[eva] Trace partitioning superposing up to 900 states
 framac/entrypoint.c:150:[eva:alarm] warning: function Frama_C_interval_16: postcondition 'result_bounded' got status unknown.
 framac/entrypoint.c:473:[eva] Trace partitioning superposing up to 100 states
-usbhid.c:594:[eva] Trace partitioning superposing up to 800 states
-usbhid.c:607:[eva:alarm] warning: function usbotghs_set_recv_fifo: precondition \valid(dst) got status invalid.
+usbhid.c:699:[eva] Trace partitioning superposing up to 800 states
+usbhid.c:712:[eva:alarm] warning: function usbotghs_set_recv_fifo: precondition \valid(dst) got status invalid.
 framac/entrypoint.c:474:[eva] Trace partitioning superposing up to 200 states
 framac/entrypoint.c:474:[eva] Trace partitioning superposing up to 400 states
-usbhid.c:610:[eva] Trace partitioning superposing up to 400 states
-framac/entrypoint.c:475:[eva] Trace partitioning superposing up to 1000 states
-usbhid_reports.c:105:[eva:alarm] warning: assertion 'rte,pointer_value' got status unknown.
-usbhid_reports.c:45:[eva:alarm] warning: assertion 'rte,pointer_value' got status invalid (stopping propagation).
-framac/entrypoint.c:132:[eva:alarm] warning: function Frama_C_interval_8: postcondition 'result_bounded' got status unknown.
-usbhid_reports.c:111:[eva:alarm] warning: assertion 'rte,pointer_value' got status unknown.
-usbhid_reports.c:111:[eva:alarm] warning: assertion 'rte,function_pointer' got status unknown.
-usbhid_reports.c:45:[eva:alarm] warning: assertion 'rte,pointer_value' got status unknown.
-usbhid_reports.c:50:[eva:alarm] warning: assertion 'rte,pointer_value' got status unknown.
-usbhid_reports.c:50:[eva:alarm] warning: assertion 'rte,function_pointer' got status unknown.
-[eva] using specification for function usbhid_get_requested_idle
-usbhid.c:575:[eva:alarm] warning: assertion got status invalid (stopping propagation).
-framac/entrypoint.c:474:[eva] Trace partitioning superposing up to 300 states
-framac/entrypoint.c:475:[eva] Trace partitioning superposing up to 900 states
+usbhid.c:715:[eva] Trace partitioning superposing up to 400 states

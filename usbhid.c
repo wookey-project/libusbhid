@@ -167,11 +167,38 @@ static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_
     return MBED_ERROR_NONE;
 }
 
+
+/*@
+  @ assigns \nothing ;
+  @ ensures \result == &usbhid_ctx;
+  */
 usbhid_context_t *usbhid_get_context(void)
 {
     return (usbhid_context_t*)&usbhid_ctx;
 }
 
+/*@
+  @ assigns \nothing ;
+  @ ensures usbhid_ctx.num_iface <= MAX_USBHID_IFACES;
+
+  @ behavior invalid_handler:
+  @   assumes hid_handler >= usbhid_ctx.num_iface;
+  @   ensures \result == false;
+
+  @ behavior undeclared_iface:
+  @   assumes hid_handler < usbhid_ctx.num_iface;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == false;
+  @   ensures \result == false;
+
+  @ behavior ok:
+  @   assumes hid_handler < usbhid_ctx.num_iface;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == true;
+  @   ensures \result == true;
+
+  @ complete behaviors;
+  @ disjoint behaviors;
+
+ */
 bool usbhid_interface_exists(uint8_t hid_handler)
 {
     usbhid_context_t *ctx = usbhid_get_context();
@@ -185,6 +212,7 @@ bool usbhid_interface_exists(uint8_t hid_handler)
 }
 
 #ifndef __FRAMAC__
+/* INFO: must be exported in order to be triggered by EVA */
 static
 #endif
 mbed_error_t usbhid_ep_trigger(uint32_t dev_id, uint32_t size, uint8_t ep_id)
@@ -253,7 +281,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    if (usbhid_ctx.num_iface == MAX_USBHID_IFACES) {
+    if (usbhid_ctx.num_iface >= MAX_USBHID_IFACES) {
         log_printf("[USBHID] error ! no more iface storage !\n");
         errcode = MBED_ERROR_NOSTORAGE;
         goto err;
@@ -262,6 +290,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     uint8_t i = usbhid_ctx.num_iface;
     memset((void*)&usbhid_ctx.hid_ifaces[i], 0x0, sizeof(usbctrl_interface_t));
 
+#ifndef __FRAMAC__
     ADD_LOC_HANDLER(usbhid_class_rqst_handler);
     ADD_LOC_HANDLER(usbhid_get_descriptor);
     if (dedicated_out_ep == false) {
@@ -270,6 +299,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     } else {
         ADD_LOC_HANDLER(usbhid_ep_trigger);
     }
+#endif
 
     usbhid_ctx.hid_ifaces[i].iface.usb_class = USB_CLASS_HID;
     usbhid_ctx.hid_ifaces[i].iface.usb_subclass = hid_subclass; /* SCSI transparent cmd set (i.e. use INQUIRY) */
@@ -356,6 +386,16 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     /* set IN EP real identifier */
     uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[i].iface);
     usbhid_ctx.hid_ifaces[i].inep.id = epid;
+
+    /*@
+        @ loop invariant 0 <= j <= MAX_HID_REPORTS;
+        @ loop invariant \valid(usbhid_ctx.hid_ifaces[i].inep.idle_ms + (0..(MAX_HID_REPORTS-1))) ;
+        @ loop invariant \valid(usbhid_ctx.hid_ifaces[i].inep.silence + (0..(MAX_HID_REPORTS-1))) ;
+        @ loop assigns j ;
+        @ loop assigns usbhid_ctx.hid_ifaces[i].inep.idle_ms[j] ;
+        @ loop assigns usbhid_ctx.hid_ifaces[i].inep.silence[j] ;
+        @ loop variant (MAX_HID_REPORTS - j);
+    */
     for (uint8_t j = 0; j < MAX_HID_REPORTS; ++j) {
         usbhid_ctx.hid_ifaces[i].inep.idle_ms[j] = 0;
         usbhid_ctx.hid_ifaces[i].inep.silence[j] = true; /* silent while no event associated to this EP is received */
@@ -530,6 +570,35 @@ err:
     return errcode;
 }
 
+
+/*@
+  @ assigns \nothing ;
+
+  @ behavior invalid_idx:
+  @   assumes index >= MAX_HID_REPORTS;
+  @   ensures \result == true;
+
+  @ behavior invalid_handler:
+  @   assumes index < MAX_HID_REPORTS;
+  @   assumes hid_handler >= MAX_USBHID_IFACES;
+  @   ensures \result == true;
+
+  @ behavior unconfigured_iface:
+  @   assumes index < MAX_HID_REPORTS;
+  @   assumes hid_handler < MAX_USBHID_IFACES;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == false;
+  @   ensures \result == true;
+
+  @ behavior ok:
+  @   assumes index < MAX_HID_REPORTS;
+  @   assumes hid_handler < MAX_USBHID_IFACES;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == true;
+  @   ensures \result == usbhid_ctx.hid_ifaces[hid_handler].inep.silence[index];
+
+  @ complete behaviors;
+  @ disjoint behaviors;
+
+ */
 bool usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index)
 {
     if (index >= MAX_HID_REPORTS) {
@@ -547,11 +616,47 @@ bool usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index)
     return usbhid_ctx.hid_ifaces[hid_handler].inep.silence[index];
 }
 
+/*@
+  @ assigns \nothing ;
+
+  @ behavior invalid_idx:
+  @   assumes index >= MAX_HID_REPORTS;
+  @   ensures \result == 0;
+
+  @ behavior invalid_handler:
+  @   assumes index < MAX_HID_REPORTS;
+  @   assumes hid_handler >= MAX_USBHID_IFACES;
+  @   ensures \result == 0;
+
+  @ behavior unconfigured_iface:
+  @   assumes index < MAX_HID_REPORTS;
+  @   assumes hid_handler < MAX_USBHID_IFACES;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == false;
+  @   ensures \result == 0;
+
+  @ behavior ok:
+  @   assumes index < MAX_HID_REPORTS;
+  @   assumes hid_handler < MAX_USBHID_IFACES;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == true;
+  @   ensures \result == usbhid_ctx.hid_ifaces[hid_handler].inep.idle_ms[index];
+
+  @ complete behaviors;
+  @ disjoint behaviors;
+
+ */
 uint16_t usbhid_get_requested_idle(uint8_t hid_handler, uint8_t index)
 {
     if (index >= MAX_HID_REPORTS) {
         return 0;
     }
+
+    if (hid_handler >= MAX_USBHID_IFACES) {
+        return 0;
+    }
+    if (usbhid_ctx.hid_ifaces[hid_handler].configured == false) {
+        return 0;
+    }
+
     return usbhid_ctx.hid_ifaces[hid_handler].inep.idle_ms[index];
 }
 

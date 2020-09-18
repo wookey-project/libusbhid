@@ -41,4 +41,9 @@ uint16_t Frama_C_interval_16(uint16_t min, uint16_t max);
  */
 uint32_t Frama_C_interval_32(uint32_t min, uint32_t max);
 
+/*
+ * exported prototypes for internal functions
+ */
+uint16_t usbhid_get_requested_idle(uint8_t hid_handler, uint8_t index);
+
 #endif/*!ENTRY_H_*/
