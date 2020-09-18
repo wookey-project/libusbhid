@@ -200,7 +200,7 @@ typedef struct {
 typedef struct {
     uint32_t num_items;
     uint32_t report_id;
-    usbhid_item_info_t items[];
+    usbhid_item_info_t *items;
 } usbhid_report_infos_t;
 
 
