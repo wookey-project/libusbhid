@@ -141,6 +141,9 @@ bool usbhid_interface_exists(uint8_t hid_handler)
     return false;
 }
 
+#ifndef __FRAMAC__
+static
+#endif
 mbed_error_t usbhid_ep_trigger(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
     /* full duplex trigger, detect if the event on the EP is a IN event or an OUT event,
