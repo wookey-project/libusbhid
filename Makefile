@@ -145,7 +145,9 @@ LIBUSB_DIR ?= $(PROJ_FILES)/libs/usbctrl
 EWOK_API_DIR ?= $(PROJ_FILES)/kernel/src/C/exported
 
 SESSION     := framac/results/frama-c-rte-eva-wp-ref.session
+LOGFILE     := framac/results/frama-c-rte-eva-wp-ref.log
 EVA_SESSION := framac/results/frama-c-rte-eva.session
+EVA_LOGFILE := framac/results/frama-c-rte-eva.log
 TIMESTAMP   := framac/results/timestamp-calcium_wp-eva.txt
 JOBS        := $(shell nproc)
 # Does this flag could be overriden by env (i.e. using ?=)
@@ -183,7 +185,7 @@ FRAMAC_EVA_FLAGS:=\
 		    -eva-use-spec usbotghs_send_zlp \
 		    -eva-use-spec usbotghs_endpoint_stall \
 		    -eva-use-spec usbotghs_endpoint_set_nak \
-		    -eva-log a:frama-c-rte-eva.log
+		    -eva-log a:$(EVA_LOGFILE)
 
 FRAMAC_WP_FLAGS:=\
 	        -wp \
@@ -193,7 +195,7 @@ FRAMAC_WP_FLAGS:=\
    			-wp-timeout $(TIMEOUT) \
 			-wp-smoke-tests \
 			-wp-no-smoke-dead-code \
-   			-wp-log a:frama-c-rte-eva-wp.log
+   			-wp-log a:$(LOGFILE)
 
 
 frama-c-parsing:
