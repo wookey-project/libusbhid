@@ -41,6 +41,11 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
+    /* TODO: add usbhid_interface_configured() */
+    if (ctx->hid_ifaces[hid_handler].get_report_cb == NULL) {
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
 
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
@@ -93,7 +98,16 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
+    if (hid_handler >= MAX_USBHID_IFACES) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (ctx->hid_ifaces[hid_handler].get_report_cb == NULL) {
+        goto err;
+    }
 
+    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;)*/
+    /* @ calls ctx->hid_ifaces[hid_handler].get_report_cb; */ /* FIXME: not sure of that line */
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
     uint8_t report_size = 0;
     uint8_t report_count = 0;
@@ -121,6 +135,12 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
      * and so on)
      */
     uint32_t local_report_len = 0;
+    /*@
+      @ loop invariant 0 <= iterator <= report->num_items ;
+      @ loop invariant \valid(report->items + (0 .. (report->num_items -1)));
+      @ loop assigns iterator, report_count, local_report_len, report_len ;
+      @ loop variant (report->num_items - iterator);
+      */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
             report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_SIZE) {
@@ -169,6 +189,11 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
+    /* TODO: add usbhid_interface_configured() */
+    if (ctx->hid_ifaces[hid_handler].get_report_cb == NULL) {
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
 
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
@@ -212,6 +237,12 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
         goto err;
     }
 
+    /* TODO: add usbhid_interface_configured() */
+    if (ctx->hid_ifaces[hid_handler].get_report_cb == NULL) {
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
+
     /* define a buffer of num_items x max item size
      * these informations should be rodata content, defining the number of
      * item of collections and reports, specific to each upper stack profile
@@ -221,6 +252,7 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
+
     uint32_t offset = 0;
     uint32_t iterator = 0;
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);

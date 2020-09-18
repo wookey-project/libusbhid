@@ -203,13 +203,14 @@ frama-c-parsing:
 		 -cpp-extra-args="-nostdinc -I framac/include -I $(LIBUSB_DIR)/api -I $(LIBUSB_DIR) -I $(LIBSTD_API_DIR) -I $(USBOTGHS_DIR) -I $(USBOTGHS_DEVHEADER_PATH) -I $(EWOK_API_DIR)"
 
 frama-c-eva:
-	frama-c framac/entrypoint.c usbhid*.c $(LIBUSB_DIR)/usbctrl.c $(USBOTGHS_DIR)/usbotghs.c -c11 \
+	frama-c framac/entrypoint.c usbhid*.c $(LIBUSB_DIR)/usbctrl.c $(USBOTGHS_DIR)/usbotghs.c $(USBOTGHS_DIR)/usbotghs_fifos.c -c11 \
 		    $(FRAMAC_GEN_FLAGS) \
 			$(FRAMAC_EVA_FLAGS) \
-			-save $(EVA_SESSION)
+			-save $(EVA_SESSION) \
+   			-time $(TIMESTAMP)
 
 frama-c:
-	frama-c framac/entrypoint.c usbhid*.c $(LIBUSB_DIR)/usbctrl.c $(USBOTGHS_DIR)/usbotghs.c -c11 \
+	frama-c framac/entrypoint.c usbhid*.c $(LIBUSB_DIR)/usbctrl.c $(USBOTGHS_DIR)/usbotghs.c $(USBOTGHS_DIR)/usbotghs_fifos.c -c11 \
 		    $(FRAMAC_GEN_FLAGS) \
 			$(FRAMAC_EVA_FLAGS) \
    		    -then \

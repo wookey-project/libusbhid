@@ -38,7 +38,12 @@
 
 volatile bool data_being_sent = false;
 
+#ifndef __FRAMAC__
 static volatile usbhid_context_t usbhid_ctx = { 0 };
+#else
+/* volatile to remove */
+static usbhid_context_t usbhid_ctx = { 0 };
+#endif
 
 
 /*
@@ -52,17 +57,30 @@ __attribute__((weak)) mbed_error_t usbhid_report_received_trigger(uint8_t hid_ha
 
 static inline uint8_t get_in_epid(volatile usbctrl_interface_t *iface)
 {
+    uint8_t epin = 0;
+    uint8_t iface_ep_num = 0;
     /* sanitize */
     if (iface == NULL) {
-        return 0;
+        goto err;
     }
-    for (uint8_t i = 0; i < iface->usb_ep_number; ++i) {
+    if (iface->usb_ep_number >= MAX_EP_PER_INTERFACE) {
+        goto err;
+    }
+    iface_ep_num = iface->usb_ep_number;
+
+    /*@
+      @ loop invariant 0 <= i <= iface_ep_num;
+      @ loop assigns i , epin ;
+      @ loop variant (iface_ep_num - i);
+      */
+    for (uint8_t i = 0; i < iface_ep_num; ++i) {
         if (iface->eps[i].dir == USB_EP_DIR_IN || iface->eps[i].dir == USB_EP_DIR_BOTH) {
             log_printf("[USBHID] IN EP is %d\n", iface->eps[i].ep_num);
-            return iface->eps[i].ep_num;
+            epin = iface->eps[i].ep_num;
         }
     }
-    return 0;
+err:
+    return epin;
 }
 
 #if 0
@@ -94,10 +112,31 @@ static inline uint8_t get_out_epid(volatile usbctrl_interface_t *iface)
  */
 static mbed_error_t usbhid_received(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
-    log_printf("[USBHID] HID packet (%d B) received on ep %d\n", size, ep_id);
-    for (uint8_t iface = 0; iface < usbhid_ctx.num_iface; ++iface)
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    uint8_t iface = 0;
+    log_printf("[USBHID] Huint8_t ID packet (%d B) received on ep %d\n", size, ep_id);
+
+
+    /*@ assert \valid(usbhid_ctx.hid_ifaces + (0 .. usbhid_ctx.num_iface)) ;*/
+    /*@
+      @ loop invariant 0 <= iface <= usbhid_ctx.num_iface ;
+      @ loop assigns iface ;
+      @ loop variant (usbhid_ctx.num_iface - iface) ;
+      */
+    for (iface = 0; iface < usbhid_ctx.num_iface; ++iface)
     {
-        for (uint8_t ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
+        uint8_t ep = 0;
+        if (usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number >= MAX_EP_PER_INTERFACE) {
+            errcode = MBED_ERROR_INVPARAM;
+            goto err;
+        }
+        /*@ assert \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0 .. usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number)) ; */
+        /*@
+          @ loop invariant 0 <= ep <= usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number ;
+          @ loop assigns ep ;
+          @ loop variant (usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - ep) ;
+          */
+        for (ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
         {
             if (usbhid_ctx.hid_ifaces[iface].iface.eps[ep].ep_num == ep_id)
             {
@@ -107,7 +146,8 @@ static mbed_error_t usbhid_received(uint32_t dev_id, uint32_t size, uint8_t ep_i
         }
     }
     dev_id = dev_id;
-    return MBED_ERROR_NONE;
+err:
+    return errcode;
 }
 
 /*
@@ -135,10 +175,13 @@ usbhid_context_t *usbhid_get_context(void)
 bool usbhid_interface_exists(uint8_t hid_handler)
 {
     usbhid_context_t *ctx = usbhid_get_context();
-    if (hid_handler < ctx->num_iface) {
-        return true;
+    bool result = false;
+    if (hid_handler < ctx->num_iface && hid_handler < MAX_USBHID_IFACES) {
+        if (ctx->hid_ifaces[hid_handler].declared == true) {
+            result = true;
+        }
     }
-    return false;
+    return result;
 }
 
 #ifndef __FRAMAC__
@@ -208,6 +251,11 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     if (hid_handler == NULL) {
         log_printf("[USBHID] error ! hid_handler is null!\n");
         errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (usbhid_ctx.num_iface == MAX_USBHID_IFACES) {
+        log_printf("[USBHID] error ! no more iface storage !\n");
+        errcode = MBED_ERROR_NOSTORAGE;
         goto err;
     }
 
@@ -295,6 +343,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
 
     }
 
+    /* @ assert curr_ep <= 2 ; */
     usbhid_ctx.hid_ifaces[i].iface.usb_ep_number = curr_ep;
 
 
@@ -320,6 +369,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
 
     /* the configuration step not yet passed */
     usbhid_ctx.hid_ifaces[i].configured = false;
+    usbhid_ctx.hid_ifaces[i].declared = true;
 
     *hid_handler = usbhid_ctx.num_iface;
     usbhid_ctx.num_iface++;
@@ -485,6 +535,13 @@ bool usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index)
     if (index >= MAX_HID_REPORTS) {
         return true;
     }
+    if (hid_handler >= MAX_USBHID_IFACES) {
+        return true;
+    }
+    if (usbhid_ctx.hid_ifaces[hid_handler].configured == false) {
+        return true;
+    }
+
     /* when setting idle_ms to 0, silence is requested while no event arrise on the
      * corresponding report index */
     return usbhid_ctx.hid_ifaces[hid_handler].inep.silence[index];
@@ -515,8 +572,20 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)), uin
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint8_t ep_id = 0;
     /* get back EP identifier from HID handler */
+    /*@ assert \valid(usbhid_ctx.hid_ifaces + (0 .. usbhid_ctx.num_iface)) ; */
+    /*@
+      @ loop invariant 0 <= iface <= usbhid_ctx.num_iface ;
+      @ loop assigns iface ;
+      @ loop variant (usbhid_ctx.num_iface - iface) ;
+      */
     for (uint8_t iface = 0; iface < usbhid_ctx.num_iface; ++iface)
     {
+        /*@ assert \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0 .. usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number)) ; */
+        /*@
+          @ loop invariant 0 <= ep <= usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number ;
+          @ loop assigns ep, ep_id ;
+          @ loop variant (usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - ep) ;
+          */
         for (uint8_t ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
         {
 

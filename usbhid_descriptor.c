@@ -51,6 +51,12 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
+    if (ctx->num_iface >= MAX_USBHID_IFACES) {
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
+    /*@ assert ctx->num_iface < MAX_USBHID_IFACES; */
+
     /* desc size is usbhid_descriptor_t size plus usbhid_content_descriptor_t size
      * for each additional optional content descriptor (report descriptor is requested) */
     uint32_t size = 0;

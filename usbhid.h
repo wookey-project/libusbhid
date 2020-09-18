@@ -31,10 +31,32 @@
 #include "libusbctrl.h"
 #include "autoconf.h"
 
+#ifdef __FRAMAC__
+#include "usbotghs.h"
+#include "usbotghs_fifos.h"
+#endif
+
 #if CONFIG_USR_LIB_USBHID_DEBUG && !__FRAMAC__
 # define log_printf(...) printf(__VA_ARGS__)
 #else
 # define log_printf(...)
+#endif
+
+#ifdef __FRAMAC__
+
+
+#define usb_backend_drv_declare usbotghs_declare
+#define usb_backend_drv_stall usbotghs_endpoint_stall
+#define usb_backend_drv_send_data usbotghs_send_data
+#define usb_backend_drv_ack usbotghs_endpoint_clear_nak
+#define usb_backend_drv_nak usbotghs_endpoint_set_nak
+#define usb_backend_drv_send_zlp usbotghs_send_zlp
+#define usb_backend_drv_configure_endpoint usbotghs_configure_endpoint
+#define usb_backend_drv_set_recv_fifo usbotghs_set_recv_fifo
+#define usb_backend_drv_get_ep_state usbotghs_get_ep_state
+#define usb_backend_drv_set_recv_fifo usbotghs_set_recv_fifo
+#define usb_backend_drv_activate_endpoint usbotghs_activate_endpoint
+
 #endif
 
 
@@ -74,6 +96,7 @@ typedef struct {
     usbhid_set_protocol_t set_proto_cb;
     usbhid_set_idle_t     set_idle_cb;
     bool                  configured;
+    bool                  declared;
 } usbhid_iface_t;
 
 
