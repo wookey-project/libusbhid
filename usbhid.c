@@ -65,6 +65,8 @@ static inline uint8_t get_in_epid(volatile usbctrl_interface_t *iface)
     return 0;
 }
 
+#if 0
+/* FRAMA_C says this is dead code. Yet this should be used as an abstraction function */
 static inline uint8_t get_out_epid(volatile usbctrl_interface_t *iface)
 {
     /* sanitize */
@@ -79,6 +81,7 @@ static inline uint8_t get_out_epid(volatile usbctrl_interface_t *iface)
     }
     return 0;
 }
+#endif
 
 
 /*
@@ -138,7 +141,7 @@ bool usbhid_interface_exists(uint8_t hid_handler)
     return false;
 }
 
-static mbed_error_t usbhid_ep_trigger(uint32_t dev_id, uint32_t size, uint8_t ep_id)
+mbed_error_t usbhid_ep_trigger(uint32_t dev_id, uint32_t size, uint8_t ep_id)
 {
     /* full duplex trigger, detect if the event on the EP is a IN event or an OUT event,
      * and call the corresponding function */

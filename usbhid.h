@@ -31,7 +31,7 @@
 #include "libusbctrl.h"
 #include "autoconf.h"
 
-#if CONFIG_USR_LIB_USBHID_DEBUG
+#if CONFIG_USR_LIB_USBHID_DEBUG && !__FRAMAC__
 # define log_printf(...) printf(__VA_ARGS__)
 #else
 # define log_printf(...)
