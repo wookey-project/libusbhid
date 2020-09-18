@@ -44,14 +44,15 @@ static usbhid_item_info_t oneindex_items[16] = {
     { USBHID_ITEM_TYPE_MAIN, USBHID_ITEM_MAIN_TAG_END_COLLECTION, 0, 0, 0 }, /* C0 */
 };
 
-#define TWOINDEX_ITEMS_NUM 23
-static usbhid_item_info_t twoindex_items[23] = {
+#define TWOINDEX_ITEMS_NUM 25
+static usbhid_item_info_t twoindex_items[TWOINDEX_ITEMS_NUM] = {
     /* type, tag, size, data1, data2 */
     { USBHID_ITEM_TYPE_GLOBAL, USBHID_ITEM_GLOBAL_TAG_USAGE_PAGE, 1, 0x1, 0 }, /* 05 01 */
     { USBHID_ITEM_TYPE_LOCAL, USBHID_ITEM_LOCAL_TAG_USAGE, 1, 0x6, 0 }, /* 09 06 */
     { USBHID_ITEM_TYPE_MAIN, USBHID_ITEM_MAIN_TAG_COLLECTION, 1, USBHID_COLL_ITEM_APPLICATION, 0 },     /* A1 01 */
     /* first, modifier byte */
     { USBHID_ITEM_TYPE_GLOBAL, USBHID_ITEM_GLOBAL_TAG_USAGE_PAGE, 1, 0x42, 0 },  /* 05 07 */
+    { USBHID_ITEM_TYPE_GLOBAL, USBHID_ITEM_GLOBAL_TAG_REPORT_ID, 1, 0x1, 0 },  /* 05 07 */
     { USBHID_ITEM_TYPE_LOCAL, USBHID_ITEM_LOCAL_TAG_USAGE_MIN, 1, 0xe0, 0 }, /* 15 00 */
     { USBHID_ITEM_TYPE_LOCAL, USBHID_ITEM_LOCAL_TAG_USAGE_MAX, 1, 0xe7, 0 }, /* 25 01 */
     { USBHID_ITEM_TYPE_GLOBAL, USBHID_ITEM_GLOBAL_TAG_LOGICAL_MIN, 1, 0x0, 0 }, /* 15 00 */
@@ -66,6 +67,8 @@ static usbhid_item_info_t twoindex_items[23] = {
     /* then key codes  */
     /* each sent report handling one field (report size) of 8 bits (report count).
      *          * This means that sent reports are made of [ data 1B ][ report id (1B) ] */
+
+    { USBHID_ITEM_TYPE_GLOBAL, USBHID_ITEM_GLOBAL_TAG_REPORT_ID, 1, 0x2, 0 },  /* 05 07 */
     { USBHID_ITEM_TYPE_GLOBAL, USBHID_ITEM_GLOBAL_TAG_REPORT_COUNT, 1, 0x6, 0 }, /* 95 08, 6 items */
     { USBHID_ITEM_TYPE_GLOBAL, USBHID_ITEM_GLOBAL_TAG_REPORT_SIZE, 1, 0x8, 0 }, /* 75 08, 8 bits per item */
     { USBHID_ITEM_TYPE_GLOBAL, USBHID_ITEM_GLOBAL_TAG_LOGICAL_MIN, 1, 0x0, 0 }, /* 15 00 */
@@ -276,7 +279,6 @@ void test_fcn_usbhid(){
     Déclaration d'une structure usb_rqst_handler_t utilisée dans les interfaces, qui nécessite aussi une structure usbctrl_setup_pkt_t
 */
 
-    my_report_type = Frama_C_interval_8(0, 2);
 
     uint8_t USB_subclass = Frama_C_interval_8(0,255);
     uint8_t USB_protocol = Frama_C_interval_8(0,255);
@@ -318,7 +320,10 @@ void test_fcn_usbhid(){
 
     uint8_t my_response_len = Frama_C_interval_8(0, 255);
 
-    usbhid_send_report(hid_handler, my_report, my_report_type, my_report_index);
+    my_report_type = Frama_C_interval_8(0, 2);
+    my_report_index= Frama_C_interval_8(0, 2);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
 
@@ -334,11 +339,12 @@ void test_fcn_usbhid(){
     }
     usbhid_is_silence_requested(hid_handler, 0);
 
-    my_report_type = Frama_C_interval_8(0, 2);
-    my_report_index = 0;
     my_response_len = Frama_C_interval_8(0, 255);
 
-    usbhid_send_report(hid_handler, my_report, my_report_type, my_report_index);
+    my_report_type = Frama_C_interval_8(0, 2);
+    my_report_index= Frama_C_interval_8(0, 2);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
 
@@ -347,7 +353,6 @@ void test_fcn_usbhid(){
     ///////////////////////////////////////////////////
     //
 
-    my_report_type = Frama_C_interval_8(0, 2);
     errcode = usbhid_declare(ctxh1,
             USB_subclass, USB_protocol,
             1, poll, dedicated_out,
@@ -365,11 +370,13 @@ void test_fcn_usbhid(){
     }
     usbhid_is_silence_requested(hid_handler, 0);
 
-    my_report_type = Frama_C_interval_8(0, 2);
     my_report_index = 0;
     my_response_len = Frama_C_interval_8(0, 255);
 
-    usbhid_send_report(hid_handler, my_report, my_report_type, my_report_index);
+    my_report_type = Frama_C_interval_8(0, 2);
+    my_report_index= Frama_C_interval_8(0, 2);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
 
@@ -472,6 +479,10 @@ void test_fcn_usbhid_erreur(){
     uint8_t my_response_len = Frama_C_interval_8(0, 255);
 
 
+    my_report_type = Frama_C_interval_8(0, 2);
+    my_report_index= Frama_C_interval_8(0, 2);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_report(hid_handler_err, NULL, my_report_type, Frama_C_interval_8(my_report_index,5));
     usbhid_send_report(hid_handler_err, my_report, my_report_type, Frama_C_interval_8(my_report_index,5));
     usbhid_send_response(hid_handler_err + 1, my_report, my_response_len);
@@ -479,6 +490,9 @@ void test_fcn_usbhid_erreur(){
     usbhid_send_response(hid_handler_err + 1, my_report, Frama_C_interval_16(0,my_response_len));
     usbhid_response_done(hid_handler_err + 1);
     usbhid_response_done(hid_handler_err);
+
+    usbhid_get_requested_idle(hid_handler, Frama_C_interval_8(0, 2));
+    usbhid_get_requested_idle(hid_handler + 1, Frama_C_interval_8(0, 2));
 
 }
 
@@ -556,8 +570,11 @@ void test_fcn_driver_eva() {
     usbhid_dflt_set_protocol(dflt_hid_handler,dflt_index);
     usbhid_dflt_set_idle(dflt_hid_handler,dflt_idle);
 
-    usbhid_send_report(hid_handler, my_report, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_ep_trigger(6, 255, 1);
+    usbhid_handle_set_protocol(&pkt);
+
 }
 
 void main(void)

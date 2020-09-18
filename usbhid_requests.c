@@ -80,7 +80,10 @@ static inline uint8_t get_hid_handler_from_iface(uint8_t iface)
 }
 
 
-static mbed_error_t usbhid_handle_set_protocol(usbctrl_setup_pkt_t *pkt)
+#ifndef __FRAMAC__
+static
+#endif
+mbed_error_t usbhid_handle_set_protocol(usbctrl_setup_pkt_t *pkt)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     usbhid_context_t *ctx = usbhid_get_context();
