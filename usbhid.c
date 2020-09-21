@@ -25,6 +25,7 @@
 
 #include "api/libusbhid.h"
 #include "libc/string.h"
+#include "libc/sync.h"
 #include "libusbctrl.h"
 #include "usbhid.h"
 #include "usbhid_requests.h"
@@ -36,7 +37,7 @@
 
 #define MAX_HID_DESCRIPTORS 8
 
-volatile bool data_being_sent = false;
+bool data_being_sent = false;
 
 #ifndef __FRAMAC__
 static volatile usbhid_context_t usbhid_ctx = { 0 };
@@ -55,7 +56,11 @@ __attribute__((weak)) mbed_error_t usbhid_report_received_trigger(uint8_t hid_ha
     return MBED_ERROR_NONE;
 }
 
+#ifdef __FRAMAC__
+static inline uint8_t get_in_epid(usbctrl_interface_t *iface)
+#else
 static inline uint8_t get_in_epid(volatile usbctrl_interface_t *iface)
+#endif
 {
     uint8_t epin = 0;
     uint8_t iface_ep_num = 0;
@@ -67,6 +72,7 @@ static inline uint8_t get_in_epid(volatile usbctrl_interface_t *iface)
         goto err;
     }
     iface_ep_num = iface->usb_ep_number;
+    /*@ assert iface_ep_num < MAX_EP_PER_INTERFACE ; */
 
     /*@
       @ loop invariant 0 <= i <= iface_ep_num;
@@ -161,7 +167,11 @@ static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_
     ep_id = ep_id;
     dev_id = dev_id;
     size = size;
-    data_being_sent = false;
+    set_bool_with_membarrier(&data_being_sent, false);
+//    data_being_sent = false;
+
+
+
 
     //usb_backend_drv_ack(usbhid_ctx.iface.eps[1].ep_num, USB_BACKEND_DRV_EP_DIR_IN);
     return MBED_ERROR_NONE;
@@ -495,7 +505,9 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
     while (data_being_sent == true) {
         ;
     }
-    data_being_sent = true;
+
+    set_bool_with_membarrier(&data_being_sent, true);
+    //data_being_sent = true;
     /* total size is report + report id (one byte) */
     uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[hid_handler].iface);
     log_printf("[USBHID] sending response on EP %d (len %d)\n", epid, response_len);
@@ -507,7 +519,8 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
     }
     /* ZLP should not be automatically sent, as the fragmentation is handled also in upper stack */
     /* XXX: needed ? */
-    data_being_sent = false;
+    //data_being_sent = false;
+    set_bool_with_membarrier(&data_being_sent, false);
 err:
     return errcode;
 }
@@ -539,7 +552,8 @@ mbed_error_t usbhid_send_report(uint8_t              hid_handler,
     while (data_being_sent == true) {
         ;
     }
-    data_being_sent = true;
+    set_bool_with_membarrier(&data_being_sent, true);
+    //data_being_sent = true;
     /* is a report id needed ? if a REPORT_ID is defined in the report descriptor, it is added,
      * otherwise, items are sent directly */
     if (usbhid_report_needs_id(hid_handler, report_index)) {
@@ -556,7 +570,8 @@ mbed_error_t usbhid_send_report(uint8_t              hid_handler,
     uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[hid_handler].iface);
     log_printf("[USBHID] sending report on EP %d (len %d)\n", epid, len);
 
-    data_being_sent = true;
+    set_bool_with_membarrier(&data_being_sent, true);
+    //data_being_sent = true;
     usb_backend_drv_send_data(buf, len, epid);
     /* wait for end of transmission */
     while (data_being_sent == true) {
@@ -565,7 +580,8 @@ mbed_error_t usbhid_send_report(uint8_t              hid_handler,
     /* finishing with ZLP */
     usb_backend_drv_send_zlp(epid);
     /* XXX: needed ? */
-    data_being_sent = false;
+    set_bool_with_membarrier(&data_being_sent, false);
+    //data_being_sent = false;
 err:
     return errcode;
 }
