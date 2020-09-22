@@ -50,7 +50,7 @@ __attribute__((weak)) mbed_error_t usbhid_report_received_trigger(uint8_t hid_ha
     return MBED_ERROR_NONE;
 }
 
-static inline uint8_t get_in_epid(usbctrl_interface_t *iface)
+static inline uint8_t get_in_epid(usbctrl_interface_t const * const iface)
 {
     uint8_t epin = 0;
     uint8_t iface_ep_num = 0;

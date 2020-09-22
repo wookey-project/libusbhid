@@ -93,7 +93,7 @@ mbed_error_t usbhid_handle_set_protocol(usbctrl_setup_pkt_t *pkt)
         goto err;
     }
     uint16_t proto = pkt->wValue;
-    uint8_t iface = pkt->wIndex;
+    uint8_t iface = pkt->wIndex & 0xff;
     uint8_t hid_handler = get_hid_handler_from_iface(iface);
 
     switch (proto) {
@@ -126,7 +126,7 @@ static mbed_error_t usbhid_handle_set_idle(usbctrl_setup_pkt_t *pkt)
     uint8_t hbyte = ((wvalue >> 4) & 0xff);
     uint8_t lbyte = wvalue & 0xff;
 
-    uint8_t iface = pkt->wIndex;
+    uint8_t iface = pkt->wIndex & 0xff;
     uint8_t hid_handler = get_hid_handler_from_iface(iface);
 
     if (hbyte == 0) {
@@ -161,7 +161,7 @@ static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     /* get the high byte */
-    uint8_t maxlen = pkt->wLength;
+    uint8_t maxlen = pkt->wLength & 0xff;
     uint8_t action = pkt->bRequest;
     uint8_t descriptor_type = pkt->wValue >> 0x8;
     uint8_t descriptor_index = pkt->wValue & 0xff;
@@ -185,7 +185,7 @@ static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
                     uint32_t size = 256;
 
                     /* get back hid iface handler from targetted iface */
-                    uint8_t iface = pkt->wIndex;
+                    uint8_t iface = pkt->wIndex & 0xff;
                     uint8_t hid_handler = get_hid_handler_from_iface(iface);
                     /* forge the descriptor */
                     usbhid_forge_report_descriptor(hid_handler, &desc[0], &size, descriptor_index);
@@ -242,7 +242,7 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
-    uint8_t iface = pkt->wIndex;
+    uint8_t iface = pkt->wIndex & 0xff;
 
     uint8_t action = pkt->bRequest;
     switch (action) {
