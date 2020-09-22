@@ -81,6 +81,7 @@ static inline uint8_t get_hid_handler_from_iface(uint8_t iface)
 
 
 #ifndef __FRAMAC__
+/* export needed to be triggered in EVA entrypoint */
 static
 #endif
 mbed_error_t usbhid_handle_set_protocol(usbctrl_setup_pkt_t *pkt)
@@ -102,6 +103,10 @@ mbed_error_t usbhid_handle_set_protocol(usbctrl_setup_pkt_t *pkt)
         case 1:
             log_printf("[USBHID] requesting report protocol on iface %d\n", iface);
             break;
+        default:
+            log_printf("[USBHID] unknown protocol %x received!\n", proto);
+            errcode = MBED_ERROR_UNSUPORTED_CMD;
+            goto err;
     }
     usbhid_request_trigger(hid_handler, USB_CLASS_RQST_SET_PROTOCOL);
 err:
