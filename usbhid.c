@@ -39,13 +39,7 @@
 
 static bool data_being_sent = false;
 
-#ifndef __FRAMAC__
 static usbhid_context_t usbhid_ctx = { 0 };
-#else
-/* volatile to remove */
-static usbhid_context_t usbhid_ctx = { 0 };
-#endif
-
 
 /*
  * Only if trigger not defined in the above stack.
@@ -56,11 +50,7 @@ __attribute__((weak)) mbed_error_t usbhid_report_received_trigger(uint8_t hid_ha
     return MBED_ERROR_NONE;
 }
 
-#ifdef __FRAMAC__
 static inline uint8_t get_in_epid(usbctrl_interface_t *iface)
-#else
-static inline uint8_t get_in_epid(volatile usbctrl_interface_t *iface)
-#endif
 {
     uint8_t epin = 0;
     uint8_t iface_ep_num = 0;
@@ -88,24 +78,6 @@ static inline uint8_t get_in_epid(volatile usbctrl_interface_t *iface)
 err:
     return epin;
 }
-
-#if 0
-/* FRAMA_C says this is dead code. Yet this should be used as an abstraction function */
-static inline uint8_t get_out_epid(volatile usbctrl_interface_t *iface)
-{
-    /* sanitize */
-    if (iface == NULL) {
-        return 0;
-    }
-    for (uint8_t i = 0; i < iface->usb_ep_number; ++i) {
-        if (iface->eps[i].dir == USB_EP_DIR_OUT || iface->eps[i].dir == USB_EP_DIR_BOTH) {
-            log_printf("[USBHID] OUT EP is %d\n", iface->eps[i].ep_num);
-            return iface->eps[i].ep_num;
-        }
-    }
-    return 0;
-}
-#endif
 
 
 /*
