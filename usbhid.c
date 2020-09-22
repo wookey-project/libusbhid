@@ -116,7 +116,7 @@ static inline uint8_t get_out_epid(volatile usbctrl_interface_t *iface)
  * HID report should respect the declared report size for the corresponding report id.
  * for e.g. FIDO reports are typically upto 64 bytes length.
  */
-static mbed_error_t usbhid_received(uint32_t dev_id, uint32_t size, uint8_t ep_id)
+static mbed_error_t usbhid_received(uint32_t dev_id __attribute__((unused)), uint32_t size, uint8_t ep_id)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint8_t iface = 0;
@@ -151,7 +151,6 @@ static mbed_error_t usbhid_received(uint32_t dev_id, uint32_t size, uint8_t ep_i
             }
         }
     }
-    dev_id = dev_id;
 err:
     return errcode;
 }
@@ -161,18 +160,10 @@ err:
  * Moreover, set_idle require a state automaton at usbhid level to lock IN Endpoint transmission
  * for time given in SET_IDLE requests
  */
-static mbed_error_t usbhid_data_sent(uint32_t dev_id, uint32_t size, uint8_t ep_id)
+static mbed_error_t usbhid_data_sent(uint32_t dev_id __attribute__((unused)), uint32_t size __attribute__((unused)), uint8_t ep_id __attribute((unused)))
 {
     log_printf("[USBHID] data (%d B) sent on EP %d\n", size, ep_id);
-    ep_id = ep_id;
-    dev_id = dev_id;
-    size = size;
     set_bool_with_membarrier(&data_being_sent, false);
-
-
-
-
-    //usb_backend_drv_ack(usbhid_ctx.iface.eps[1].ep_num, USB_BACKEND_DRV_EP_DIR_IN);
     return MBED_ERROR_NONE;
 }
 
