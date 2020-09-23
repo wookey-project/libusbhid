@@ -108,7 +108,7 @@ static mbed_error_t usbhid_received(uint32_t dev_id __attribute__((unused)), uin
             errcode = MBED_ERROR_INVPARAM;
             goto err;
         }
-        /*@ assert \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0 .. usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number)) ; */
+        /*@ assert \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0 .. usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - 1)) ; */
         /*@
           @ loop invariant 0 <= ep <= usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number ;
           @ loop assigns ep ;
@@ -152,23 +152,8 @@ usbhid_context_t *usbhid_get_context(void)
 /*@
   @ assigns \nothing ;
   @ ensures usbhid_ctx.num_iface <= MAX_USBHID_IFACES;
-
-  @ behavior invalid_handler:
-  @   assumes hid_handler >= usbhid_ctx.num_iface;
-  @   ensures \result == false;
-
-  @ behavior undeclared_iface:
-  @   assumes hid_handler < usbhid_ctx.num_iface;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == false;
-  @   ensures \result == false;
-
-  @ behavior ok:
-  @   assumes hid_handler < usbhid_ctx.num_iface;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == true;
-  @   ensures \result == true;
-
-  @ complete behaviors;
-  @ disjoint behaviors;
+  @ ensures (hid_handler < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[hid_handler].declared == \true) ==> \result == true ;
+  @ ensures !(hid_handler < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[hid_handler].declared == \true) ==> \result == false ;
 
  */
 bool usbhid_interface_exists(uint8_t hid_handler)
@@ -176,9 +161,10 @@ bool usbhid_interface_exists(uint8_t hid_handler)
     usbhid_context_t *ctx = usbhid_get_context();
     bool result = false;
     if (hid_handler < ctx->num_iface && hid_handler < MAX_USBHID_IFACES) {
-        if (ctx->hid_ifaces[hid_handler].declared == true) {
-            result = true;
-        }
+        /* INFO: boolean normalization based on false (lonely checked value.
+         * Thus, this is not fault-resilient as any non-zero value generates a
+         * TRUE result */
+        result = !(ctx->hid_ifaces[hid_handler].declared == false);
     }
     return result;
 }
@@ -392,10 +378,10 @@ err:
 }
 
 mbed_error_t usbhid_configure(uint8_t               hid_handler,
-                              usbhid_get_report_t   get_report_cb,
-                              usbhid_set_report_t   set_report_cb,
-                              usbhid_set_protocol_t set_proto_cb,
-                              usbhid_set_idle_t     set_idle_cb)
+                              usbhid_get_report_t   get_report,
+                              usbhid_set_report_t   set_report,
+                              usbhid_set_protocol_t set_proto,
+                              usbhid_set_idle_t     set_idle)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     usbhid_context_t *ctx = usbhid_get_context();
@@ -404,31 +390,38 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    if (get_report_cb == NULL) {
+    if (get_report == NULL) {
         /* At least this one must be set! */
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
 
     /* set each of the interface callbacks */
-    ctx->hid_ifaces[hid_handler].get_report_cb = get_report_cb;
+    ctx->hid_ifaces[hid_handler].get_report_cb = get_report;
+    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {oneidx_get_report_cb,  twoidx_get_report_cb} ;)*/
 
-    if (set_report_cb != NULL) {
-        ctx->hid_ifaces[hid_handler].set_report_cb = set_report_cb;
+    if (set_report != NULL) {
+        ctx->hid_ifaces[hid_handler].set_report_cb = set_report;
+        /* @ assert ctx->hid_ifaces[hid_handler].set_report_cb ∈ {set_report_cb} ;)*/
     } else {
         ctx->hid_ifaces[hid_handler].set_report_cb = usbhid_dflt_set_report;
+        /* @ assert ctx->hid_ifaces[hid_handler].set_report_cb ∈ {usbhid_dflt_set_report} ;)*/
     }
 
-    if (set_proto_cb != NULL) {
-        ctx->hid_ifaces[hid_handler].set_proto_cb = set_proto_cb;
+    if (set_proto != NULL) {
+        ctx->hid_ifaces[hid_handler].set_proto_cb = set_proto;
+        /* @ assert ctx->hid_ifaces[hid_handler].set_proto_cb ∈ {set_proto} ;)*/
     } else {
         ctx->hid_ifaces[hid_handler].set_proto_cb = usbhid_dflt_set_protocol;
+        /* @ assert ctx->hid_ifaces[hid_handler].set_proto_cb ∈ {usbhid_dflt_set_protocol} ;)*/
     }
 
-    if (set_idle_cb != NULL) {
-        ctx->hid_ifaces[hid_handler].set_idle_cb = set_idle_cb;
+    if (set_idle != NULL) {
+        ctx->hid_ifaces[hid_handler].set_idle_cb = set_idle;
+        /* @ assert ctx->hid_ifaces[hid_handler].set_idle_cb ∈ {set_idle} ;)*/
     } else {
         ctx->hid_ifaces[hid_handler].set_idle_cb = usbhid_dflt_set_idle;
+        /* @ assert ctx->hid_ifaces[hid_handler].set_idle_cb ∈ {usbhid_dflt_set_idle} ;)*/
     }
 
     /* set interface as configured */
@@ -467,6 +460,11 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
     /* wait for previous data to be fully transmitted */
     while (data_being_sent == true) {
         request_data_membarrier();
+#ifdef __FRAMAC__
+        /* asynchronous triggering must be simulate in Frama-C. Here we trigger
+         * the flag syncrhonously */
+        data_being_sent = false;
+#endif
     }
 
     set_bool_with_membarrier(&data_being_sent, true);
@@ -478,7 +476,13 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
     /* wait for end of transmission */
     while (data_being_sent == true) {
         request_data_membarrier();
+#ifdef __FRAMAC__
+        /* asynchronous triggering must be simulate in Frama-C. Here we trigger
+         * the flag syncrhonously */
+        data_being_sent = false;
+#endif
     }
+    /* TODO: is this line useful ? the trigger should have done the job */
     set_bool_with_membarrier(&data_being_sent, false);
 err:
     return errcode;
@@ -510,6 +514,11 @@ mbed_error_t usbhid_send_report(uint8_t              hid_handler,
     /* wait for previous data to be fully transmitted */
     while (data_being_sent == true) {
         request_data_membarrier();
+#ifdef __FRAMAC__
+        /* asynchronous triggering must be simulate in Frama-C. Here we trigger
+         * the flag syncrhonously */
+        data_being_sent = false;
+#endif
     }
     set_bool_with_membarrier(&data_being_sent, true);
     /* is a report id needed ? if a REPORT_ID is defined in the report descriptor, it is added,
@@ -528,14 +537,19 @@ mbed_error_t usbhid_send_report(uint8_t              hid_handler,
     uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[hid_handler].iface);
     log_printf("[USBHID] sending report on EP %d (len %d)\n", epid, len);
 
-    set_bool_with_membarrier(&data_being_sent, true);
     usb_backend_drv_send_data(buf, len, epid);
     /* wait for end of transmission */
     while (data_being_sent == true) {
         request_data_membarrier();
+#ifdef __FRAMAC__
+        /* asynchronous triggering must be simulate in Frama-C. Here we trigger
+         * the flag syncrhonously */
+        data_being_sent = false;
+#endif
     }
     /* finishing with ZLP */
     usb_backend_drv_send_zlp(epid);
+    /* TODO: is this line useful ? the trigger should have done the job */
     set_bool_with_membarrier(&data_being_sent, false);
 err:
     return errcode;
@@ -547,18 +561,18 @@ err:
 
   @ behavior invalid_idx:
   @   assumes index >= MAX_HID_REPORTS;
-  @   ensures \result == true;
+  @   ensures \result == \true;
 
   @ behavior invalid_handler:
   @   assumes index < MAX_HID_REPORTS;
   @   assumes hid_handler >= MAX_USBHID_IFACES;
-  @   ensures \result == true;
+  @   ensures \result == \true;
 
   @ behavior unconfigured_iface:
   @   assumes index < MAX_HID_REPORTS;
   @   assumes hid_handler < MAX_USBHID_IFACES;
   @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == false;
-  @   ensures \result == true;
+  @   ensures \result == \true;
 
   @ behavior ok:
   @   assumes index < MAX_HID_REPORTS;
@@ -647,24 +661,32 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)), uin
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint8_t ep_id = 0;
+    uint8_t ep;
+    uint8_t iface;
     /* get back EP identifier from HID handler */
-    /*@ assert \valid(usbhid_ctx.hid_ifaces + (0 .. usbhid_ctx.num_iface)) ; */
+
+    /*@ assert \valid(usbhid_ctx.hid_ifaces + (0 .. usbhid_ctx.num_iface - 1)) ; */
     /*@
       @ loop invariant 0 <= iface <= usbhid_ctx.num_iface ;
-      @ loop assigns iface ;
+      @ loop invariant \valid(usbhid_ctx.hid_ifaces + (0..(MAX_USBHID_IFACES-1))) ;
+      @ loop assigns iface, ep, ep_id, errcode ;
       @ loop variant (usbhid_ctx.num_iface - iface) ;
       */
-    for (uint8_t iface = 0; iface < usbhid_ctx.num_iface; ++iface)
+    for (iface = 0; iface < usbhid_ctx.num_iface; ++iface)
     {
-        /*@ assert \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0 .. usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number)) ; */
+        if (usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number >= MAX_EP_PER_INTERFACE) {
+            errcode = MBED_ERROR_INVPARAM;
+            goto err;
+        }
+        /*@ assert \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0 .. usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - 1)) ; */
         /*@
           @ loop invariant 0 <= ep <= usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number ;
+          @ loop invariant \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0..(MAX_EP_PER_INTERFACE-1))) ;
           @ loop assigns ep, ep_id ;
           @ loop variant (usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - ep) ;
           */
-        for (uint8_t ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
+        for (ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
         {
-
             if (usbhid_ctx.hid_ifaces[iface].iface.eps[ep].dir == USB_EP_DIR_OUT || usbhid_ctx.hid_ifaces[iface].iface.eps[ep].dir == USB_EP_DIR_BOTH)
             {
                 ep_id = usbhid_ctx.hid_ifaces[iface].iface.eps[ep].ep_num;
