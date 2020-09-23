@@ -64,7 +64,7 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
     /* descriptor number is a per-interface information. We get back the iface based on the
      * identifier passed by libxDCI */
 
-    /*@ assert \valid(ctx->hid_ifaces + (0 .. ctx->num_iface)) ; */
+    /*@ assert \valid(ctx->hid_ifaces + (0 .. ctx->num_iface - 1)) ; */
     /*@
       @ loop invariant 0 <= i <= ctx->num_iface ;
       @ loop assigns i ;
