@@ -104,9 +104,9 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
     /*@
       @ loop invariant 0 <= descid <= ctx->hid_ifaces[i].num_descriptors ;
       @ loop assigns descid ;
-      @ loop assigns desc->descriptors[descid].bDescriptorType ;
-      @ loop assigns desc->descriptors[descid].wDescriptorLength ;
-      @ loop variant (ctx->num_iface - i) ;
+      @ loop assigns desc->descriptors[0..(ctx->hid_ifaces[i].num_descriptors-1)].bDescriptorType ;
+      @ loop assigns desc->descriptors[0..(ctx->hid_ifaces[i].num_descriptors-1)].wDescriptorLength ;
+      @ loop variant (ctx->hid_ifaces[i].num_descriptors - descid) ;
       */
     for (descid = 0; descid < ctx->hid_ifaces[i].num_descriptors; ++descid) {
         desc->descriptors[descid].bDescriptorType = REPORT_DESCRIPTOR_TYPE;

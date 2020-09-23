@@ -66,7 +66,7 @@ static inline uint8_t get_in_epid(usbctrl_interface_t const * const iface)
 
     /*@
       @ loop invariant 0 <= i <= iface_ep_num;
-      @ loop assigns  epin ;
+      @ loop assigns i, epin ;
       @ loop variant (iface_ep_num - i);
       */
     for (uint8_t i = 0; i < iface_ep_num; ++i) {
@@ -364,8 +364,9 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
         @ loop invariant 0 <= j <= MAX_HID_REPORTS;
         @ loop invariant \valid(usbhid_ctx.hid_ifaces[i].inep.idle_ms + (0..(MAX_HID_REPORTS-1))) ;
         @ loop invariant \valid(usbhid_ctx.hid_ifaces[i].inep.silence + (0..(MAX_HID_REPORTS-1))) ;
-        @ loop assigns usbhid_ctx.hid_ifaces[i].inep.idle_ms[j] ;
-        @ loop assigns usbhid_ctx.hid_ifaces[i].inep.silence[j] ;
+        @ loop assigns j;
+        @ loop assigns usbhid_ctx.hid_ifaces[i].inep.idle_ms[0..(MAX_HID_REPORTS-1)] ;
+        @ loop assigns usbhid_ctx.hid_ifaces[i].inep.silence[0..(MAX_HID_REPORTS-1)] ;
         @ loop variant (MAX_HID_REPORTS - j);
     */
     for (uint8_t j = 0; j < MAX_HID_REPORTS; ++j) {
@@ -693,7 +694,7 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)),
     /*@ assert \valid(usbhid_ctx.hid_ifaces + (0 .. usbhid_ctx.num_iface - 1)) ; */
     /*@
       @ loop invariant 0 <= iface <= usbhid_ctx.num_iface ;
-      @ loop assigns \nothing;
+      @ loop assigns iface,ep;
       @ loop variant (usbhid_ctx.num_iface - iface) ;
       */
     for (iface = 0; iface < usbhid_ctx.num_iface; ++iface)
@@ -705,7 +706,7 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)),
         /*@ assert \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0 .. usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - 1)) ; */
         /*@
           @ loop invariant 0 <= ep <= usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number ;
-          @ loop assigns  \nothing;
+          @ loop assigns  ep;
           @ loop variant (usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - ep) ;
           */
         for (ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
