@@ -149,21 +149,21 @@ usbhid_context_t *usbhid_get_context(void)
     return (usbhid_context_t*)&usbhid_ctx;
 }
 
-/*@
+/*@ 
   @ assigns \nothing ;
   @ ensures usbhid_ctx.num_iface <= MAX_USBHID_IFACES;
 
   @ behavior invalid_handler:
-  @   assumes hid_handler >= usbhid_ctx.num_iface;
+  @   assumes hid_handler >= usbhid_ctx.num_iface ||hid_handler >=MAX_USBHID_IFACES;
   @   ensures \result == \false;
 
   @ behavior undeclared_iface:
-  @   assumes hid_handler < usbhid_ctx.num_iface;
+  @   assumes hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES ;
   @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \false;
   @   ensures \result == \false;
 
   @ behavior ok:
-  @   assumes hid_handler < usbhid_ctx.num_iface;
+  @   assumes hid_handler < usbhid_ctx.num_iface&& hid_handler < MAX_USBHID_IFACES ;
   @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \true;
   @   ensures \result == \true;
 
