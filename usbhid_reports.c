@@ -48,7 +48,7 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
     }
 
     /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {oneidx_get_report_cb,  twoidx_get_report_cb} ;)*/
-    /* @ calls ctx->hid_ifaces[hid_handler].get_report_cb; */
+    /* @ calls oneidx_get_report_cb,  twoidx_get_report_cb; */
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
