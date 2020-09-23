@@ -51,13 +51,32 @@ __attribute__((weak)) mbed_error_t usbhid_request_trigger(uint8_t hid_handler __
     return MBED_ERROR_NONE;
 }
 
+/*
+ * TODO: behaviors
+ */
 static inline uint8_t is_iface_using_out_ep(uint8_t iface)
 {
     /* ctx checked by parent function */
     usbhid_context_t *ctx = usbhid_get_context();
-    for (uint8_t i = 0; i < ctx->num_iface; ++i) {
+    uint8_t i, j;
+    /*@
+      @ loop invariant 0 <= i <= ctx->num_iface ;
+      @ loop assigns i, j;
+      @ loop variant (ctx->num_iface - i);
+      */
+    for (i = 0; i < ctx->num_iface; ++i) {
         if (ctx->hid_ifaces[i].iface.id == iface) {
-            for (uint8_t j = 0; j < ctx->hid_ifaces[i].iface.usb_ep_number; ++j) {
+            if (ctx->hid_ifaces[i].configured == false) {
+                /* invalid behavior */
+                return false;
+            }
+            /* @ assert ctx->hid_ifaces[i].iface.usb_ep_number < MAX_EP_PER_INTERFACE; */
+            /*@
+              @ loop invariant 0 <= j <= ctx->hid_ifaces[i].iface.usb_ep_number ;
+              @ loop assigns j;
+              @ loop variant (ctx->hid_ifaces[i].iface.usb_ep_number - j);
+              */
+            for (j = 0; j < ctx->hid_ifaces[i].iface.usb_ep_number; ++j) {
                 if (ctx->hid_ifaces[i].iface.eps[j].dir == USB_EP_DIR_OUT) {
                     return true;
                 }

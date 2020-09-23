@@ -671,7 +671,18 @@ uint16_t usbhid_get_requested_idle(uint8_t hid_handler, uint8_t index)
  * In the second case, the recv FIFO is dedicated in the corresponding EP. Though it should be
  * configured each time the device application is ready to receive data from host
  */
-mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)), uint8_t *report, uint16_t size)
+
+/* basics ACSL for now */
+/*@
+  @ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
+  @ assigns usbotghs_ctx ;
+  */
+
+
+mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)),
+                                uint8_t *report,
+                                uint16_t size)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint8_t ep_id = 0;

@@ -260,14 +260,20 @@ mbed_error_t usbhid_report_received_trigger(uint8_t hid_handler,
 }
 
 uint32_t ctxh1=0;
+uint32_t hid_handler_valid=0;
 
 uint8_t  hid_handler;
 
-void prepare_ctrl_ctx(){
-    usbctrl_declare(6, &ctxh1);
+mbed_error_t prepare_ctrl_ctx(){
+    mbed_error_t errcode;
+    errcode = usbctrl_declare(USB_OTG_HS_ID, &ctxh1);
+    /*@ assert errcode == MBED_ERROR_NONE ; */
     /*@ assert ctxh1 == 0 ; */
-    usbctrl_initialize(ctxh1);
+
+    errcode = usbctrl_initialize(ctxh1);
+    /*@ assert errcode == MBED_ERROR_NONE ; */
     /*@ assert ctxh1 == 0 ; */
+    return errcode;
 }
 
 
@@ -310,6 +316,9 @@ void test_fcn_usbhid(){
             recv_buf,
             maxlen);
     /* @ assert errcode == MBED_ERROR_NONE ; */
+
+    /* define this handler as valid for future use */
+    hid_handler_valid = hid_handler;
 
     if(errcode == MBED_ERROR_NONE) {
         errcode = usbhid_configure(hid_handler, NULL, NULL, NULL, NULL);
@@ -387,7 +396,6 @@ void test_fcn_usbhid(){
     usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
-
 
 }
 
@@ -472,13 +480,8 @@ void test_fcn_usbhid_erreur(){
     /* @ assert errcode != MBED_ERROR_NONE; */
 
 
-    /* finishing with valid declratation */
-    errcode = usbhid_declare(ctxh1,
-            0, 0,
-            1, poll, dedicated_out,
-            512, &(hid_handler_err),
-            recv_buf,
-            256);
+    /* get back valid HID handler for next commands */
+    hid_handler_err = hid_handler_valid;
     /* @ assert errcode == MBED_ERROR_NONE; */
 
     errcode = usbhid_configure(hid_handler_err + 1, oneidx_get_report_cb, NULL, NULL, NULL);
@@ -528,12 +531,16 @@ void test_fcn_driver_eva() {
     uint8_t my_report_index = report_index;
     mbed_error_t errcode;
     usbctrl_context_t *ctx = NULL;
-    usbctrl_get_context(6, &ctx);
+    usbctrl_get_context(7, &ctx);
 
     uint16_t maxlen = Frama_C_interval_16(0,65535);
     /*@ assert ctx != (usbctrl_context_t*)NULL ; */
     uint8_t curr_cfg = 0; /* first cfg declared */
     uint8_t iface = 0; /* first iface declared */
+
+    /* @ assert ctx->cfg[curr_cfg].interfaces[iface].configured == \true; */
+    /* @ assert ctx->cfg[curr_cfg].interfaces[iface].usb_ep_number < MAX_EP_PER_INTERFACE; */
+
     uint8_t max_ep = ctx->cfg[curr_cfg].interfaces[iface].usb_ep_number ;  // cyril : meme chose que pour max_iface, wp passe maintenant
 
 
@@ -557,7 +564,9 @@ void test_fcn_driver_eva() {
                     errcode = MBED_ERROR_INVPARAM;
                     break;
             }
-            /* @assert errcode != MBED_ERROR_INVPARAM ; */
+            /* @ assert errcode != MBED_ERROR_INVPARAM ; */
+            /* @ assert \valid(ctx->cfg[curr_cfg].interfaces[iface].eps[i].handler); */
+            /* @ calls ctx->cfg[curr_cfg].interfaces[iface].eps[i].handler; */
             usb_backend_drv_configure_endpoint(ctx->cfg[curr_cfg].interfaces[iface].eps[i].ep_num,
                     ctx->cfg[curr_cfg].interfaces[iface].eps[i].type,
                     dir,
@@ -570,7 +579,7 @@ void test_fcn_driver_eva() {
     usbctrl_configuration_set();
 
     /* set input FIFO */
-    usbhid_recv_report(hid_handler, recv_buf, maxlen);
+    usbhid_recv_report(hid_handler_valid, recv_buf, maxlen);
 
 
     usbctrl_setup_pkt_t pkt = { 0 };
@@ -605,9 +614,12 @@ void test_fcn_driver_eva() {
 
 void main(void)
 {
-    prepare_ctrl_ctx();
-    test_fcn_usbhid() ;
-    test_fcn_usbhid_erreur() ;
-   // test_fcn_driver_eva() ;
+    mbed_error_t errcode;
 
+    errcode = prepare_ctrl_ctx();
+    if (errcode == MBED_ERROR_NONE) {
+        test_fcn_usbhid() ;
+        test_fcn_usbhid_erreur() ;
+        test_fcn_driver_eva() ;
+    }
 }
