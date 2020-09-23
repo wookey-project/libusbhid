@@ -138,7 +138,7 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
       @ loop invariant \valid(report->items + (0 .. (report->num_items -1)));
-      @ loop assigns iterator, report_count, local_report_len, report_len ;
+      @ loop assigns report_count, report_size, local_report_len, report_len ;
       @ loop variant (report->num_items - iterator);
       */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
