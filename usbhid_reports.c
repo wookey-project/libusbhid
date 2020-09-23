@@ -107,7 +107,7 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
     }
 
     /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;)*/
-    /* @ calls ctx->hid_ifaces[hid_handler].get_report_cb; */ /* FIXME: not sure of that line */
+    /* @ calls oneidx_get_report_cb,  twoidx_get_report_cb; */
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
     uint8_t report_size = 0;
     uint8_t report_count = 0;
