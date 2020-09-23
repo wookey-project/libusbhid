@@ -66,7 +66,7 @@ static inline uint8_t get_in_epid(usbctrl_interface_t const * const iface)
 
     /*@
       @ loop invariant 0 <= i <= iface_ep_num;
-      @ loop assigns i , epin ;
+      @ loop assigns  epin ;
       @ loop variant (iface_ep_num - i);
       */
     for (uint8_t i = 0; i < iface_ep_num; ++i) {
@@ -152,8 +152,23 @@ usbhid_context_t *usbhid_get_context(void)
 /*@
   @ assigns \nothing ;
   @ ensures usbhid_ctx.num_iface <= MAX_USBHID_IFACES;
-  @ ensures (hid_handler < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[hid_handler].declared == \true) ==> \result == true ;
-  @ ensures !(hid_handler < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[hid_handler].declared == \true) ==> \result == false ;
+
+  @ behavior invalid_handler:
+  @   assumes hid_handler >= usbhid_ctx.num_iface;
+  @   ensures \result == \false;
+
+  @ behavior undeclared_iface:
+  @   assumes hid_handler < usbhid_ctx.num_iface;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \false;
+  @   ensures \result == \false;
+
+  @ behavior ok:
+  @   assumes hid_handler < usbhid_ctx.num_iface;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \true;
+  @   ensures \result == \true;
+
+  @ complete behaviors;
+  @ disjoint behaviors;
 
  */
 bool usbhid_interface_exists(uint8_t hid_handler)
@@ -349,7 +364,6 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
         @ loop invariant 0 <= j <= MAX_HID_REPORTS;
         @ loop invariant \valid(usbhid_ctx.hid_ifaces[i].inep.idle_ms + (0..(MAX_HID_REPORTS-1))) ;
         @ loop invariant \valid(usbhid_ctx.hid_ifaces[i].inep.silence + (0..(MAX_HID_REPORTS-1))) ;
-        @ loop assigns j ;
         @ loop assigns usbhid_ctx.hid_ifaces[i].inep.idle_ms[j] ;
         @ loop assigns usbhid_ctx.hid_ifaces[i].inep.silence[j] ;
         @ loop variant (MAX_HID_REPORTS - j);
@@ -571,13 +585,13 @@ err:
   @ behavior unconfigured_iface:
   @   assumes index < MAX_HID_REPORTS;
   @   assumes hid_handler < MAX_USBHID_IFACES;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == false;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \false;
   @   ensures \result == \true;
 
   @ behavior ok:
   @   assumes index < MAX_HID_REPORTS;
   @   assumes hid_handler < MAX_USBHID_IFACES;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == true;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;
   @   ensures \result == usbhid_ctx.hid_ifaces[hid_handler].inep.silence[index];
 
   @ complete behaviors;
@@ -616,13 +630,13 @@ bool usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index)
   @ behavior unconfigured_iface:
   @   assumes index < MAX_HID_REPORTS;
   @   assumes hid_handler < MAX_USBHID_IFACES;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == false;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \false;
   @   ensures \result == 0;
 
   @ behavior ok:
   @   assumes index < MAX_HID_REPORTS;
   @   assumes hid_handler < MAX_USBHID_IFACES;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == true;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;
   @   ensures \result == usbhid_ctx.hid_ifaces[hid_handler].inep.idle_ms[index];
 
   @ complete behaviors;
@@ -668,8 +682,7 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)), uin
     /*@ assert \valid(usbhid_ctx.hid_ifaces + (0 .. usbhid_ctx.num_iface - 1)) ; */
     /*@
       @ loop invariant 0 <= iface <= usbhid_ctx.num_iface ;
-      @ loop invariant \valid(usbhid_ctx.hid_ifaces + (0..(MAX_USBHID_IFACES-1))) ;
-      @ loop assigns iface, ep, ep_id, errcode ;
+      @ loop assigns \nothing;
       @ loop variant (usbhid_ctx.num_iface - iface) ;
       */
     for (iface = 0; iface < usbhid_ctx.num_iface; ++iface)
@@ -681,8 +694,7 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)), uin
         /*@ assert \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0 .. usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - 1)) ; */
         /*@
           @ loop invariant 0 <= ep <= usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number ;
-          @ loop invariant \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0..(MAX_EP_PER_INTERFACE-1))) ;
-          @ loop assigns ep, ep_id ;
+          @ loop assigns  \nothing;
           @ loop variant (usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - ep) ;
           */
         for (ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
