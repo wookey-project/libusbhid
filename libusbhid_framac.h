@@ -21,23 +21,28 @@
  * Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
-#ifndef USBHID_H_
-#define USBHID_H_
+#ifndef LIBUSBHID_FRAMAC_H_
+#define LIBUSBHID_FRAMAC_H_
 
-#include "libc/types.h"
-#include "libc/stdio.h"
-#include "libc/syscall.h"
-#include "api/libusbhid.h"
-#include "libusbctrl.h"
-#include "autoconf.h"
+/* ifndef should be useless (caller responsability), but is also added here for protection */
+#ifdef __FRAMAC__
 
-#if CONFIG_USR_LIB_USBHID_DEBUG && !__FRAMAC__
-# define log_printf(...) printf(__VA_ARGS__)
-#else
-# define log_printf(...)
-#endif
+#include "usbotghs.h"
+#include "usbotghs_fifos.h"
 
-#ifndef __FRAMAC__
+
+#define usb_backend_drv_declare usbotghs_declare
+#define usb_backend_drv_stall usbotghs_endpoint_stall
+#define usb_backend_drv_send_data usbotghs_send_data
+#define usb_backend_drv_ack usbotghs_endpoint_clear_nak
+#define usb_backend_drv_nak usbotghs_endpoint_set_nak
+#define usb_backend_drv_send_zlp usbotghs_send_zlp
+#define usb_backend_drv_configure_endpoint usbotghs_configure_endpoint
+#define usb_backend_drv_set_recv_fifo usbotghs_set_recv_fifo
+#define usb_backend_drv_get_ep_state usbotghs_get_ep_state
+#define usb_backend_drv_set_recv_fifo usbotghs_set_recv_fifo
+#define usb_backend_drv_activate_endpoint usbotghs_activate_endpoint
+
 
 #define MAX_USBHID_IFACES    4
 #define MAX_HID_REPORTS 8
@@ -89,10 +94,8 @@ typedef struct {
 } usbhid_context_t;
 
 
+static usbhid_context_t usbhid_ctx = { 0 };
+
 #endif
 
-usbhid_context_t *usbhid_get_context(void);
-
-bool usbhid_interface_exists(uint8_t hid_handler);
-
-#endif/*!USBHID_H_*/
+#endif/*!LIBUSBHID_FRAMAC_H_*/

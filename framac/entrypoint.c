@@ -18,6 +18,11 @@
 /* defined in usbhid.c, not exported  */
 mbed_error_t usbhid_ep_trigger(uint32_t dev_id, uint32_t size, uint8_t ep_id);
 
+mbed_error_t usbhid_ep_trigger(uint32_t dev_id, uint32_t size, uint8_t ep_id);
+mbed_error_t usbhid_data_sent(uint32_t dev_id __attribute__((unused)), uint32_t size __attribute__((unused)), uint8_t ep_id __attribute((unused)));
+mbed_error_t usbhid_received(uint32_t dev_id __attribute__((unused)), uint32_t size, uint8_t ep_id);
+
+
 uint8_t my_report[256] = { 0 };
 /* sample, non-empty, report */
 
@@ -542,40 +547,40 @@ void test_fcn_driver_eva() {
     /* @ assert ctx->cfg[curr_cfg].interfaces[iface].usb_ep_number < MAX_EP_PER_INTERFACE; */
 
     uint8_t max_ep = ctx->cfg[curr_cfg].interfaces[iface].usb_ep_number ;  // cyril : meme chose que pour max_iface, wp passe maintenant
+    /* @ assert max_ep < MAX_EP_PER_INTERFACE; */
 
 
     /* we set properly backend driver content to be sure that IN/OUT functions have
      * correct driver state on their EP */
-    for (uint8_t i = 0; i < max_ep; ++i) {
-        usb_backend_drv_ep_dir_t dir;
-        if (ctx->cfg[curr_cfg].interfaces[iface].eps[i].type != USB_EP_TYPE_CONTROL) {
-            switch (ctx->cfg[curr_cfg].interfaces[iface].eps[i].dir) {
-                case USB_EP_DIR_OUT:
-                    dir = USB_BACKEND_DRV_EP_DIR_OUT;
-                    break;
-                case USB_EP_DIR_IN:
-                    dir = USB_BACKEND_DRV_EP_DIR_IN;
-                    break;
-                case USB_EP_DIR_BOTH:
-                    dir = USB_BACKEND_DRV_EP_DIR_BOTH;
-                    break;
-                default:
-                    log_printf("[USBCTRL] invalid EP type !\n");
-                    errcode = MBED_ERROR_INVPARAM;
-                    break;
-            }
-            /* @ assert errcode != MBED_ERROR_INVPARAM ; */
-            /* @ assert \valid(ctx->cfg[curr_cfg].interfaces[iface].eps[i].handler); */
-            /* @ calls ctx->cfg[curr_cfg].interfaces[iface].eps[i].handler; */
-            usb_backend_drv_configure_endpoint(ctx->cfg[curr_cfg].interfaces[iface].eps[i].ep_num,
-                    ctx->cfg[curr_cfg].interfaces[iface].eps[i].type,
-                    dir,
-                    ctx->cfg[curr_cfg].interfaces[iface].eps[i].pkt_maxsize,
-                    USB_BACKEND_EP_ODDFRAME,
-                    ctx->cfg[curr_cfg].interfaces[iface].eps[i].handler);
-        }
-        ctx->cfg[curr_cfg].interfaces[iface].eps[i].configured = true;
+    if (ctx->cfg[curr_cfg].interfaces[iface].id != ctxh1) {
+        /* received context different from the one declared through HID */
+        goto err;
     }
+    /* @ assert ctx->cfg[curr_cfg].interfaces[iface].id == ctxh1; */
+
+    /* here, we got back the USB Ctrl context associated to the current USB HID interface. This
+     * allows us to dirrectly manipulate the control plane context to activate/configure the
+     * data endpoints and activate triggers.
+     * the above assert checks that the usbctrl context we get is the very same one
+     * we have declared in the first function checking valid behavior */
+
+    uint8_t i = 0;
+    /* we have defined a full-duplex HID interface. Let's (manually) configure it.
+     * This portion of code is representative of the Set_Configuration STD request */
+    usb_backend_drv_configure_endpoint(1, /* EP 1 */
+            USB_EP_TYPE_INTERRUPT,
+            USB_BACKEND_DRV_EP_DIR_OUT,
+            64, /* mpsize */
+            USB_BACKEND_EP_ODDFRAME,
+            usbhid_ep_trigger);
+    usb_backend_drv_configure_endpoint(1, /* EP 1 */
+            USB_EP_TYPE_INTERRUPT,
+            USB_BACKEND_DRV_EP_DIR_IN,
+            64, /* mpsize */
+            USB_BACKEND_EP_ODDFRAME,
+            usbhid_ep_trigger);
+    ctx->cfg[curr_cfg].interfaces[iface].eps[0].configured = true;
+
     usbctrl_configuration_set();
 
     /* set input FIFO */
@@ -610,6 +615,8 @@ void test_fcn_driver_eva() {
     usbhid_ep_trigger(6, 255, 1);
     usbhid_handle_set_protocol(&pkt);
 
+err:
+    return;
 }
 
 void main(void)

@@ -39,7 +39,9 @@
 
 static bool data_being_sent = false;
 
+#ifndef __FRAMAC__
 static usbhid_context_t usbhid_ctx = { 0 };
+#endif
 
 /*
  * Only if trigger not defined in the above stack.
@@ -88,7 +90,10 @@ err:
  * HID report should respect the declared report size for the corresponding report id.
  * for e.g. FIDO reports are typically upto 64 bytes length.
  */
-static mbed_error_t usbhid_received(uint32_t dev_id __attribute__((unused)), uint32_t size, uint8_t ep_id)
+#ifndef __FRAMAC__
+static
+#endif
+mbed_error_t usbhid_received(uint32_t dev_id __attribute__((unused)), uint32_t size, uint8_t ep_id)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint8_t iface = 0;
@@ -132,7 +137,10 @@ err:
  * Moreover, set_idle require a state automaton at usbhid level to lock IN Endpoint transmission
  * for time given in SET_IDLE requests
  */
-static mbed_error_t usbhid_data_sent(uint32_t dev_id __attribute__((unused)), uint32_t size __attribute__((unused)), uint8_t ep_id __attribute((unused)))
+#ifndef __FRAMAC__
+static
+#endif
+mbed_error_t usbhid_data_sent(uint32_t dev_id __attribute__((unused)), uint32_t size __attribute__((unused)), uint8_t ep_id __attribute((unused)))
 {
     log_printf("[USBHID] data (%d B) sent on EP %d\n", size, ep_id);
     set_bool_with_membarrier(&data_being_sent, false);
@@ -149,7 +157,7 @@ usbhid_context_t *usbhid_get_context(void)
     return (usbhid_context_t*)&usbhid_ctx;
 }
 
-/*@ 
+/*@
   @ assigns \nothing ;
   @ ensures usbhid_ctx.num_iface <= MAX_USBHID_IFACES;
 
@@ -571,34 +579,7 @@ err:
 }
 
 
-/*@
-  @ assigns \nothing ;
 
-  @ behavior invalid_idx:
-  @   assumes index >= MAX_HID_REPORTS;
-  @   ensures \result == \true;
-
-  @ behavior invalid_handler:
-  @   assumes index < MAX_HID_REPORTS;
-  @   assumes hid_handler >= MAX_USBHID_IFACES;
-  @   ensures \result == \true;
-
-  @ behavior unconfigured_iface:
-  @   assumes index < MAX_HID_REPORTS;
-  @   assumes hid_handler < MAX_USBHID_IFACES;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \false;
-  @   ensures \result == \true;
-
-  @ behavior ok:
-  @   assumes index < MAX_HID_REPORTS;
-  @   assumes hid_handler < MAX_USBHID_IFACES;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;
-  @   ensures \result == usbhid_ctx.hid_ifaces[hid_handler].inep.silence[index];
-
-  @ complete behaviors;
-  @ disjoint behaviors;
-
- */
 bool usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index)
 {
     if (index >= MAX_HID_REPORTS) {
@@ -674,12 +655,6 @@ uint16_t usbhid_get_requested_idle(uint8_t hid_handler, uint8_t index)
  */
 
 /* basics ACSL for now */
-/*@
-  @ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
-  @ assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
-  @ assigns usbotghs_ctx ;
-  */
-
 
 mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)),
                                 uint8_t *report,
