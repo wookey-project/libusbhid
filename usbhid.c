@@ -41,7 +41,6 @@ static bool data_being_sent = false;
 
 #ifndef __FRAMAC__
 static usbhid_context_t usbhid_ctx = { 0 };
-#endif
 
 /*
  * Only if trigger not defined in the above stack.
@@ -51,7 +50,39 @@ __attribute__((weak)) mbed_error_t usbhid_report_received_trigger(uint8_t hid_ha
 {
     return MBED_ERROR_NONE;
 }
+#endif
 
+
+/*@
+  @ assigns \nothing ;
+  @ ensures usbhid_ctx.num_iface <= MAX_USBHID_IFACES;
+
+  @ behavior gie_invalid_iface:
+  @   assumes iface == NULL ;
+  @   ensures \result == 0;
+
+  @ behavior gie_invalid_maxep:
+  @   assumes iface != NULL ;
+  @   assumes iface->usb_ep_number >= MAX_EP_PER_INTERFACE ;
+  @   ensures \result == 0;
+
+  @ behavior gie_ep_found:
+  @   assumes iface != NULL ;
+  @   assumes iface->usb_ep_number < MAX_EP_PER_INTERFACE ;
+  @   assumes \exists integer i ; 0 <= i < iface->usb_ep_number && (iface->eps[i].dir == USB_EP_DIR_IN || iface->eps[i].dir == USB_EP_DIR_BOTH) ;
+  @   ensures \result >= 0 && \result <= 255 ; // no upper limit at HID level, upper limit is handled at driver level
+
+  // seems that this behavior is dead code (impossible to reach through normal call graph)
+  @ behavior gie_ep_not_found:
+  @   assumes iface != NULL ;
+  @   assumes iface->usb_ep_number < MAX_EP_PER_INTERFACE ;
+  @   assumes \forall integer i ; 0 <= i < iface->usb_ep_number ==> iface->eps[i].dir != USB_EP_DIR_IN && iface->eps[i].dir != USB_EP_DIR_BOTH ;
+  @   ensures \result == 0;
+
+  @ complete behaviors;
+  @ disjoint behaviors;
+
+ */
 static inline uint8_t get_in_epid(usbctrl_interface_t const * const iface)
 {
     uint8_t epin = 0;
@@ -75,6 +106,7 @@ static inline uint8_t get_in_epid(usbctrl_interface_t const * const iface)
         if (iface->eps[i].dir == USB_EP_DIR_IN || iface->eps[i].dir == USB_EP_DIR_BOTH) {
             log_printf("[USBHID] IN EP is %d\n", iface->eps[i].ep_num);
             epin = iface->eps[i].ep_num;
+            goto err;
         }
     }
 err:
@@ -161,16 +193,16 @@ usbhid_context_t *usbhid_get_context(void)
   @ assigns \nothing ;
   @ ensures usbhid_ctx.num_iface <= MAX_USBHID_IFACES;
 
-  @ behavior invalid_handler:
+  @ behavior uie_invalid_handler:
   @   assumes hid_handler >= usbhid_ctx.num_iface ||hid_handler >=MAX_USBHID_IFACES;
   @   ensures \result == \false;
 
-  @ behavior undeclared_iface:
+  @ behavior uie_undeclared_iface:
   @   assumes hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES ;
   @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \false;
   @   ensures \result == \false;
 
-  @ behavior ok:
+  @ behavior uie_ok:
   @   assumes hid_handler < usbhid_ctx.num_iface&& hid_handler < MAX_USBHID_IFACES ;
   @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \true;
   @   ensures \result == \true;
@@ -512,7 +544,6 @@ err:
 }
 
 
-
 mbed_error_t usbhid_send_report(uint8_t              hid_handler,
                                 uint8_t*             report,
                                 usbhid_report_type_t type,
@@ -600,22 +631,22 @@ bool usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index)
 /*@
   @ assigns \nothing ;
 
-  @ behavior invalid_idx:
+  @ behavior ugri_invalid_idx:
   @   assumes index >= MAX_HID_REPORTS;
   @   ensures \result == 0;
 
-  @ behavior invalid_handler:
+  @ behavior ugri_invalid_handler:
   @   assumes index < MAX_HID_REPORTS;
   @   assumes hid_handler >= MAX_USBHID_IFACES;
   @   ensures \result == 0;
 
-  @ behavior unconfigured_iface:
+  @ behavior ugri_unconfigured_iface:
   @   assumes index < MAX_HID_REPORTS;
   @   assumes hid_handler < MAX_USBHID_IFACES;
   @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \false;
   @   ensures \result == 0;
 
-  @ behavior ok:
+  @ behavior ugri_ok:
   @   assumes index < MAX_HID_REPORTS;
   @   assumes hid_handler < MAX_USBHID_IFACES;
   @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;

@@ -378,6 +378,11 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
  * report in the report descriptor, starting with 0
  */
 
+/*@
+  @ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
+  @ assigns usbotghs_ctx ;
+  */
 mbed_error_t usbhid_send_report(uint8_t hid_handler,
                                 uint8_t *report,
                                 usbhid_report_type_t type,
@@ -392,6 +397,7 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
  * When an effective reception arise, the usbhid_report_received_trigger is
  * triggered, the data being accessible directly in the report argument buffer.
  */
+
 /*@
   @ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
   @ assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
@@ -414,29 +420,29 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler,
 /*@
   @ assigns \nothing ;
 
-  @ behavior invalid_idx:
-  @   assumes index >= MAX_HID_REPORTS;
-  @   ensures \result == \true;
+  @ behavior uisr_invalid_idx :
+  @   assumes index >= MAX_HID_REPORTS ;
+  @   ensures \result == \true ;
 
-  @ behavior invalid_handler:
-  @   assumes index < MAX_HID_REPORTS;
-  @   assumes hid_handler >= MAX_USBHID_IFACES;
-  @   ensures \result == \true;
+  @ behavior uisr_invalid_handler :
+  @   assumes index < MAX_HID_REPORTS ;
+  @   assumes hid_handler >= MAX_USBHID_IFACES ;
+  @   ensures \result == \true ;
 
-  @ behavior unconfigured_iface:
-  @   assumes index < MAX_HID_REPORTS;
-  @   assumes hid_handler < MAX_USBHID_IFACES;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \false;
-  @   ensures \result == \true;
+  @ behavior uisr_unconfigured_iface :
+  @   assumes index < MAX_HID_REPORTS ;
+  @   assumes hid_handler < MAX_USBHID_IFACES ;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \false ;
+  @   ensures \result == \true ;
 
-  @ behavior ok:
-  @   assumes index < MAX_HID_REPORTS;
-  @   assumes hid_handler < MAX_USBHID_IFACES;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;
-  @   ensures \result == usbhid_ctx.hid_ifaces[hid_handler].inep.silence[index];
+  @ behavior uisr_ok :
+  @   assumes index < MAX_HID_REPORTS ;
+  @   assumes hid_handler < MAX_USBHID_IFACES ;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true ;
+  @   ensures \result == usbhid_ctx.hid_ifaces[hid_handler].inep.silence[index] ;
 
-  @ complete behaviors;
-  @ disjoint behaviors;
+  @ complete behaviors ;
+  @ disjoint behaviors ;
 
  */
 bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);

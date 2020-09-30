@@ -42,6 +42,7 @@
 #define DESCRIPTOR_TYPE_REPORT          0x22
 #define DESCRIPTOR_TYPE_PHYSICAL        0x23
 
+#ifndef __FRAMAC__
 /*
  * weak trigger, to be replaced by upper stack trigger implementation at link time
  */
@@ -50,6 +51,7 @@ __attribute__((weak)) mbed_error_t usbhid_request_trigger(uint8_t hid_handler __
 {
     return MBED_ERROR_NONE;
 }
+#endif
 
 /*
  * TODO: behaviors
