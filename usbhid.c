@@ -542,7 +542,10 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
     uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[hid_handler].iface);
     log_printf("[USBHID] sending response on EP %d (len %d)\n", epid, response_len);
 
-    usb_backend_drv_send_data(response, response_len, epid);
+    errcode = usb_backend_drv_send_data(response, response_len, epid);
+    if (errcode != MBED_ERROR_NONE) {
+        goto err_send;
+    }
     /* wait for end of transmission */
     while (data_being_sent == true) {
         request_data_membarrier();
@@ -552,6 +555,7 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
         data_being_sent = false;
 #endif
     }
+err_send:
     /* TODO: is this line useful ? the trigger should have done the job */
     set_bool_with_membarrier(&data_being_sent, false);
 err:

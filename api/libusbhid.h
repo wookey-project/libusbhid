@@ -513,16 +513,21 @@ bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
 
   @ behavior inv_handler:
   @   assumes response != NULL ;
+  @   assumes response_len > 0 ;
   @   assumes hid_handler >= usbhid_ctx.num_iface;
   @   assigns \nothing;
   @   ensures \result == MBED_ERROR_INVPARAM;
 
   @ behavior ok:
-  @    assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
-  @    assigns usbotghs_ctx ;
-  @    assigns data_being_sent ;
-  @    ensures data_being_sent == \false; // should be false at the end, whatever it is at start
-  @    ensures \result == MBED_ERROR_NONE;
+  @   assumes response != NULL ;
+  @   assumes response_len > 0 ;
+  @   assumes hid_handler < usbhid_ctx.num_iface;
+  @   assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
+  @   assigns usbotghs_ctx ;
+  @   assigns data_being_sent ;
+  @   ensures \valid(response);
+  @   ensures data_being_sent == \false; // should be false at the end, whatever it is at start
+  @   ensures \result >= MBED_ERROR_NONE;
 
   @ complete behaviors ;
   @ disjoint behaviors ;

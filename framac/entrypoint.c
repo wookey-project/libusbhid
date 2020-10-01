@@ -522,7 +522,7 @@ void test_fcn_usbhid_erreur(){
     usbhid_send_report(hid_handler_err, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_report(hid_handler_err, NULL, my_report_type, Frama_C_interval_8(my_report_index,5));
     usbhid_send_report(hid_handler_err, (uint8_t*)&report_oneindex, my_report_type, Frama_C_interval_8(my_report_index,5));
-//    usbhid_send_response(hid_handler_err + 42, &(my_report[0]), my_response_len);
+    usbhid_send_response(hid_handler_err + 42, &(my_report[0]), my_response_len);
     usbhid_send_response(hid_handler_err, NULL, my_response_len);
     usbhid_send_response(hid_handler_err, &(my_report[0]), Frama_C_interval_16(0,my_response_len));
     usbhid_response_done(hid_handler_err + 42);
