@@ -518,6 +518,10 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
+    if (response_len == 0) {
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
     if (!usbhid_interface_exists(hid_handler)) {
         errcode = MBED_ERROR_INVPARAM;
         goto err;

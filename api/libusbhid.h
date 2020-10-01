@@ -505,6 +505,12 @@ bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
   @   assigns \nothing;
   @   ensures \result == MBED_ERROR_INVPARAM;
 
+  @ behavior inv_response_len:
+  @   assumes response != NULL && response_len == 0 ;
+  @   assigns \nothing;
+  @   ensures \result == MBED_ERROR_INVPARAM;
+
+
   @ behavior inv_handler:
   @   assumes response != NULL ;
   @   assumes hid_handler >= usbhid_ctx.num_iface;
