@@ -35,10 +35,9 @@
 #include "libc/sanhandlers.h"
 
 
-
+#ifndef __FRAMAC__
 static bool data_being_sent = false;
 
-#ifndef __FRAMAC__
 #define MAX_HID_DESCRIPTORS 8
 
 static usbhid_context_t usbhid_ctx = { 0 };

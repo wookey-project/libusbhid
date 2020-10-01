@@ -272,12 +272,19 @@ uint8_t  hid_handler;
 mbed_error_t prepare_ctrl_ctx(){
     mbed_error_t errcode;
     errcode = usbctrl_declare(USB_OTG_HS_ID, &ctxh1);
+    if (errcode != MBED_ERROR_NONE) {
+        goto err;
+    }
     /*@ assert errcode == MBED_ERROR_NONE ; */
     /*@ assert ctxh1 == 0 ; */
 
     errcode = usbctrl_initialize(ctxh1);
+    if (errcode != MBED_ERROR_NONE) {
+        goto err;
+    }
     /*@ assert errcode == MBED_ERROR_NONE ; */
     /*@ assert ctxh1 == 0 ; */
+err:
     return errcode;
 }
 
@@ -340,7 +347,7 @@ void test_fcn_usbhid(){
 
     uint8_t my_response_len = Frama_C_interval_8(0, 255);
 
-    my_report_type = Frama_C_interval_8(0, 2);
+    my_report_type = Frama_C_interval_8(0, 255);
     my_report_index= Frama_C_interval_8(0, 2);
     usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
     usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
@@ -361,7 +368,7 @@ void test_fcn_usbhid(){
 
     my_response_len = Frama_C_interval_8(0, 255);
 
-    my_report_type = Frama_C_interval_8(0, 2);
+    my_report_type = Frama_C_interval_8(0, 255);
     my_report_index= Frama_C_interval_8(0, 2);
     usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
     usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
@@ -515,10 +522,10 @@ void test_fcn_usbhid_erreur(){
     usbhid_send_report(hid_handler_err, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_report(hid_handler_err, NULL, my_report_type, Frama_C_interval_8(my_report_index,5));
     usbhid_send_report(hid_handler_err, my_report, my_report_type, Frama_C_interval_8(my_report_index,5));
-    usbhid_send_response(hid_handler_err + 1, my_report, my_response_len);
-    usbhid_send_response(hid_handler_err + 1, NULL, my_response_len);
-    usbhid_send_response(hid_handler_err + 1, my_report, Frama_C_interval_16(0,my_response_len));
-    usbhid_response_done(hid_handler_err + 1);
+    usbhid_send_response(hid_handler_err + 42, my_report, my_response_len);
+    usbhid_send_response(hid_handler_err, NULL, my_response_len);
+    usbhid_send_response(hid_handler_err, my_report, Frama_C_interval_16(0,my_response_len));
+    usbhid_response_done(hid_handler_err + 42);
     usbhid_response_done(hid_handler_err);
 
     usbhid_get_requested_idle(hid_handler_err, Frama_C_interval_8(0, 8));
@@ -619,14 +626,17 @@ err:
     return;
 }
 
-void main(void)
+int main(void)
 {
     mbed_error_t errcode;
 
     errcode = prepare_ctrl_ctx();
-    if (errcode == MBED_ERROR_NONE) {
-        test_fcn_usbhid() ;
-        test_fcn_usbhid_erreur() ;
-        test_fcn_driver_eva() ;
+    if (errcode != MBED_ERROR_NONE) {
+        goto err;
     }
+    test_fcn_usbhid() ;
+    test_fcn_usbhid_erreur() ;
+    test_fcn_driver_eva() ;
+err:
+    return errcode;
 }

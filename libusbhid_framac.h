@@ -49,6 +49,8 @@
 #define MAX_USBHID_IFACES    4
 #define MAX_HID_REPORTS 8
 
+static bool data_being_sent = false;
+
 typedef struct {
     uint8_t  id;      /* IN EP identifier */
     uint16_t idle_ms[MAX_HID_REPORTS]; /* per report (or global): idle time in ms  */

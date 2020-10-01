@@ -366,8 +366,8 @@ typedef mbed_error_t          (*usbhid_set_idle_t)(uint8_t hid_handler,
   @behavior declare_iface:
   @   assumes num_descriptor != 0 && num_descriptor < MAX_HID_DESCRIPTORS && hid_handler != NULL ;
   @   assumes usbhid_ctx.num_iface < MAX_USBHID_IFACES && in_buff != NULL && in_buff_len > 0 ;
-  @   assigns usbhid_ctx.hid_ifaces[\old(usbhid_ctx.num_iface)], usbhid_ctx.num_iface ;
-  @   ensures \result == MBED_ERROR_NONE || \result == MBED_ERROR_NOSTORAGE ;
+  @   assigns usbhid_ctx ;
+  @   ensures \result >= MBED_ERROR_NONE && \result <= MBED_ERROR_INTR ;
 
   @ complete behaviors ;
   @ disjoint behaviors ;
@@ -392,6 +392,24 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
  * This allow, for HID stacks that do not handle some specific requests like
  * Set_Protocol(), to let the libUSBHID handle the default response.
  */
+/*@
+  @ behavior uc_inviface:
+  @    assumes hid_handler >= usbhid_ctx.num_iface ;
+  @    ensures \result == MBED_ERROR_INVPARAM;
+
+  @ behavior uc_invgetter:
+  @    assumes get_report_cb == NULL ;
+  @    ensures \result == MBED_ERROR_INVPARAM;
+
+  @ behavior uc_ok:
+  @    assumes hid_handler < usbhid_ctx.num_iface && get_report_cb != NULL ;
+  @    assigns usbhid_ctx.hid_ifaces[hid_handler] ;
+  @    ensures usbhid_ctx.hid_ifaces[hid_handler].configured == \true ;
+  @    ensures \result == MBED_ERROR_NONE;
+
+  @ complete behaviors ;
+  @ disjoint behaviors ;
+*/
 mbed_error_t usbhid_configure(uint8_t               hid_handler,
                               usbhid_get_report_t   get_report_cb,
                               usbhid_set_report_t   set_report_cb,
@@ -407,6 +425,7 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
   @ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
   @ assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
   @ assigns usbotghs_ctx ;
+  @ assigns data_being_sent ;
   */
 mbed_error_t usbhid_send_report(uint8_t hid_handler,
                                 uint8_t *report,
@@ -478,6 +497,30 @@ bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
  * device, the response is not a report and is to be sent directly without parsing
  * report specific format.
  */
+/*@
+  @ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+
+  @ behavior inv_response:
+  @   assumes response == NULL ;
+  @   assigns \nothing;
+  @   ensures \result == MBED_ERROR_INVPARAM;
+
+  @ behavior inv_handler:
+  @   assumes response != NULL ;
+  @   assumes hid_handler >= usbhid_ctx.num_iface;
+  @   assigns \nothing;
+  @   ensures \result == MBED_ERROR_INVPARAM;
+
+  @ behavior ok:
+  @    assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
+  @    assigns usbotghs_ctx ;
+  @    assigns data_being_sent ;
+  @    ensures data_being_sent == \false; // should be false at the end, whatever it is at start
+  @    ensures \result == MBED_ERROR_NONE;
+
+  @ complete behaviors ;
+  @ disjoint behaviors ;
+  */
 mbed_error_t usbhid_send_response(uint8_t              hid_handler,
                                   uint8_t*             response,
                                   uint8_t              response_len);
