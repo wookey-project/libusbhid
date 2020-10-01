@@ -1,16 +1,16 @@
 [eva] Splitting return states on:
 \return(sys_cfg_CFG_DEV_MAP) == 0 (auto)
 \return(usbctrl_declare_interface) == 0 (auto)
-\return(usbhid_declare) == 0 (auto)
-\return(usbhid_configure) == 0 (auto)
-\return(memcpy) == 0 (auto)
-\return(memset) == 0 (auto)
 \return(usbotghs_configure) == 0 (auto)
 \return(usbotghs_set_recv_fifo) == 0 (auto)
 \return(usbotghs_get_ep_state) == 8 (auto)
 \return(usbotghs_get_context) == 0 (auto)
 \return(usbotghs_write_epx_fifo) == 0 (auto)
 \return(usbotghs_set_xmit_fifo) == 0 (auto)
+\return(usbhid_declare) == 0 (auto)
+\return(usbhid_configure) == 0 (auto)
+\return(memcpy) == 0 (auto)
+\return(memset) == 0 (auto)
 \return(usbctrl_get_interface) == 0 (auto)
 \return(usbhid_get_context) == 0 (auto)
 \return(usbhid_interface_exists) == 0 (auto)
@@ -25,8 +25,8 @@
 \return(usbotghs_ulpi_reset) == 0 (auto)
 \return(handler_sanity_check) == 0 (auto)
 \return(is_iface_using_out_ep) == 0 (auto)
-\return(get_reg_value_5) == 0 (auto)
 \return(get_reg_value_6) == 0 (auto)
+\return(get_reg_value_7) == 0 (auto)
 [eva] Analyzing a complete application starting at main
 [eva] Computing initial state
 [eva] Initial state computed
@@ -36,33 +36,34 @@
 for clause 'assigns *ctxh, num_ctx, usbotghs_ctx, GHOST_num_ctx,
                     ctx_list[\old(num_ctx)];'
 /home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:97:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_context_t
-framac/entrypoint.c:270:[eva:alarm] warning: assertion got status invalid (stopping propagation).
+framac/entrypoint.c:275:[eva:alarm] warning: assertion got status invalid (stopping propagation).
 [eva] using specification for function usbctrl_initialize
 /home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:209:[eva] warning: no 'assigns \result \from ...' clause specified for
 function usbctrl_initialize
-framac/entrypoint.c:273:[eva:alarm] warning: function usbctrl_initialize: precondition GHOST_num_ctx ≡ num_ctx got status unknown.
+framac/entrypoint.c:278:[eva:alarm] warning: function usbctrl_initialize: precondition GHOST_num_ctx ≡ num_ctx got status unknown.
 /home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:190:[eva] warning: no \from part
 for clause 'assigns ctx_list[ctxh].cfg[ctx_list[ctxh].curr_cfg].interfaces[
                     0 .. 4 - 1], ctx_list[ctxh];'
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/string.h:236:[eva] cannot evaluate ACSL term, unsupported ACSL construct: logic function memset
 [eva] using specification for function usbctrl_declare_interface
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:631:[eva] warning: no 'assigns \result \from ...' clause specified for
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:698:[eva] warning: no 'assigns \result \from ...' clause specified for
 function usbctrl_declare_interface
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:572:[eva] warning: no \from part for clause 'assigns *iface, ctx_list[ctxh];'
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:610:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_interface_t
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:591:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_interface_t
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:592:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_context_t
-usbhid.c:72:[eva] Trace partitioning superposing up to 100 states
-usbhid.c:728:[eva:alarm] warning: function usbotghs_set_recv_fifo: precondition epid < 3 got status unknown.
-[eva] using specification for function printf_va_6
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:639:[eva] warning: no \from part for clause 'assigns *iface, ctx_list[ctxh];'
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:677:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_interface_t
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:658:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_interface_t
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:659:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_context_t
+usbhid.c:68:[eva:alarm] warning: function get_in_epid, behavior gie_invalid_maxep: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
+usbhid.c:81:[eva:alarm] warning: function get_in_epid, behavior gie_ep_not_found: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
+api/libusbhid.h:361:[eva:alarm] warning: function usbhid_declare, behavior ud_nostorage: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+api/libusbhid.h:370:[eva:alarm] warning: function usbhid_declare, behavior declare_iface: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/sync.h:63:[eva:alarm] warning: function set_bool_with_membarrier__fc_inline_1: postcondition got status unknown.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:524:[eva:alarm] warning: assertion 'rte,unsigned_downcast' got status unknown.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:524:[eva:alarm] warning: assertion 'rte,division_by_zero' got status unknown.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:524:[eva:alarm] warning: assertion 'rte,unsigned_overflow' got status unknown.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:542:[eva:alarm] warning: assertion got status unknown.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:450:[eva:alarm] warning: function usbotghs_set_recv_fifo: postcondition got status unknown.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:454:[eva:alarm] warning: function usbotghs_set_recv_fifo: postcondition got status unknown.
-framac/entrypoint.c:340:[eva] Trace partitioning superposing up to 100 states
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:522:[eva:alarm] warning: assertion 'rte,unsigned_downcast' got status unknown.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:522:[eva:alarm] warning: assertion 'rte,division_by_zero' got status unknown.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:522:[eva:alarm] warning: assertion 'rte,unsigned_overflow' got status unknown.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:540:[eva:alarm] warning: assertion got status unknown.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:448:[eva:alarm] warning: function usbotghs_set_recv_fifo: postcondition got status unknown.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:452:[eva:alarm] warning: function usbotghs_set_recv_fifo: postcondition got status unknown.
+framac/entrypoint.c:345:[eva] Trace partitioning superposing up to 100 states
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/string.h:198:[eva] cannot evaluate ACSL term, unsupported ACSL construct: logic function memcmp
 [eva] using specification for function usbotghs_send_data
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:481:[eva] warning: no 'assigns \result \from ...' clause specified for
@@ -74,104 +75,133 @@ for clause 'assigns *((uint32_t *)(0x40040000 .. 0x40044000)), usbotghs_ctx,
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:791:[eva] warning: no 'assigns \result \from ...' clause specified for
 function usbotghs_send_zlp
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:774:[eva] warning: no \from part for clause 'assigns *((uint32_t *)(0x40040000 .. 0x40044000));'
-framac/entrypoint.c:355:[eva] Trace partitioning superposing up to 200 states
-framac/entrypoint.c:360:[eva] Trace partitioning superposing up to 400 states
-framac/entrypoint.c:380:[eva] Trace partitioning superposing up to 500 states
-usbhid.c:168:[eva:alarm] warning: function usbhid_interface_exists, behavior ok: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
-usbhid.c:158:[eva:alarm] warning: function usbhid_interface_exists, behavior invalid_handler: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
-usbhid.c:163:[eva:alarm] warning: function usbhid_interface_exists, behavior undeclared_iface: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
-usbhid.c:168:[eva:alarm] warning: function usbhid_interface_exists, behavior ok: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
-usbhid.c:184:[eva] cannot properly split on \result == 0
-usbhid.c:715:[eva] Trace partitioning superposing up to 100 states
-usbhid.c:731:[eva] Trace partitioning superposing up to 700 states
-usbhid.c:595:[eva:alarm] warning: function usbhid_is_silence_requested, behavior ok: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
-usbhid.c:595:[eva:alarm] warning: function usbhid_is_silence_requested, behavior ok: postcondition got status unknown.
-usbhid.c:589:[eva:alarm] warning: function usbhid_is_silence_requested, behavior unconfigured_iface: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
-usbhid_reports.c:107:[eva:alarm] warning: assertion 'rte,pointer_value' got status invalid (stopping propagation).
-usbhid_reports.c:45:[eva:alarm] warning: assertion 'rte,pointer_value' got status invalid (stopping propagation).
-usbhid_reports.c:107:[eva:alarm] warning: assertion 'rte,pointer_value' got status unknown.
-usbhid_reports.c:45:[eva:alarm] warning: assertion 'rte,pointer_value' got status unknown.
-usbhid_reports.c:113:[eva:alarm] warning: assertion 'rte,pointer_value' got status unknown.
-usbhid_reports.c:113:[eva:alarm] warning: assertion 'rte,function_pointer' got status unknown.
-usbhid_reports.c:52:[eva:alarm] warning: assertion 'rte,pointer_value' got status unknown.
-usbhid_reports.c:52:[eva:alarm] warning: assertion 'rte,function_pointer' got status unknown.
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:576:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_interface_t
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:577:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_context_t
-usbhid.c:711:[eva] Trace partitioning superposing up to 100 states
-usbhid.c:711:[eva] Trace partitioning superposing up to 200 states
-usbhid.c:711:[eva] Trace partitioning superposing up to 300 states
-usbhid.c:711:[eva] Trace partitioning superposing up to 400 states
-usbhid.c:711:[eva] Trace partitioning superposing up to 500 states
-usbhid.c:711:[eva] starting to merge loop iterations
-usbhid.c:707:[eva:alarm] warning: loop invariant got status unknown.
-usbhid.c:715:[eva] Trace partitioning superposing up to 800 states
-framac/entrypoint.c:495:[eva] Trace partitioning superposing up to 400 states
-framac/entrypoint.c:148:[eva:alarm] warning: function Frama_C_interval_16: postcondition 'result_bounded' got status unknown.
-framac/entrypoint.c:495:[eva] Trace partitioning superposing up to 500 states
-usbhid.c:728:[eva:alarm] warning: function usbotghs_set_recv_fifo: precondition \valid(dst) got status invalid.
-usbhid.c:583:[eva:alarm] warning: function usbhid_is_silence_requested, behavior invalid_handler: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
-usbhid.c:578:[eva:alarm] warning: function usbhid_is_silence_requested, behavior invalid_idx: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
-framac/entrypoint.c:508:[eva] Trace partitioning superposing up to 600 states
-framac/entrypoint.c:130:[eva:alarm] warning: function Frama_C_interval_8: postcondition 'result_bounded' got status unknown.
-framac/entrypoint.c:520:[eva] Trace partitioning superposing up to 800 states
-usbhid.c:640:[eva:alarm] warning: function usbhid_get_requested_idle, behavior ok: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
-usbhid.c:711:[eva] Trace partitioning superposing up to 900 states
-usbhid.c:713:[eva:alarm] warning: assertion 'rte,index_bound' got status unknown.
-usbhid.c:695:[eva:alarm] warning: loop invariant got status unknown.
-framac/entrypoint.c:495:[eva] Trace partitioning superposing up to 300 states
-framac/entrypoint.c:496:[eva] Trace partitioning superposing up to 700 states
-framac/entrypoint.c:509:[eva] Trace partitioning superposing up to 800 states
-framac/entrypoint.c:520:[eva] Trace partitioning superposing up to 600 states
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:392:[eva] cannot evaluate ACSL term, no environment to evaluate \at(_,LoopEntry)
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:392:[eva:alarm] warning: loop invariant got status unknown.
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:391:[eva:alarm] warning: loop invariant got status unknown.
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:363:[eva:alarm] warning: function usbctrl_get_context, behavior found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:364:[eva:alarm] warning: function usbctrl_get_context, behavior found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:365:[eva:alarm] warning: function usbctrl_get_context, behavior found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:366:[eva:alarm] warning: function usbctrl_get_context, behavior found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:357:[eva:alarm] warning: function usbctrl_get_context, behavior not_found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:358:[eva:alarm] warning: function usbctrl_get_context, behavior not_found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:363:[eva:alarm] warning: function usbctrl_get_context, behavior found: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
-framac/entrypoint.c:537:[eva:alarm] warning: assertion got status invalid (stopping propagation).
-framac/entrypoint.c:575:[eva:alarm] warning: assertion 'rte,pointer_value' got status invalid (stopping propagation).
-framac/entrypoint.c:570:[eva] Trace partitioning superposing up to 100 states
-framac/entrypoint.c:551:[eva:alarm] warning: assertion 'rte,index_bound' got status invalid (stopping propagation).
+framac/entrypoint.c:360:[eva] Trace partitioning superposing up to 300 states
+framac/entrypoint.c:365:[eva] Trace partitioning superposing up to 500 states
+api/libusbhid.h:370:[eva:alarm] warning: function usbhid_declare, behavior declare_iface: postcondition got status invalid.
+usbhid.c:734:[eva] Trace partitioning superposing up to 100 states
+usbhid.c:750:[eva] Trace partitioning superposing up to 700 states
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1487:[eva:alarm] warning: function usbotghs_activate_endpoint, behavior dir_out_bad_ep_id: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1504:[eva:alarm] warning: function usbotghs_activate_endpoint, behavior dir_out_ok: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:643:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_interface_t
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:644:[eva] cannot evaluate ACSL term, unsupported ACSL construct: == operation on non-supported type usbctrl_context_t
+framac/entrypoint.c:153:[eva:alarm] warning: function Frama_C_interval_16: postcondition 'result_bounded' got status unknown.
+framac/entrypoint.c:504:[eva] Trace partitioning superposing up to 100 states
+framac/entrypoint.c:505:[eva] Trace partitioning superposing up to 200 states
+framac/entrypoint.c:506:[eva] Trace partitioning superposing up to 400 states
+framac/entrypoint.c:513:[eva] Trace partitioning superposing up to 900 states
+framac/entrypoint.c:135:[eva:alarm] warning: function Frama_C_interval_8: postcondition 'result_bounded' got status unknown.
+[eva] using specification for function printf_va_6
+framac/entrypoint.c:500:[eva] Trace partitioning superposing up to 100 states
+framac/entrypoint.c:501:[eva] Trace partitioning superposing up to 300 states
+framac/entrypoint.c:503:[eva] Trace partitioning superposing up to 600 states
+usbhid.c:665:[eva:alarm] warning: function usbhid_get_requested_idle, behavior ugri_ok: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
+usbhid.c:750:[eva] Trace partitioning superposing up to 500 states
+usbhid.c:755:[eva] Trace partitioning superposing up to 200 states
+usbhid.c:755:[eva] Trace partitioning superposing up to 300 states
+framac/entrypoint.c:501:[eva] Trace partitioning superposing up to 300 states
+framac/entrypoint.c:501:[eva] Trace partitioning superposing up to 500 states
+usbhid.c:750:[eva] Trace partitioning superposing up to 800 states
+framac/entrypoint.c:516:[eva] Trace partitioning superposing up to 800 states
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:387:[eva] cannot evaluate ACSL term, no environment to evaluate \at(_,LoopEntry)
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:387:[eva:alarm] warning: loop invariant got status unknown.
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:386:[eva:alarm] warning: loop invariant got status unknown.
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:358:[eva:alarm] warning: function usbctrl_get_context, behavior found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:359:[eva:alarm] warning: function usbctrl_get_context, behavior found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:360:[eva:alarm] warning: function usbctrl_get_context, behavior found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:361:[eva:alarm] warning: function usbctrl_get_context, behavior found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:352:[eva:alarm] warning: function usbctrl_get_context, behavior not_found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:353:[eva:alarm] warning: function usbctrl_get_context, behavior not_found: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:358:[eva:alarm] warning: function usbctrl_get_context, behavior found: postcondition got status unknown. (Behavior may be inactive, no reduction performed.)
+framac/entrypoint.c:542:[eva:alarm] warning: assertion got status invalid (stopping propagation).
 [eva] using specification for function usbctrl_configuration_set
-framac/entrypoint.c:585:[eva] Trace partitioning superposing up to 200 states
-usbhid_reports.c:195:[eva:alarm] warning: assertion 'rte,pointer_value' got status invalid (stopping propagation).
-usbhid_reports.c:195:[eva:alarm] warning: assertion 'rte,pointer_value' got status unknown.
-framac/entrypoint.c:597:[eva] Trace partitioning superposing up to 400 states
-usbhid_requests.c:80:[eva:alarm] warning: assertion 'rte,index_bound' got status invalid (stopping propagation).
+usbhid_requests.c:170:[eva:alarm] warning: assertion 'rte,index_bound' got status unknown.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:999:[eva:alarm] warning: function usbotghs_endpoint_clear_nak, behavior dir_in_out_MBED_ERROR_INVSTATE: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1006:[eva:alarm] warning: function usbotghs_endpoint_clear_nak, behavior dir_in_out_configured_MBED_ERROR_NONE: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
+usbhid_requests.c:221:[eva:alarm] warning: assertion 'rte,index_bound' got status unknown.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1716:[eva:alarm] warning: function usbotghs_get_ep_state, behavior DIR_OUT: postcondition got status unknown.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1747:[eva] cannot properly split on \result == 8
+usbhid_requests.c:82:[eva:alarm] warning: assertion 'rte,index_bound' got status invalid (stopping propagation).
 [eva] using specification for function usbotghs_endpoint_stall
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1105:[eva] warning: no 'assigns \result \from ...' clause specified for
 function usbotghs_endpoint_stall
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1096:[eva] warning: no \from part for clause 'assigns *((uint32_t *)(0x40040000 .. 0x40044000));'
-usbhid_requests.c:168:[eva:alarm] warning: assertion 'rte,index_bound' got status unknown.
-usbhid_reports.c:243:[eva:alarm] warning: assertion 'rte,pointer_value' got status unknown.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:999:[eva:alarm] warning: function usbotghs_endpoint_clear_nak, behavior dir_in_out_MBED_ERROR_INVSTATE: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1006:[eva:alarm] warning: function usbotghs_endpoint_clear_nak, behavior dir_in_out_configured_MBED_ERROR_NONE: postcondition got status invalid. (Behavior may be inactive, no reduction performed.)
-usbhid_requests.c:219:[eva:alarm] warning: assertion 'rte,index_bound' got status unknown.
-framac/entrypoint.c:599:[eva] Trace partitioning superposing up to 900 states
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1716:[eva:alarm] warning: function usbotghs_get_ep_state, behavior DIR_OUT: postcondition got status unknown.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1747:[eva] cannot properly split on \result == 8
-usbhid.c:117:[eva] Trace partitioning superposing up to 100 states
-usbhid.c:117:[eva] Trace partitioning superposing up to 200 states
-usbhid.c:117:[eva] Trace partitioning superposing up to 300 states
-usbhid.c:117:[eva] Trace partitioning superposing up to 500 states
-usbhid.c:113:[eva:alarm] warning: loop invariant got status unknown.
-framac/entrypoint.c:597:[eva] Trace partitioning superposing up to 500 states
-usbhid_requests.c:86:[eva] Trace partitioning superposing up to 100 states
-usbhid.c:98:[eva:alarm] warning: assertion got status unknown.
-usbhid.c:117:[eva] Trace partitioning superposing up to 900 states
-usbhid.c:119:[eva:alarm] warning: assertion 'rte,index_bound' got status unknown.
-usbhid.c:100:[eva:alarm] warning: loop invariant got status unknown.
-framac/entrypoint.c:599:[eva] Trace partitioning superposing up to 800 states
+framac/entrypoint.c:616:[eva] Trace partitioning superposing up to 100 states
+usbhid.c:155:[eva] Trace partitioning superposing up to 100 states
+framac/entrypoint.c:619:[eva] Trace partitioning superposing up to 200 states
 [eva] done for function main
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1060:[eva] assertion 'rte,mem_access' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1060:[eva] assertion 'rte,index_bound' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1065:[eva] assertion 'rte,pointer_value' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1065:[eva] assertion 'rte,signed_overflow' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1065:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1261:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1261:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1262:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1262:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1263:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1263:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1264:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1264:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1265:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1265:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1266:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1266:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1267:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1267:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1269:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1269:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1273:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1273:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1273:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1277:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1277:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1277:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1288:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1288:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1288:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1291:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1294:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1294:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1294:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1295:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1295:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1295:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1297:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1297:[eva] assertion 'rte,shift' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1297:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1308:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1308:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1309:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1309:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1310:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1310:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1311:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1311:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1312:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1312:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1313:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1313:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1314:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1314:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1316:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1316:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1321:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1321:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1321:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1332:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1332:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1332:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1336:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1336:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1336:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1340:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1340:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1340:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1342:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1344:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1344:[eva] assertion 'rte,shift' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1344:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1344:[eva] assertion 'rte,pointer_value' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1536:[eva] assertion 'rte,pointer_value' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1536:[eva] assertion 'rte,signed_overflow' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1536:[eva] assertion 'rte,signed_overflow' got final status valid.
@@ -179,242 +209,245 @@ framac/entrypoint.c:599:[eva] Trace partitioning superposing up to 800 states
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1537:[eva] assertion 'rte,signed_overflow' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1537:[eva] assertion 'rte,signed_overflow' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs.c:1740:[eva] assertion 'rte,index_bound' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:475:[eva] assertion 'rte,pointer_value' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:480:[eva] assertion 'rte,mem_access' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:480:[eva] assertion 'rte,mem_access' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:498:[eva] assertion 'rte,mem_access' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:506:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:256:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:289:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:292:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:292:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:292:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:292:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:298:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:305:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:305:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:311:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:311:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:311:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:311:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:312:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:312:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:312:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:316:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:317:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:318:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:319:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:320:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:321:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:473:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:478:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:478:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:496:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:504:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:505:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:506:[eva] assertion 'rte,mem_access' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:507:[eva] assertion 'rte,mem_access' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:508:[eva] assertion 'rte,mem_access' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:509:[eva] assertion 'rte,mem_access' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:513:[eva] assertion 'rte,pointer_value' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:524:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:524:[eva] assertion 'rte,mem_access' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:524:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:511:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:522:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:522:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:522:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:522:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:522:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:523:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:523:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:523:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:524:[eva] assertion 'rte,pointer_value' got final status valid.
 /home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:524:[eva] assertion 'rte,signed_overflow' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:524:[eva] assertion 'rte,mem_access' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:525:[eva] assertion 'rte,pointer_value' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:525:[eva] assertion 'rte,signed_overflow' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:525:[eva] assertion 'rte,signed_overflow' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:526:[eva] assertion 'rte,pointer_value' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:526:[eva] assertion 'rte,signed_overflow' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:526:[eva] assertion 'rte,signed_overflow' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:536:[eva] assertion 'rte,pointer_value' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:536:[eva] assertion 'rte,signed_overflow' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:536:[eva] assertion 'rte,signed_overflow' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:537:[eva] assertion 'rte,mem_access' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:537:[eva] assertion 'rte,pointer_value' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:537:[eva] assertion 'rte,signed_overflow' got final status valid.
-/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:537:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:524:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:534:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:534:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:534:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:535:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:535:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:535:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//drivers/socs/stm32f439/usbotghs/usbotghs_fifos.c:535:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:142:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+/home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:142:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:142:[eva] assertion 'rte,shift' got final status valid.
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:142:[eva] assertion 'rte,unsigned_downcast' got final status valid.
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:142:[eva] assertion 'rte,unsigned_overflow' got final status valid.
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:142:[eva] assertion 'rte,shift' got final status valid.
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:199:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:199:[eva] assertion 'rte,mem_access' got final status valid.
+/home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:215:[eva] assertion 'rte,mem_access' got final status valid.
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:215:[eva] assertion 'rte,mem_access' got final status valid.
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/regutils.h:230:[eva] assertion 'rte,mem_access' got final status valid.
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/sync.h:67:[eva] assertion 'rte,mem_access' got final status valid.
 /home/phil/Travail/FIDO/u2f2//libs/std/api/libc/sync.h:67:[eva] assertion 'rte,mem_access' got final status valid.
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:398:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:398:[eva] assertion 'rte,signed_overflow' got final status valid.
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:399:[eva] assertion 'rte,index_bound' got final status valid.
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:400:[eva] assertion 'rte,pointer_value' got final status valid.
-/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:400:[eva] assertion 'rte,mem_access' got final status valid.
-framac/entrypoint.c:431:[eva] assertion 'rte,unsigned_overflow' got final status valid.
-framac/entrypoint.c:440:[eva] assertion 'rte,unsigned_overflow' got final status valid.
-framac/entrypoint.c:484:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-framac/entrypoint.c:487:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-framac/entrypoint.c:487:[eva] assertion 'rte,signed_overflow' got final status valid.
-framac/entrypoint.c:494:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-framac/entrypoint.c:494:[eva] assertion 'rte,signed_overflow' got final status valid.
-framac/entrypoint.c:500:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-framac/entrypoint.c:500:[eva] assertion 'rte,signed_overflow' got final status valid.
-framac/entrypoint.c:513:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-framac/entrypoint.c:513:[eva] assertion 'rte,signed_overflow' got final status valid.
-framac/entrypoint.c:514:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-framac/entrypoint.c:514:[eva] assertion 'rte,signed_overflow' got final status valid.
-framac/entrypoint.c:515:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-framac/entrypoint.c:515:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-framac/entrypoint.c:515:[eva] assertion 'rte,signed_overflow' got final status valid.
-framac/entrypoint.c:516:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-framac/entrypoint.c:516:[eva] assertion 'rte,signed_overflow' got final status valid.
-framac/entrypoint.c:544:[eva] assertion 'rte,mem_access' got final status valid.
-framac/entrypoint.c:544:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:544:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:544:[eva] assertion 'rte,pointer_value' got final status valid.
-framac/entrypoint.c:549:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-framac/entrypoint.c:549:[eva] assertion 'rte,signed_overflow' got final status valid.
-framac/entrypoint.c:551:[eva] assertion 'rte,mem_access' got final status valid.
-framac/entrypoint.c:551:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:551:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:551:[eva] assertion 'rte,pointer_value' got final status valid.
-framac/entrypoint.c:552:[eva] assertion 'rte,mem_access' got final status valid.
-framac/entrypoint.c:552:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:552:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:552:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:552:[eva] assertion 'rte,pointer_value' got final status valid.
-framac/entrypoint.c:570:[eva] assertion 'rte,mem_access' got final status valid.
-framac/entrypoint.c:575:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:575:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:575:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:575:[eva] assertion 'rte,pointer_value' got final status invalid.
-framac/entrypoint.c:575:[eva] assertion 'rte,pointer_value' got final status valid.
-framac/entrypoint.c:573:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:573:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:573:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:573:[eva] assertion 'rte,pointer_value' got final status valid.
-framac/entrypoint.c:571:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:571:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:571:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:571:[eva] assertion 'rte,pointer_value' got final status valid.
-framac/entrypoint.c:570:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:570:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:570:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:570:[eva] assertion 'rte,pointer_value' got final status valid.
-framac/entrypoint.c:577:[eva] assertion 'rte,pointer_value' got final status valid.
-framac/entrypoint.c:577:[eva] assertion 'rte,mem_access' got final status valid.
-framac/entrypoint.c:577:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:577:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:577:[eva] assertion 'rte,index_bound' got final status valid.
-framac/entrypoint.c:582:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:61:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:64:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:72:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:72:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid.c:73:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:73:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:73:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:73:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:75:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:75:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:104:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:104:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:393:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:393:[eva] assertion 'rte,signed_overflow' got final status valid.
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:394:[eva] assertion 'rte,index_bound' got final status valid.
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:395:[eva] assertion 'rte,pointer_value' got final status valid.
+/home/phil/Travail/FIDO/u2f2//libs/usbctrl/usbctrl.c:395:[eva] assertion 'rte,mem_access' got final status valid.
+framac/entrypoint.c:436:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+framac/entrypoint.c:445:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+framac/entrypoint.c:489:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+framac/entrypoint.c:492:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+framac/entrypoint.c:492:[eva] assertion 'rte,signed_overflow' got final status valid.
+framac/entrypoint.c:499:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+framac/entrypoint.c:499:[eva] assertion 'rte,signed_overflow' got final status valid.
+framac/entrypoint.c:505:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+framac/entrypoint.c:505:[eva] assertion 'rte,signed_overflow' got final status valid.
+framac/entrypoint.c:518:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+framac/entrypoint.c:518:[eva] assertion 'rte,signed_overflow' got final status valid.
+framac/entrypoint.c:519:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+framac/entrypoint.c:519:[eva] assertion 'rte,signed_overflow' got final status valid.
+framac/entrypoint.c:520:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+framac/entrypoint.c:520:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+framac/entrypoint.c:520:[eva] assertion 'rte,signed_overflow' got final status valid.
+framac/entrypoint.c:521:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+framac/entrypoint.c:521:[eva] assertion 'rte,signed_overflow' got final status valid.
+framac/entrypoint.c:549:[eva] assertion 'rte,mem_access' got final status valid.
+framac/entrypoint.c:549:[eva] assertion 'rte,index_bound' got final status valid.
+framac/entrypoint.c:549:[eva] assertion 'rte,index_bound' got final status valid.
+framac/entrypoint.c:549:[eva] assertion 'rte,pointer_value' got final status valid.
+framac/entrypoint.c:555:[eva] assertion 'rte,mem_access' got final status valid.
+framac/entrypoint.c:555:[eva] assertion 'rte,index_bound' got final status valid.
+framac/entrypoint.c:555:[eva] assertion 'rte,index_bound' got final status valid.
+framac/entrypoint.c:555:[eva] assertion 'rte,pointer_value' got final status valid.
+framac/entrypoint.c:582:[eva] assertion 'rte,pointer_value' got final status valid.
+framac/entrypoint.c:582:[eva] assertion 'rte,mem_access' got final status valid.
+framac/entrypoint.c:582:[eva] assertion 'rte,index_bound' got final status valid.
+framac/entrypoint.c:582:[eva] assertion 'rte,index_bound' got final status valid.
+framac/entrypoint.c:587:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:95:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:98:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:106:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:106:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid.c:107:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid.c:107:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:117:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:117:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:117:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid.c:119:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:122:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:178:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:182:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:182:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:264:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid.c:277:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:278:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:279:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:280:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:281:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:282:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:298:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:298:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:299:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:299:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:300:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:300:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:301:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:301:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:302:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:302:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:303:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:303:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:304:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:304:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:305:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:305:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:306:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:306:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid.c:324:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:324:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:325:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:325:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:326:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:326:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:327:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:327:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:328:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:328:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:329:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:107:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:107:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:109:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:109:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:142:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:142:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid.c:145:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:155:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:155:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:155:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid.c:157:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:157:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:160:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:219:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:223:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:223:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:316:[eva] assertion 'rte,pointer_value' got final status valid.
 usbhid.c:329:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid.c:330:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:330:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:331:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:331:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid.c:337:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:337:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:338:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:338:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:339:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:339:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:340:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:340:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:341:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:341:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:342:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:342:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:343:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:343:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:344:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:344:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:345:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:345:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid.c:331:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:332:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:333:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:334:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid.c:350:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:353:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid.c:360:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid.c:361:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:371:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:371:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid.c:372:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:372:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:373:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:373:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:350:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:351:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:351:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:352:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:352:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:353:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:353:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:354:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:354:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:355:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:355:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:356:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:356:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:357:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:357:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:358:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:358:[eva] assertion 'rte,signed_overflow' got final status valid.
 usbhid.c:376:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid.c:376:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid.c:377:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:377:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:378:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid.c:378:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid.c:379:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:379:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid.c:380:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:383:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:384:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:386:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:387:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:387:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid.c:414:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:414:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:418:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:418:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:421:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:421:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:426:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:380:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:381:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:381:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:382:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:382:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:383:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:383:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid.c:389:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:389:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:390:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:390:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:391:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:391:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:392:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:392:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:393:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:393:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:394:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:394:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:395:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:395:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:396:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:396:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:397:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:397:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid.c:402:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:405:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid.c:412:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid.c:413:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:424:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:424:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid.c:425:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:425:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid.c:426:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:429:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:426:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid.c:429:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:434:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:434:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:437:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:429:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:430:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:431:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:432:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:433:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:436:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid.c:437:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:442:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid.c:442:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:454:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid.c:486:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid.c:543:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid.c:544:[eva] assertion 'rte,unsigned_overflow' got final status valid.
-usbhid.c:551:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid.c:609:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:615:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:615:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:655:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:659:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:659:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:699:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:699:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid.c:701:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:711:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:711:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid.c:711:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid.c:713:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:713:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:713:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:715:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid.c:715:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:439:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:440:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:440:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid.c:467:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:467:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:471:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:471:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:474:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:474:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:479:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:479:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:482:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:482:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:487:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:487:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:490:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:490:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:495:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid.c:495:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:507:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid.c:539:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid.c:595:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid.c:596:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+usbhid.c:603:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid.c:634:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:640:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:640:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:680:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:684:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:684:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:718:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:718:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid.c:720:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:730:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:730:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid.c:730:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid.c:732:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:732:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:732:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:732:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:734:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid.c:734:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid_descriptor.c:54:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_descriptor.c:73:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_descriptor.c:73:[eva] assertion 'rte,unsigned_downcast' got final status valid.
@@ -466,188 +499,205 @@ usbhid_reports.c:81:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:81:[eva] assertion 'rte,pointer_value' got final status valid.
 usbhid_reports.c:107:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:107:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_reports.c:113:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:113:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_reports.c:146:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:146:[eva] assertion 'rte,unsigned_overflow' got final status valid.
-usbhid_reports.c:147:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:147:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:115:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:115:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid_reports.c:148:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:148:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:148:[eva] assertion 'rte,unsigned_overflow' got final status valid.
 usbhid_reports.c:149:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:149:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:152:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:152:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:153:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:153:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:150:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:150:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:151:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:151:[eva] assertion 'rte,pointer_value' got final status valid.
 usbhid_reports.c:154:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:154:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:159:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:159:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:160:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:160:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:195:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:195:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_reports.c:200:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:200:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_reports.c:206:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:206:[eva] assertion 'rte,unsigned_overflow' got final status valid.
-usbhid_reports.c:209:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:209:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:210:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+usbhid_reports.c:155:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:155:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:156:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:156:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:161:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:161:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:162:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:162:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:197:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:197:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_reports.c:202:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:202:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_reports.c:208:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:208:[eva] assertion 'rte,unsigned_overflow' got final status valid.
 usbhid_reports.c:211:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:211:[eva] assertion 'rte,pointer_value' got final status valid.
 usbhid_reports.c:212:[eva] assertion 'rte,unsigned_overflow' got final status valid.
 usbhid_reports.c:213:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:213:[eva] assertion 'rte,pointer_value' got final status valid.
 usbhid_reports.c:214:[eva] assertion 'rte,unsigned_overflow' got final status valid.
-usbhid_reports.c:226:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_reports.c:243:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:243:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_reports.c:260:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:260:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_reports.c:266:[eva] assertion 'rte,unsigned_overflow' got final status valid.
-usbhid_reports.c:266:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:273:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:273:[eva] assertion 'rte,unsigned_overflow' got final status valid.
-usbhid_reports.c:275:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_reports.c:215:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:215:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:216:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+usbhid_reports.c:228:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_reports.c:245:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:245:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_reports.c:262:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:262:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_reports.c:268:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+usbhid_reports.c:268:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:275:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:275:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:276:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_reports.c:276:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:276:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:275:[eva] assertion 'rte,unsigned_overflow' got final status valid.
 usbhid_reports.c:277:[eva] assertion 'rte,unsigned_downcast' got final status valid.
 usbhid_reports.c:277:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:277:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:278:[eva] assertion 'rte,unsigned_downcast' got final status valid.
 usbhid_reports.c:278:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:278:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:279:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+usbhid_reports.c:279:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_reports.c:279:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:279:[eva] assertion 'rte,pointer_value' got final status valid.
 usbhid_reports.c:280:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:280:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:281:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:281:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:282:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+usbhid_reports.c:281:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+usbhid_reports.c:282:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:282:[eva] assertion 'rte,pointer_value' got final status valid.
 usbhid_reports.c:283:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:283:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:284:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_reports.c:284:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:284:[eva] assertion 'rte,unsigned_overflow' got final status valid.
 usbhid_reports.c:285:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_reports.c:285:[eva] assertion 'rte,pointer_value' got final status valid.
-usbhid_reports.c:286:[eva] assertion 'rte,unsigned_overflow' got final status valid.
-usbhid_reports.c:294:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:67:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:67:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:67:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid_requests.c:68:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:68:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_reports.c:286:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:286:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:287:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_reports.c:287:[eva] assertion 'rte,pointer_value' got final status valid.
+usbhid_reports.c:288:[eva] assertion 'rte,unsigned_overflow' got final status valid.
+usbhid_reports.c:296:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_requests.c:69:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:69:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_requests.c:79:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:79:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_requests.c:79:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:79:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid_requests.c:80:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:80:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_requests.c:93:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:93:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:93:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid_requests.c:94:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:94:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_requests.c:114:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:115:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:115:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:144:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:145:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:145:[eva] assertion 'rte,shift' got final status valid.
-usbhid_requests.c:146:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:69:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:69:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid_requests.c:70:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:70:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_requests.c:71:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:71:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_requests.c:81:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:81:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_requests.c:81:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:81:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid_requests.c:82:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:82:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_requests.c:95:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:95:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:95:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid_requests.c:96:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:96:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_requests.c:116:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:117:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:117:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:146:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:147:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:147:[eva] assertion 'rte,shift' got final status valid.
 usbhid_requests.c:148:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:148:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:156:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:156:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid_requests.c:160:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:160:[eva] assertion 'rte,signed_overflow' got final status valid.
-usbhid_requests.c:161:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:161:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_requests.c:161:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_requests.c:150:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:150:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:158:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:158:[eva] assertion 'rte,signed_overflow' got final status valid.
+usbhid_requests.c:162:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:162:[eva] assertion 'rte,signed_overflow' got final status valid.
 usbhid_requests.c:163:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_requests.c:163:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid_requests.c:163:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_requests.c:168:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_requests.c:165:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:165:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_requests.c:165:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid_requests.c:170:[eva] assertion 'rte,mem_access' got final status valid.
 usbhid_requests.c:170:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_requests.c:170:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_requests.c:183:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:183:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:184:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:172:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:172:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_requests.c:172:[eva] assertion 'rte,index_bound' got final status valid.
 usbhid_requests.c:185:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:185:[eva] assertion 'rte,shift' got final status valid.
 usbhid_requests.c:185:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:186:[eva] assertion 'rte,unsigned_downcast' got final status valid.
 usbhid_requests.c:186:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:207:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:207:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:219:[eva] assertion 'rte,index_bound' got final status valid.
-usbhid_requests.c:264:[eva] assertion 'rte,unsigned_downcast' got final status valid.
-usbhid_requests.c:264:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:187:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:187:[eva] assertion 'rte,shift' got final status valid.
+usbhid_requests.c:187:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:188:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:188:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:209:[eva] assertion 'rte,unsigned_downcast' got final status valid.
+usbhid_requests.c:209:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:221:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:221:[eva] assertion 'rte,index_bound' got final status valid.
+usbhid_requests.c:266:[eva] assertion 'rte,unsigned_downcast' got final status valid.
 usbhid_requests.c:266:[eva] assertion 'rte,mem_access' got final status valid.
-usbhid_requests.c:333:[eva] assertion 'rte,shift' got final status valid.
-usbhid_requests.c:333:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:268:[eva] assertion 'rte,mem_access' got final status valid.
+usbhid_requests.c:335:[eva] assertion 'rte,shift' got final status valid.
+usbhid_requests.c:335:[eva] assertion 'rte,mem_access' got final status valid.
 [eva] ====== VALUES COMPUTED ======
 [eva] ####### Value execution feedback #########
 Long running functions (does not include current running time):
 ===============================================================
-+ main: executed: 1x total: 192.704s
-    | test_fcn_usbhid_erreur 4x 117.366s (60.9%) | test_fcn_driver_eva 3x 48.755s (25.3%) | test_fcn_usbhid 1x 26.568s (13.8%) | 1 others: 0.009s (0.0%) | self: 0.005s (0.0%)|
-+ test_fcn_usbhid_erreur: executed: 4x total: 117.366s
-    | usbhid_recv_report 948x 105.087s (89.5%) | 10 others: 9.519s (8.1%) | self: 2.760s (2.4%)|
-+ usbhid_recv_report: executed: 1194x total: 110.181s
-    | 2 others: 1.017s (0.9%) | self: 109.164s (99.1%)|
-+ test_fcn_driver_eva: executed: 3x total: 48.755s
-    | usbhid_class_rqst_handler 902x 36.834s (75.5%) | usbhid_ep_trigger 16x 5.123s (10.5%) | usbhid_recv_report 108x 4.179s (8.6%) | 10 others: 1.417s (2.9%) | self: 1.202s (2.5%)|
-+ usbhid_class_rqst_handler: executed: 902x total: 36.834s
-    | usbhid_handle_std_request 902x 26.050s (70.7%) | usbhid_handle_class_request 902x 8.661s (23.5%) | self: 2.124s (5.8%)|
-+ test_fcn_usbhid: executed: 1x total: 26.568s
-    | usbhid_send_report 920x 12.499s (47.0%) | usbhid_declare 232x 9.176s (34.5%) | usbhid_send_response 472x 2.015s (7.6%) | 7 others: 1.976s (7.4%) | self: 0.902s (3.4%)|
-+ usbhid_handle_std_request: executed: 902x total: 26.050s
-    | usbotghs_send_data 5230x 7.056s (27.1%) | usbotghs_endpoint_clear_nak 5230x 1.915s (7.4%) | 3 others: 1.284s (4.9%) | self: 15.794s (60.6%)|
-+ usbhid_send_report: executed: 1029x total: 14.799s
-    | usbhid_get_report_len 879x 4.940s (33.4%) | get_in_epid 903x 2.346s (15.9%) | usbotghs_send_data 1257x 1.746s (11.8%) | usbotghs_send_zlp 1836x 0.952s (6.4%) | usbhid_report_needs_id 879x 0.830s (5.6%) | 5 others: 0.704s (4.8%) | self: 3.279s (22.2%)|
-+ usbhid_declare: executed: 552x total: 12.989s
-    | get_in_epid 440x 2.358s (18.2%) | usbctrl_declare_interface 496x 1.110s (8.5%) | 2 others: 0.159s (1.2%) | self: 9.362s (72.1%)|
-+ usbotghs_send_data: executed: 7545x total: 10.323s
-    | self: 10.323s (100.0%)|
-+ usbhid_handle_class_request: executed: 902x total: 8.661s
-    | usbotghs_send_zlp 4582x 2.492s (28.8%) | is_iface_using_out_ep 902x 0.858s (9.9%) | usbhid_handle_set_idle 902x 0.638s (7.4%) | 2 others: 0.202s (2.3%) | self: 4.471s (51.6%)|
-+ get_in_epid: executed: 2653x total: 5.604s
-    | self: 5.604s (100.0%)|
-+ usbhid_ep_trigger: executed: 16x total: 5.123s
-    | usbhid_received 5x 5.109s (99.7%) | 2 others: 0.002s (0.0%) | self: 0.012s (0.2%)|
-+ usbhid_received: executed: 5x total: 5.109s
-    | 1 others: 0.068s (1.3%) | self: 5.041s (98.7%)|
-+ usbhid_get_report_len: executed: 879x total: 4.940s
-    | 4 others: 0.033s (0.7%) | self: 4.907s (99.3%)|
-+ usbotghs_send_zlp: executed: 7842x total: 4.197s
-    | self: 4.197s (100.0%)|
-+ usbhid_send_response: executed: 726x total: 4.038s
-    | usbotghs_send_data 1058x 1.521s (37.7%) | get_in_epid 594x 0.484s (12.0%) | 3 others: 0.145s (3.6%) | self: 1.888s (46.7%)|
++ main: executed: 1x total: 42.108s
+    | test_fcn_usbhid_erreur 3x 20.123s (47.8%) | test_fcn_driver_eva 3x 14.282s (33.9%) | test_fcn_usbhid 1x 7.690s (18.3%) | 1 others: 0.010s (0.0%) | self: 0.004s (0.0%)|
++ usbhid_send_report: executed: 1936x total: 23.368s
+    | usbhid_get_report_len 1623x 7.213s (30.9%) | usbotghs_send_data 3029x 4.118s (17.6%) | usbotghs_send_zlp 4236x 2.176s (9.3%) | usbhid_report_needs_id 1623x 1.535s (6.6%) | 6 others: 1.666s (7.1%) | self: 6.660s (28.5%)|
++ test_fcn_usbhid_erreur: executed: 3x total: 20.123s
+    | usbhid_send_report 1144x 11.195s (55.6%) | usbhid_recv_report 601x 5.836s (29.0%) | 9 others: 0.966s (4.8%) | self: 2.126s (10.6%)|
++ test_fcn_driver_eva: executed: 3x total: 14.282s
+    | usbhid_send_report 304x 7.514s (52.6%) | usbhid_class_rqst_handler 76x 4.095s (28.7%) | usbhid_ep_trigger 152x 1.182s (8.3%) | 11 others: 1.163s (8.1%) | self: 0.328s (2.3%)|
++ test_fcn_usbhid: executed: 1x total: 7.690s
+    | usbhid_send_report 488x 4.659s (60.6%) | usbhid_recv_report 140x 0.831s (10.8%) | usbhid_send_response 244x 0.604s (7.9%) | usbhid_declare 12x 0.569s (7.4%) | 6 others: 0.477s (6.2%) | self: 0.550s (7.1%)|
++ usbhid_get_report_len: executed: 1623x total: 7.213s
+    | 4 others: 0.023s (0.3%) | self: 7.190s (99.7%)|
++ usbhid_recv_report: executed: 753x total: 7.179s
+    | usbotghs_set_recv_fifo 2683x 0.371s (5.2%) | 1 others: 0.142s (2.0%) | self: 6.666s (92.9%)|
++ usbotghs_send_data: executed: 3470x total: 4.674s
+    | self: 4.674s (100.0%)|
++ usbhid_class_rqst_handler: executed: 76x total: 4.095s
+    | usbhid_handle_std_request 76x 2.400s (58.6%) | usbhid_handle_class_request 76x 1.519s (37.1%) | self: 0.175s (4.3%)|
++ usbotghs_send_zlp: executed: 4765x total: 2.439s
+    | self: 2.439s (100.0%)|
++ usbhid_handle_std_request: executed: 76x total: 2.400s
+    | usbhid_forge_report_descriptor 116x 1.125s (46.9%) | usbotghs_send_data 228x 0.297s (12.4%) | 3 others: 0.130s (5.4%) | self: 0.848s (35.3%)|
++ usbhid_report_needs_id: executed: 1623x total: 1.535s
+    | 4 others: 0.012s (0.8%) | self: 1.523s (99.2%)|
++ usbhid_handle_class_request: executed: 76x total: 1.519s
+    | usbhid_handle_set_idle 76x 0.560s (36.8%) | is_iface_using_out_ep 76x 0.444s (29.2%) | usbotghs_send_zlp 304x 0.154s (10.2%) | 2 others: 0.018s (1.2%) | self: 0.344s (22.6%)|
++ usbhid_ep_trigger: executed: 152x total: 1.182s
+    | usbhid_received 37x 1.113s (94.1%) | 2 others: 0.007s (0.6%) | self: 0.063s (5.3%)|
++ usbhid_forge_report_descriptor: executed: 116x total: 1.125s
+    | 4 others: 0.027s (2.4%) | self: 1.098s (97.6%)|
++ usbhid_received: executed: 37x total: 1.113s
+    | 1 others: 0.026s (2.3%) | self: 1.087s (97.7%)|
++ usbhid_declare: executed: 276x total: 0.942s
+    | get_in_epid 20x 0.074s (7.8%) | usbctrl_declare_interface 56x 0.069s (7.4%) | 2 others: 0.013s (1.4%) | self: 0.786s (83.4%)|
++ get_in_epid: executed: 1997x total: 0.761s
+    | self: 0.761s (100.0%)|
++ usbhid_send_response: executed: 829x total: 0.731s
+    | usbotghs_send_data 213x 0.259s (35.4%) | 4 others: 0.050s (6.9%) | self: 0.422s (57.8%)|
 
 Execution time per callstack (includes current running time):
 =============================================================
-+ main: executed: 1x total: 192.704s
-| + test_fcn_usbhid_erreur: executed: 4x total: 117.366s
-| | + usbhid_recv_report: executed: 674x total: 49.363s
-| | + usbhid_recv_report: executed: 256x total: 43.427s
-| | + usbhid_recv_report: executed: 18x total: 12.297s
-| + test_fcn_driver_eva: executed: 3x total: 48.755s
-| | + usbhid_class_rqst_handler: executed: 902x total: 36.834s
-| | | + usbhid_handle_std_request: executed: 902x total: 26.050s
-| | | | + usbotghs_send_data: executed: 5230x total: 7.056s
-| | | + usbhid_handle_class_request: executed: 902x total: 8.661s
-| | + usbhid_ep_trigger: executed: 16x total: 5.123s
-| | | + usbhid_received: executed: 5x total: 5.109s
-| | + usbhid_recv_report: executed: 108x total: 4.179s
-| + test_fcn_usbhid: executed: 1x total: 26.568s
-| | + usbhid_declare: executed: 224x total: 8.654s
-| | + usbhid_send_report: executed: 64x total: 3.825s
-| | + usbhid_send_report: executed: 224x total: 3.505s
++ main: executed: 1x total: 42.108s
+| + test_fcn_usbhid_erreur: executed: 3x total: 20.123s
+| | + usbhid_send_report: executed: 370x total: 4.180s
+| | | + usbotghs_send_data: executed: 720x total: 0.971s
+| | + usbhid_send_report: executed: 278x total: 3.759s
+| | | + usbotghs_send_data: executed: 801x total: 1.138s
+| | + usbhid_send_report: executed: 370x total: 3.234s
+| | | + usbotghs_send_data: executed: 720x total: 0.973s
+| | + usbhid_recv_report: executed: 240x total: 3.107s
+| | + usbhid_recv_report: executed: 313x total: 1.493s
+| | + usbhid_recv_report: executed: 48x total: 1.236s
+| + test_fcn_driver_eva: executed: 3x total: 14.282s
+| | + usbhid_send_report: executed: 152x total: 6.521s
+| | | + usbhid_get_report_len: executed: 144x total: 4.201s
+| | | + usbhid_report_needs_id: executed: 144x total: 0.867s
+| | + usbhid_class_rqst_handler: executed: 76x total: 4.095s
+| | | + usbhid_handle_std_request: executed: 76x total: 2.400s
+| | | | + usbhid_forge_report_descriptor: executed: 116x total: 1.125s
+| | | + usbhid_handle_class_request: executed: 76x total: 1.519s
+| | + usbhid_ep_trigger: executed: 152x total: 1.182s
+| | | + usbhid_received: executed: 37x total: 1.113s
+| | + usbhid_send_report: executed: 152x total: 0.993s
+| + test_fcn_usbhid: executed: 1x total: 7.690s
+| | + usbhid_send_report: executed: 192x total: 1.902s
+| | | + usbhid_get_report_len: executed: 128x total: 0.914s
+| | + usbhid_send_report: executed: 48x total: 1.564s
+| | | + usbhid_get_report_len: executed: 36x total: 1.006s
+| | + usbhid_send_report: executed: 192x total: 0.752s
 ################

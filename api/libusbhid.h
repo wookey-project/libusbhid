@@ -347,6 +347,31 @@ typedef mbed_error_t          (*usbhid_set_idle_t)(uint8_t hid_handler,
  *
  * the USB HID stack return a handler to interact with this interface
  */
+
+/*@
+  @ requires \separated(&usbhid_ctx,(uint8_t*)(in_buff + (0 .. in_buff_len)));
+
+  @behavior ud_invparam:
+  @   assumes num_descriptor == 0 || num_descriptor >= MAX_HID_DESCRIPTORS || hid_handler == NULL ;
+  @   ensures \result == MBED_ERROR_INVPARAM;
+
+  @behavior ud_nostorage:
+  @   assumes num_descriptor != 0 && num_descriptor < MAX_HID_DESCRIPTORS && hid_handler != NULL ;
+  @   assumes usbhid_ctx.num_iface >= MAX_USBHID_IFACES || in_buff == NULL || in_buff_len == 0 ;
+  @   ensures \result == MBED_ERROR_NOSTORAGE ;
+
+  // the lonely possibility here is that there is no more space at CTRL level for our interface.
+  // The iface content should be valid (no INVPARAM)
+  // TODO: assigns ctx_list (usbctrl)
+  @behavior declare_iface:
+  @   assumes num_descriptor != 0 && num_descriptor < MAX_HID_DESCRIPTORS && hid_handler != NULL ;
+  @   assumes usbhid_ctx.num_iface < MAX_USBHID_IFACES && in_buff != NULL && in_buff_len > 0 ;
+  @   assigns usbhid_ctx.hid_ifaces[\old(usbhid_ctx.num_iface)], usbhid_ctx.num_iface ;
+  @   ensures \result == MBED_ERROR_NONE || \result == MBED_ERROR_NOSTORAGE ;
+
+  @ complete behaviors ;
+  @ disjoint behaviors ;
+*/
 mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
                             usbhid_subclass_t hid_subclass,
                             usbhid_protocol_t hid_protocol,

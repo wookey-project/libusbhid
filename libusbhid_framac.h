@@ -44,6 +44,8 @@
 #define usb_backend_drv_activate_endpoint usbotghs_activate_endpoint
 
 
+#define MAX_HID_DESCRIPTORS 8
+
 #define MAX_USBHID_IFACES    4
 #define MAX_HID_REPORTS 8
 

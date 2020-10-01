@@ -35,11 +35,12 @@
 #include "libc/sanhandlers.h"
 
 
-#define MAX_HID_DESCRIPTORS 8
 
 static bool data_being_sent = false;
 
 #ifndef __FRAMAC__
+#define MAX_HID_DESCRIPTORS 8
+
 static usbhid_context_t usbhid_ctx = { 0 };
 
 /*
@@ -284,7 +285,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    if (num_descriptor > MAX_HID_DESCRIPTORS) {
+    if (num_descriptor >= MAX_HID_DESCRIPTORS) {
         log_printf("[USBHID] error ! too many class level descriptors!\n");
         errcode = MBED_ERROR_INVPARAM;
         goto err;
@@ -299,6 +300,17 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
         errcode = MBED_ERROR_NOSTORAGE;
         goto err;
     }
+    if (in_buff == NULL) {
+        log_printf("[USBHID] error ! buffer given is null !\n");
+        errcode = MBED_ERROR_NOSTORAGE;
+        goto err;
+    }
+    if (in_buff_len == 0) {
+        log_printf("[USBHID] error ! buffer given is null-sized !\n");
+        errcode = MBED_ERROR_NOSTORAGE;
+        goto err;
+    }
+
 
     uint8_t i = usbhid_ctx.num_iface;
     memset((void*)&usbhid_ctx.hid_ifaces[i], 0x0, sizeof(usbctrl_interface_t));
