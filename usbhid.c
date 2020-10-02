@@ -97,12 +97,13 @@ static inline uint8_t get_in_epid(usbctrl_interface_t const * const iface)
     iface_ep_num = iface->usb_ep_number;
     /*@ assert iface_ep_num < MAX_EP_PER_INTERFACE ; */
 
+    uint8_t i = 0;
     /*@
       @ loop invariant 0 <= i <= iface_ep_num ;
       @ loop assigns i ;
       @ loop variant (iface_ep_num - i);
       */
-    for (uint8_t i = 0; i < iface_ep_num; ++i) {
+    for (i = 0; i < iface_ep_num; ++i) {
         if (iface->eps[i].dir == USB_EP_DIR_IN || iface->eps[i].dir == USB_EP_DIR_BOTH) {
             log_printf("[USBHID] IN EP is %d\n", iface->eps[i].ep_num);
             epin = iface->eps[i].ep_num;
@@ -140,23 +141,27 @@ mbed_error_t usbhid_received(uint32_t dev_id __attribute__((unused)), uint32_t s
       */
     for (iface = 0; iface < usbhid_ctx.num_iface; ++iface)
     {
-        uint8_t ep = 0;
         if (usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number >= MAX_EP_PER_INTERFACE) {
             errcode = MBED_ERROR_INVPARAM;
             goto err;
         }
-        /*@ assert \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0 .. usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - 1)) ; */
+
+        uint8_t ep = 0;
+        const uint8_t max_ep_number = usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number;
+        /*@ assert 0 <= max_ep_number < MAX_EP_PER_INTERFACE; */
+        /*@ assert \valid(usbhid_ctx.hid_ifaces[iface].iface.eps + (0 .. max_ep_number - 1)) ; */
         /*@
-          @ loop invariant 0 <= ep <= usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number ;
+          @ loop invariant 0 <= ep <= max_ep_number ;
           @ loop assigns ep ;
-          @ loop variant (usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number - ep) ;
+          @ loop variant (max_ep_number - ep) ;
           */
-        for (ep = 0; ep < usbhid_ctx.hid_ifaces[iface].iface.usb_ep_number; ++ep)
+        for (ep = 0; ep < max_ep_number; ++ep)
         {
             if (usbhid_ctx.hid_ifaces[iface].iface.eps[ep].ep_num == ep_id)
             {
                 log_printf("[USBHID] executing trigger for EP %d\n", ep_id);
                 usbhid_report_received_trigger(iface, size);
+                goto err;
             }
         }
     }
@@ -411,6 +416,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
     uint8_t epid = get_in_epid(&usbhid_ctx.hid_ifaces[i].iface);
     usbhid_ctx.hid_ifaces[i].inep.id = epid;
 
+    uint8_t j = 0;
     /*@
         @ loop invariant 0 <= j <= MAX_HID_REPORTS;
         @ loop invariant \valid(usbhid_ctx.hid_ifaces[i].inep.idle_ms + (0..(MAX_HID_REPORTS-1))) ;
@@ -420,7 +426,7 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
         @ loop assigns usbhid_ctx.hid_ifaces[i].inep.silence[0..(MAX_HID_REPORTS-1)] ;
         @ loop variant (MAX_HID_REPORTS - j);
     */
-    for (uint8_t j = 0; j < MAX_HID_REPORTS; ++j) {
+    for (j = 0; j < MAX_HID_REPORTS; ++j) {
         usbhid_ctx.hid_ifaces[i].inep.idle_ms[j] = 0;
         usbhid_ctx.hid_ifaces[i].inep.silence[j] = true; /* silent while no event associated to this EP is received */
     }
@@ -715,7 +721,7 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler __attribute__((unused)),
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint8_t ep_id = 0;
     uint8_t ep;
-    uint8_t iface;
+    uint8_t iface = 0;
     /* get back EP identifier from HID handler */
 
     /*@ assert \valid(usbhid_ctx.hid_ifaces + (0 .. usbhid_ctx.num_iface - 1)) ; */
