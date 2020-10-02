@@ -616,6 +616,12 @@ void test_fcn_driver_eva() {
     uint8_t ephemeral_desc_size = 255;
     /* now we can emulate triggers */
     usbhid_get_descriptor((uint8_t)0, &(buf[0]), &ephemeral_desc_size, 0);
+    usbhid_get_descriptor((uint8_t)0, NULL, &ephemeral_desc_size, 0);
+    usbhid_get_descriptor((uint8_t)0, &(buf[0]), NULL, 0);
+    ephemeral_desc_size = 2;
+    usbhid_get_descriptor((uint8_t)0, &(buf[0]), &ephemeral_desc_size, 0);
+    ephemeral_desc_size = 255;
+    usbhid_get_descriptor((uint8_t)42, &(buf[0]), &ephemeral_desc_size, 0);
 
     usbhid_class_rqst_handler(ctxh1, &pkt);
 

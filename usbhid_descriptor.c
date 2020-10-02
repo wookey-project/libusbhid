@@ -33,6 +33,47 @@
 /* This is the HID class descriptor content. This descriptor is returned at GetConfiguration time.
  * Each other class-level descriptor (report descriptor and others) are returned to
  * GetDescriptor class level requests, handled by the class-level handler */
+/*@
+  @ requires \separated(buf,desc_size) ;
+
+  @behavior invparam:
+  @   assumes (buf == NULL || desc_size == NULL) ;
+  @   assigns \nothing;
+  @   ensures \result == MBED_ERROR_INVPARAM ;
+
+  @behavior invstate:
+  @   assumes !(buf == NULL || desc_size == NULL) ;
+  @   assumes usbhid_ctx.num_iface >= MAX_USBHID_IFACES ;
+  @   assigns \nothing;
+  @   ensures \result == MBED_ERROR_INVSTATE ;
+
+  @behavior noiface:
+  @   assumes !(buf == NULL || desc_size == NULL) ;
+  @   assumes usbhid_ctx.num_iface < MAX_USBHID_IFACES ;
+  @   assumes \forall integer i ; 0 <= i < usbhid_ctx.num_iface ==> usbhid_ctx.hid_ifaces[i].id != iface_id ;
+  @   assigns \nothing;
+  @   ensures \result == MBED_ERROR_INVPARAM ;
+
+  @behavior toobig:
+  @   assumes !(buf == NULL || desc_size == NULL) ;
+  @   assumes usbhid_ctx.num_iface < MAX_USBHID_IFACES ;
+  @   assumes \exists integer i ; 0 <= i < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[i].id == iface_id && sizeof(usbhid_descriptor_t) + (usbhid_ctx.hid_ifaces[i].num_descriptors * sizeof (usbhid_content_descriptor_t)) >= *desc_size ;
+  @   assigns \nothing ;
+  @   ensures \result == MBED_ERROR_NOMEM ;
+
+  @behavior ok:
+  @   assumes !(buf == NULL || desc_size == NULL) ;
+  @   assumes usbhid_ctx.num_iface < MAX_USBHID_IFACES ;
+  @   assumes \exists integer i ; 0 <= i < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[i].id == iface_id && sizeof(usbhid_descriptor_t) + (usbhid_ctx.hid_ifaces[i].num_descriptors * sizeof (usbhid_content_descriptor_t)) < *desc_size ;
+  @   assigns *buf ;
+  @   assigns *desc_size ;
+  @   ensures \result == MBED_ERROR_NONE ;
+
+
+  @ complete behaviors ;
+  @ disjoint behaviors ;
+
+ */
 mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
                                         uint8_t            *buf,
                                         uint8_t            *desc_size,
@@ -46,12 +87,7 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    if (ctx == NULL) {
-        log_printf("[USBHID] unable to get ctx !\n");
-        errcode = MBED_ERROR_INVSTATE;
-        goto err;
-    }
-    if (ctx->num_iface >= MAX_USBHID_IFACES) {
+     if (ctx->num_iface >= MAX_USBHID_IFACES) {
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
@@ -103,13 +139,6 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
     desc->bNumDescriptors = num_desc; /* number of class descriptor, including report descriptor (at least one) */
 
     uint8_t descid = 0;
-        /*
-           ghost
-             uint8_t *last_desctype = &desc->descriptors[num_desc-1].bDescriptorType;
-             uint16_t *last_desclen = &desc->descriptors[num_desc-1].wDescriptorLength;
-             //  assert last_desctype <= (uint8_t*)&buf[*desc_size-1] ;
-             //  assert (uint8_t*)last_desclen <= (uint8_t*)&buf[*desc_size-2] ;
-         */
     /*@
       @ loop invariant 0 <= descid <= num_desc ;
       @ loop assigns descid, *buf;
@@ -118,13 +147,6 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
       @ loop variant (num_desc - descid) ;
       */
     for (descid = 0; descid < num_desc; ++descid) {
-        /*
-           ghost
-             uint8_t *desctype = &desc->descriptors[descid].bDescriptorType;
-             uint16_t *desclen = &desc->descriptors[descid].wDescriptorLength;
-             //  assert desctype <= (uint8_t*)&buf[*desc_size-1] ;
-             //  assert (uint8_t*)desclen <= (uint8_t*)&buf[*desc_size-2] ;
-         */
         desc->descriptors[descid].bDescriptorType = REPORT_DESCRIPTOR_TYPE;
         desc->descriptors[descid].wDescriptorLength = usbhid_get_report_desc_len(i, descid);
     }
