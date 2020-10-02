@@ -422,13 +422,13 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
  */
 
 /*@
-  @ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ requires \separated(report,&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
   @ assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
   @ assigns usbotghs_ctx ;
   @ assigns data_being_sent ;
   */
 mbed_error_t usbhid_send_report(uint8_t hid_handler,
-                                uint8_t *report,
+                                const uint8_t * const report,
                                 usbhid_report_type_t type,
                                 uint8_t report_index);
 

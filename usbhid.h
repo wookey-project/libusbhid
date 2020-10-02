@@ -37,10 +37,13 @@
 # define log_printf(...)
 #endif
 
+#define MAX_HID_REPORT_SIZE 255
+
 #ifndef __FRAMAC__
 
 #define MAX_USBHID_IFACES    4
 #define MAX_HID_REPORTS 8
+
 
 typedef struct {
     uint8_t  id;      /* IN EP identifier */

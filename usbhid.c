@@ -570,10 +570,10 @@ err:
 }
 
 
-mbed_error_t usbhid_send_report(uint8_t              hid_handler,
-                                uint8_t*             report,
-                                usbhid_report_type_t type,
-                                uint8_t              report_index)
+mbed_error_t usbhid_send_report(uint8_t               hid_handler,
+                                uint8_t const * const report,
+                                usbhid_report_type_t  type,
+                                uint8_t               report_index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint32_t len = 0;
@@ -586,11 +586,19 @@ mbed_error_t usbhid_send_report(uint8_t              hid_handler,
         goto err;
     }
     /* first field is the report index */
-    uint8_t buf[256] = { 0 };
+    uint8_t buf[MAX_HID_REPORT_SIZE + 1] = { 0 };
     len = usbhid_get_report_len(hid_handler, type, report_index);
     if (len == 0) {
         log_printf("[USBHID] unable to get back report len for iface %d/idx %d\n", hid_handler, report_index);
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
     }
+    if (len > MAX_HID_REPORT_SIZE) {
+        log_printf("[USBHID] report len is %x, too long for local buffer!\n", len);
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    /*@ assert 0 < len <= MAX_HID_REPORT_SIZE ; */
     /* wait for previous data to be fully transmitted */
     while (data_being_sent == true) {
         request_data_membarrier();
@@ -603,14 +611,27 @@ mbed_error_t usbhid_send_report(uint8_t              hid_handler,
     set_bool_with_membarrier(&data_being_sent, true);
     /* is a report id needed ? if a REPORT_ID is defined in the report descriptor, it is added,
      * otherwise, items are sent directly */
-    if (usbhid_report_needs_id(hid_handler, report_index)) {
+    uint8_t * dest_buf;
+    bool requires_id = usbhid_report_needs_id(hid_handler, report_index);
+
+    if (requires_id) {
         buf[0] = usbhid_report_get_id(hid_handler, report_index);
         log_printf("[USBHID] this report requires its ID (0x%x) to be sent\n", buf[0]);
-        memcpy((void*)&buf[1], (void*)report, len);
-        len++;
+        dest_buf = &buf[1];
     } else {
         log_printf("[USBHID] sending report without ID\n");
-        memcpy((void*)&buf[0], (void*)report, len);
+        dest_buf = &buf[0];
+    }
+    /* ghost
+      uint8_t *start_of_report = (uint8_t*)report;
+      uint8_t *end_of_report = (uint8_t*)report + len;
+    */
+    /* assert \valid_read((uint8_t*)(start_of_report .. end_of_report)); */
+
+    memcpy((void*)&dest_buf[0], (void*)report, len);
+
+    if (requires_id) {
+        len += 1;
     }
 
     /* total size is report + report id (one byte) */

@@ -139,13 +139,14 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
      * and so on)
      */
     uint32_t local_report_len = 0;
+    uint32_t iterator = 0;
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
       @ loop invariant \valid(report->items + (0 .. (report->num_items -1)));
       @ loop assigns iterator,report_count, report_size, local_report_len, report_len ;
       @ loop variant (report->num_items - iterator);
       */
-    for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
+    for (iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
             report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_SIZE) {
             report_size = report->items[iterator].data1;
@@ -172,10 +173,20 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
             local_report_len = local_report_len / 8;
             log_printf("[USBHID] current report size in bbytes: %d\n", local_report_len);
             /* add local MAIN item report size to current global report size */
+            /* local overflow detection */
+            uint32_t local_total = 0;
+            local_total = report_len + local_report_len;
+            if (local_total > MAX_HID_REPORT_SIZE) {
+                log_printf("[USBHID] current report size is bigger than max report size!\n");
+                report_len = 0;
+                goto err;
+            }
             report_len += local_report_len;
+            /* @ assert 0 <= report_len <= MAX_HID_REPORT_SIZE; */
         }
     }
 err:
+    /* @ assert 0 <= report_len <= MAX_HID_REPORT_SIZE; */
     return report_len;
 }
 
