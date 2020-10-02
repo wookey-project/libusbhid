@@ -392,6 +392,10 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
  * This allow, for HID stacks that do not handle some specific requests like
  * Set_Protocol(), to let the libUSBHID handle the default response.
  */
+/*@ lemma pmo_test:
+    \forall integer x,y,z,w; (x<=y) || (x>y && z<w) || (x>y && z>=w) <==> (x<=y)||((x>y)&&(z<w || z>=w)) ;
+*/
+
 /*@
   @ behavior uc_inviface:
   @    assumes hid_handler >= usbhid_ctx.num_iface ;
