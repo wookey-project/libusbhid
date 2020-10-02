@@ -349,7 +349,9 @@ void test_fcn_usbhid(){
 
     my_report_type = Frama_C_interval_8(0, 255);
     my_report_index= Frama_C_interval_8(0, 2);
+    errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    errcode = usbhid_configure(hid_handler, twoidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
@@ -370,7 +372,9 @@ void test_fcn_usbhid(){
 
     my_report_type = Frama_C_interval_8(0, 255);
     my_report_index= Frama_C_interval_8(0, 2);
+    errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    errcode = usbhid_configure(hid_handler, twoidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
@@ -404,7 +408,9 @@ void test_fcn_usbhid(){
 
     my_report_type = Frama_C_interval_8(0, 2);
     my_report_index= Frama_C_interval_8(0, 2);
+    errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    errcode = usbhid_configure(hid_handler, twoidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
@@ -518,11 +524,14 @@ void test_fcn_usbhid_erreur(){
 
     my_report_type = Frama_C_interval_8(0, 2);
     my_report_index= Frama_C_interval_8(0, 2);
+    errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler_err, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
     usbhid_send_report(hid_handler_err, (uint8_t*)&report_oneindex, my_report_type, 0);
+    errcode = usbhid_configure(hid_handler, twoidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler_err, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_report(hid_handler_err, (uint8_t*)&report_twoindex, my_report_type, 0);
     usbhid_send_report(hid_handler_err, NULL, my_report_type, Frama_C_interval_8(my_report_index,5));
+    errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler_err, (uint8_t*)&report_oneindex, my_report_type, Frama_C_interval_8(my_report_index,5));
     usbhid_send_response(hid_handler_err + 42, &(my_report[0]), my_response_len);
     usbhid_send_response(hid_handler_err, NULL, my_response_len);
@@ -619,8 +628,10 @@ void test_fcn_driver_eva() {
     usbhid_dflt_set_protocol(dflt_hid_handler,dflt_index);
     usbhid_dflt_set_idle(dflt_hid_handler,dflt_idle);
 
+    errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
     usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, 0);
+    errcode = usbhid_configure(hid_handler, twoidx_get_report_cb, NULL, NULL, NULL);
     usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
     usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, 0);
     usbhid_ep_trigger(6, 255, 1);
