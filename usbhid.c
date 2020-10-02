@@ -621,12 +621,12 @@ mbed_error_t usbhid_send_report(uint8_t               hid_handler,
         log_printf("[USBHID] sending report without ID\n");
         dest_buf = &buf[0];
     }
-    /* ghost
+    /* @ghost
       uint8_t *start_of_report = (uint8_t*)report;
-      uint8_t *end_of_report = (uint8_t*)report + len;
+      uint8_t *end_of_report = (uint8_t*)(report + (len-1));
     */
-    /* assert \valid_read((uint8_t*)(start_of_report .. end_of_report)); */
-
+    /*  assert \valid_read((uint8_t*)(start_of_report .. end_of_report)); */
+    /* @assert \valid((uint8_t*)report+(0..(len-1))) ; */
     memcpy((void*)&dest_buf[0], (void*)report, len);
 
     if (requires_id) {

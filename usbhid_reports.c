@@ -113,11 +113,11 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
     /* @ calls oneidx_get_report_cb,  twoidx_get_report_cb; */
 
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
-    uint8_t report_size = 0;
-    uint8_t report_count = 0;
     if (report == NULL) {
         goto err;
     }
+    uint8_t report_size = 0;
+    uint8_t report_count = 0;
     log_printf("[USBHID] get report length for HID report type %x\n", type);
     /* The report len defines the length (in bits in USB HID 1.11) of
      * the data sent after the report identifier.
