@@ -398,7 +398,7 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
   @    ensures \result == MBED_ERROR_INVPARAM;
 
   @ behavior uc_invgetter:
-  @    assumes get_report_cb == NULL ;
+  @    assumes hid_handler < usbhid_ctx.num_iface && get_report_cb == NULL ;
   @    ensures \result == MBED_ERROR_INVPARAM;
 
   @ behavior uc_ok:
