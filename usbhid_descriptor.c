@@ -91,24 +91,40 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
         goto err;
     }
 
-    usbhid_descriptor_t *desc =
+    /* @ assert ctx->hid_ifaces[i].num_descriptors < MAX_HID_DESCRIPTORS; */
+    const uint8_t num_desc = ctx->hid_ifaces[i].num_descriptors;
+
+    usbhid_descriptor_t * const desc =
         (usbhid_descriptor_t *)(&buf[0]);
     desc->bLength = size; /* HID descriptor size */
     desc->bDescriptorType = HID_DESCRIPTOR_TYPE; /* HID descriptor type, set by USB consortium */
     desc->bcdHID = 0x111; /* HID class specification release 1.11 */
     desc->bCountryCode = 0;  /* contry code : 0x0 = not supported */
-    desc->bNumDescriptors = ctx->hid_ifaces[i].num_descriptors; /* number of class descriptor, including report descriptor (at least one) */
+    desc->bNumDescriptors = num_desc; /* number of class descriptor, including report descriptor (at least one) */
 
     uint8_t descid = 0;
-    /* @ assert ctx->hid_ifaces[i].num_descriptors < MAX_HID_DESCRIPTORS; */
+        /*
+           ghost
+             uint8_t *last_desctype = &desc->descriptors[num_desc-1].bDescriptorType;
+             uint16_t *last_desclen = &desc->descriptors[num_desc-1].wDescriptorLength;
+             //  assert last_desctype <= (uint8_t*)&buf[*desc_size-1] ;
+             //  assert (uint8_t*)last_desclen <= (uint8_t*)&buf[*desc_size-2] ;
+         */
     /*@
-      @ loop invariant 0 <= descid <= ctx->hid_ifaces[i].num_descriptors ;
-      @ loop assigns descid ;
-      @ loop assigns desc->descriptors[0..(ctx->hid_ifaces[i].num_descriptors-1)].bDescriptorType ;
-      @ loop assigns desc->descriptors[0..(ctx->hid_ifaces[i].num_descriptors-1)].wDescriptorLength ;
-      @ loop variant (ctx->hid_ifaces[i].num_descriptors - descid) ;
+      @ loop invariant 0 <= descid <= num_desc ;
+      @ loop assigns descid, *buf;
+      //  loop assigns desc->descriptors[0..(num_desc-1)].bDescriptorType ;
+      //  loop assigns desc->descriptors[0..(num_desc-1)].wDescriptorLength ;
+      @ loop variant (num_desc - descid) ;
       */
-    for (descid = 0; descid < ctx->hid_ifaces[i].num_descriptors; ++descid) {
+    for (descid = 0; descid < num_desc; ++descid) {
+        /*
+           ghost
+             uint8_t *desctype = &desc->descriptors[descid].bDescriptorType;
+             uint16_t *desclen = &desc->descriptors[descid].wDescriptorLength;
+             //  assert desctype <= (uint8_t*)&buf[*desc_size-1] ;
+             //  assert (uint8_t*)desclen <= (uint8_t*)&buf[*desc_size-2] ;
+         */
         desc->descriptors[descid].bDescriptorType = REPORT_DESCRIPTOR_TYPE;
         desc->descriptors[descid].wDescriptorLength = usbhid_get_report_desc_len(i, descid);
     }
