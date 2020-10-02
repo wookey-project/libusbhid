@@ -195,13 +195,13 @@ uint8_t recv_buf[65535];
 usbhid_report_infos_t report_oneindex = {
     .num_items = ONEINDEX_ITEMS_NUM,
     .report_id = 0,
-    .items = &oneindex_items
+    .items = &(oneindex_items[0])
 };
 
 usbhid_report_infos_t report_twoindex = {
     .num_items = TWOINDEX_ITEMS_NUM,
     .report_id = 0,
-    .items = &twoindex_items
+    .items = &(twoindex_items[0])
 };
 
 /*********************************************************************
