@@ -513,24 +513,24 @@ bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
 
   @ behavior inv_handler:
   @   assumes response != NULL ;
-  @   assumes response_len > 0 ;
+  @   assumes response_len != 0 ;
   @   assumes (hid_handler >= usbhid_ctx.num_iface || hid_handler >= MAX_USBHID_IFACES);
   @   assigns \nothing;
   @   ensures \result == MBED_ERROR_INVPARAM;
 
   @ behavior undeclared_iface:
   @   assumes response != NULL ;
-  @   assumes response_len > 0 ;
+  @   assumes response_len != 0 ;
   @   assumes (hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES && usbhid_ctx.hid_ifaces[hid_handler].declared == \false);
   @   assigns \nothing;
   @   ensures \result == MBED_ERROR_INVPARAM;
 
   @ behavior ok:
   @   assumes response != NULL ;
-  @   assumes response_len > 0 ;
+  @   assumes response_len != 0 ;
   @   assumes (hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES && usbhid_ctx.hid_ifaces[hid_handler].declared != \false);
   @   assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
-  @   assigns usbotghs_ctx, usbotghs_ctx.out_eps[0..(USBOTGHS_MAX_OUT_EP-1)] ;
+  @   assigns usbotghs_ctx, usbotghs_ctx.in_eps[0..255] ;
   @   assigns data_being_sent ;
   @   ensures \valid(response);
   @   ensures data_being_sent == \false; // should be false at the end, whatever it is at start
@@ -539,6 +539,7 @@ bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
   @ complete behaviors ;
   @ disjoint behaviors ;
   */
+//pmo before    assigns usbotghs_ctx, usbotghs_ctx.out_eps[0..(USBOTGHS_MAX_OUT_EP-1)] ;
 mbed_error_t usbhid_send_response(uint8_t              hid_handler,
                                   uint8_t*             response,
                                   uint8_t              response_len);

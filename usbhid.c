@@ -76,7 +76,7 @@ __attribute__((weak)) mbed_error_t usbhid_report_received_trigger(uint8_t hid_ha
   @ behavior gie_ep_not_found:
   @   assumes iface != NULL ;
   @   assumes iface->usb_ep_number < MAX_EP_PER_INTERFACE ;
-  @   assumes \forall integer i ; 0 <= i < iface->usb_ep_number ==> iface->eps[i].dir != USB_EP_DIR_IN && iface->eps[i].dir != USB_EP_DIR_BOTH ;
+  @   assumes \forall integer i ; 0 <= i < iface->usb_ep_number ==> (iface->eps[i].dir != USB_EP_DIR_IN && iface->eps[i].dir != USB_EP_DIR_BOTH) ;
   @   ensures \result == 0;
 
   @ complete behaviors;
@@ -99,8 +99,7 @@ static inline uint8_t get_in_epid(usbctrl_interface_t const * const iface)
 
     uint8_t i = 0;
     /*@
-      @ loop invariant 0 <= i <= iface_ep_num;
-      @ loop invariant \forall uint8_t j; 0 <= j < i ==> iface->eps[j].dir != USB_EP_DIR_IN && iface->eps[j].dir != USB_EP_DIR_BOTH;
+      @ loop invariant 0 <= i <= iface_ep_num ;
       @ loop assigns i ;
       @ loop variant (iface_ep_num - i);
       */
