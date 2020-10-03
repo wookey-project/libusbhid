@@ -44,6 +44,7 @@
   @behavior invstate:
   @   assumes !(buf == NULL || desc_size == NULL) ;
   @   assumes usbhid_ctx.num_iface >= MAX_USBHID_IFACES ;
+  @   requires \separated((uint8_t*)(buf +( 0 .. *desc_size)),desc_size) ;
   @   assigns \nothing;
   @   ensures \result == MBED_ERROR_INVSTATE ;
 
@@ -51,6 +52,7 @@
   @   assumes !(buf == NULL || desc_size == NULL) ;
   @   assumes usbhid_ctx.num_iface < MAX_USBHID_IFACES ;
   @   assumes \forall integer i ; 0 <= i < usbhid_ctx.num_iface ==> usbhid_ctx.hid_ifaces[i].id != iface_id ;
+  @   requires \separated((uint8_t*)(buf +( 0 .. *desc_size)),desc_size) ;
   @   assigns \nothing;
   @   ensures \result == MBED_ERROR_INVPARAM ;
 
@@ -58,6 +60,7 @@
   @   assumes !(buf == NULL || desc_size == NULL) ;
   @   assumes usbhid_ctx.num_iface < MAX_USBHID_IFACES ;
   @   assumes \exists integer i ; 0 <= i < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[i].id == iface_id && sizeof(usbhid_descriptor_t) + (usbhid_ctx.hid_ifaces[i].num_descriptors * sizeof (usbhid_content_descriptor_t)) >= *desc_size ;
+  @   requires \separated((uint8_t*)(buf +( 0 .. *desc_size)),desc_size) ;
   @   assigns \nothing ;
   @   ensures \result == MBED_ERROR_NOMEM ;
 
@@ -65,6 +68,7 @@
   @   assumes !(buf == NULL || desc_size == NULL) ;
   @   assumes usbhid_ctx.num_iface < MAX_USBHID_IFACES ;
   @   assumes \exists integer i ; 0 <= i < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[i].id == iface_id && sizeof(usbhid_descriptor_t) + (usbhid_ctx.hid_ifaces[i].num_descriptors * sizeof (usbhid_content_descriptor_t)) < *desc_size ;
+  @   requires \separated((uint8_t*)(buf +( 0 .. *desc_size)),desc_size) ;
   @   assigns *buf ;
   @   assigns *desc_size ;
   @   ensures \result == MBED_ERROR_NONE ;
