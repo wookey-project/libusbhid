@@ -1,10 +1,10 @@
 #include "generated/devlist.h"
+#include "libusbctrl.h"
 #include "api/libusbhid.h"
 #include "autoconf.h"
 #include "libc/types.h"
 #include "libc/string.h"
 //#include <string.h>
-#include "usbctrl.h"
 #include "usbhid.h"
 #include "usbhid_requests.h"
 #include "usbhid_default_handlers.h"
@@ -225,7 +225,8 @@ mbed_error_t set_report_cb(uint8_t hid_handler, uint8_t index)
     return MBED_ERROR_NONE;
 }
 
-mbed_error_t set_proto_cb(uint8_t hid_handler, uint8_t index) {
+mbed_error_t set_proto_cb(uint8_t hid_handler, uint8_t index)
+{
     hid_handler = hid_handler;
     index = index;
     /* FIXME: interval on errors */
@@ -233,7 +234,8 @@ mbed_error_t set_proto_cb(uint8_t hid_handler, uint8_t index) {
 
 }
 
-mbed_error_t set_idle_cb(uint8_t hid_handler, uint8_t idle) {
+mbed_error_t set_idle_cb(uint8_t hid_handler, uint8_t idle)
+{
     hid_handler = hid_handler;
     idle = idle;
     /* FIXME: interval on errors */
@@ -613,9 +615,15 @@ void test_fcn_driver_eva() {
     pkt.bmRequestType = Frama_C_interval_8(0,255);
 
     uint8_t buf[256];
-    uint8_t desc_size = 255;
+    uint8_t ephemeral_desc_size = 255;
     /* now we can emulate triggers */
-    usbhid_get_descriptor((uint8_t)0, &(buf[0]), &desc_size, 0);
+    usbhid_get_descriptor((uint8_t)0, &(buf[0]), &ephemeral_desc_size, 0);
+    usbhid_get_descriptor((uint8_t)0, NULL, &ephemeral_desc_size, 0);
+    usbhid_get_descriptor((uint8_t)0, &(buf[0]), NULL, 0);
+    ephemeral_desc_size = 2;
+    usbhid_get_descriptor((uint8_t)0, &(buf[0]), &ephemeral_desc_size, 0);
+    ephemeral_desc_size = 255;
+    usbhid_get_descriptor((uint8_t)42, &(buf[0]), &ephemeral_desc_size, 0);
 
     usbhid_class_rqst_handler(ctxh1, &pkt);
 

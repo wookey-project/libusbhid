@@ -534,6 +534,9 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
     }
     /* first field is the report index */
     /* wait for previous data to be fully transmitted */
+    /*@
+      @ loop assigns data_being_sent ;
+      */
     while (data_being_sent == true) {
         request_data_membarrier();
 #ifdef __FRAMAC__
@@ -553,6 +556,9 @@ mbed_error_t usbhid_send_response(uint8_t              hid_handler,
         goto err_send;
     }
     /* wait for end of transmission */
+    /*@
+      @ loop assigns data_being_sent ;
+      */
     while (data_being_sent == true) {
         request_data_membarrier();
 #ifdef __FRAMAC__
@@ -599,6 +605,9 @@ mbed_error_t usbhid_send_report(uint8_t               hid_handler,
     }
     /*@ assert 0 < len <= MAX_HID_REPORT_SIZE ; */
     /* wait for previous data to be fully transmitted */
+    /*@
+      @ loop assigns data_being_sent ;
+      */
     while (data_being_sent == true) {
         request_data_membarrier();
 #ifdef __FRAMAC__
@@ -638,7 +647,11 @@ mbed_error_t usbhid_send_report(uint8_t               hid_handler,
     log_printf("[USBHID] sending report on EP %d (len %d)\n", epid, len);
 
     usb_backend_drv_send_data(buf, len, epid);
-    /* wait for end of transmission */
+    /* wait for end of transmission. This is a triggered loop. Frama-C can't guarantee
+     * that this loop is finished using this vary implementation */
+    /*@
+      @ loop assigns data_being_sent ;
+      */
     while (data_being_sent == true) {
         request_data_membarrier();
 #ifdef __FRAMAC__
