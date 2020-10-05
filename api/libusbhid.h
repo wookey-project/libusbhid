@@ -392,7 +392,9 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
  * This allow, for HID stacks that do not handle some specific requests like
  * Set_Protocol(), to let the libUSBHID handle the default response.
  */
+  // requires \separated(&usbhid_ctx,get_report_cb,set_report_cb,set_proto_cb,set_idle_cb) ;
 /*@
+
   @ behavior uc_inviface:
   @    assumes hid_handler >= usbhid_ctx.num_iface ;
   @    ensures \result == MBED_ERROR_INVPARAM;

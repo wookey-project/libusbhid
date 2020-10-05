@@ -1,10 +1,10 @@
 #include "generated/devlist.h"
+#include "libusbctrl.h"
 #include "api/libusbhid.h"
 #include "autoconf.h"
 #include "libc/types.h"
 #include "libc/string.h"
 //#include <string.h>
-#include "usbctrl.h"
 #include "usbhid.h"
 #include "usbhid_requests.h"
 #include "usbhid_default_handlers.h"
