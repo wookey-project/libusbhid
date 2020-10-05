@@ -99,7 +99,7 @@ err:
 }
 
 
-
+/*@ assigns \nothing; */
 uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index)
 {
 
@@ -204,7 +204,7 @@ err:
 /*
  * TODO: return mbed_error_t type, to handle errcode
  */
-/*@
+/*@  requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
   @ assigns \nothing;
   */
 uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)

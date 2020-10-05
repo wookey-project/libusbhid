@@ -396,7 +396,7 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
     \forall integer x,y,z,w; (x<=y) || (x>y && z<w) || (x>y && z>=w) <==> (x<=y)||((x>y)&&(z<w || z>=w)) ;
 */
 
-/*@
+/*@ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
 
   @ behavior uc_inviface:
   @    assumes hid_handler >= usbhid_ctx.num_iface ;
@@ -466,7 +466,7 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler,
  * PROTOCOL (Set_Procotol command)
  */
 
-/*@
+/*@  requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
   @ assigns \nothing ;
 
   @ behavior uisr_invalid_idx :

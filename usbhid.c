@@ -126,6 +126,8 @@ err:
 #ifndef __FRAMAC__
 static
 #endif
+/*@ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ assigns \nothing; */
 mbed_error_t usbhid_received(uint32_t dev_id __attribute__((unused)), uint32_t size, uint8_t ep_id)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -467,7 +469,7 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-
+    /*@ assert errcode==MBED_ERROR_NONE; */
     /* set each of the interface callbacks */
     ctx->hid_ifaces[hid_handler].get_report_cb = get_report;
     /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {oneidx_get_report_cb,  twoidx_get_report_cb} ;)*/
@@ -498,6 +500,9 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
 
     /* set interface as configured */
     ctx->hid_ifaces[hid_handler].configured = true;
+    /*@ assert errcode==MBED_ERROR_NONE; */
+    /*@ assert  errcode==MBED_ERROR_NONE ==> (hid_handler < usbhid_ctx.num_iface && get_report != NULL) ;*/
+    
 err:
     return errcode;
 }
