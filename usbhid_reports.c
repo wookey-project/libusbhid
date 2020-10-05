@@ -48,9 +48,14 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
     }
 
     /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {oneidx_get_report_cb,  twoidx_get_report_cb} ;)*/
-    /* @ calls oneidx_get_report_cb,  twoidx_get_report_cb; */
+    /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
+    /*@
+      @ loop invariant 0 <= iterator <= report->num_items ;
+      @ loop assigns \nothing;
+      @ loop variant report->num_items - iterator ;
+      */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
             report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) {
@@ -73,8 +78,15 @@ uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index)
         goto err;
     }
 
+    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;)*/
+    /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
+    /*@
+      @ loop invariant 0 <= iterator <= report->num_items ;
+      @ loop assigns \nothing ;
+      @ loop variant report->num_items - iterator ;
+      */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
             report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) {
@@ -110,8 +122,7 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
 
 
     /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;)*/
-    /* @ calls oneidx_get_report_cb,  twoidx_get_report_cb; */
-
+    /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
     if (report == NULL) {
         goto err;
@@ -193,6 +204,9 @@ err:
 /*
  * TODO: return mbed_error_t type, to handle errcode
  */
+/*@
+  @ assigns \nothing;
+  */
 uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -210,12 +224,19 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
         goto err;
     }
 
+    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;)*/
+    /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     if (report == NULL) {
         goto err;
     }
 
+    /*@
+      @ loop invariant 0 <= iterator <= report->num_items ;
+      @ loop assigns offset ;
+      @ loop variant report->num_items - iterator ;
+      */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         /* first byte is handling type, tag and size of the item */
         /* there can be one to three more bytes, depending on the item */
@@ -270,6 +291,8 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
 
     uint32_t offset = 0;
     uint32_t iterator = 0;
+    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;)*/
+    /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
     if (report == NULL) {
         log_printf("[USBHID] report for handler %d/index %d not found!\n", hid_handler, index);
@@ -283,6 +306,12 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
 
     /* let's forge the report */
     log_printf("[USBHID] collection size is %d\n", report->num_items);
+
+    /*@
+      @ loop invariant 0 <= iterator <= report->num_items ;
+      @ loop assigns offset, *buf ;
+      @ loop variant report->num_items - iterator ;
+      */
     for (iterator = 0; iterator < report->num_items; ++iterator) {
         usbhid_short_item_t *item = (usbhid_short_item_t*)&(buf[offset]);
         item->bSize =  report->items[iterator].size;
