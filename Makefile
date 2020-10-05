@@ -137,7 +137,7 @@ LIBSTD_API_DIR ?= $(PROJ_FILES)/libs/std/api
 
 # This is the Wookey USB control plane library directory. This directory is used by all USB class
 # implementations such as HID.
-LIBUSB_DIR ?= $(PROJ_FILES)/libs/usbctrl
+LIBUSB_API_DIR ?= $(PROJ_FILES)/libs/usbctrl/api
 
 
 # This is the EwoK kernel exported headers directory. These headers are requested by the libstd
@@ -164,7 +164,7 @@ FRAMAC_GEN_FLAGS:=\
 	        -warn-unsigned-overflow \
 	        -warn-invalid-pointer \
 			-kernel-msg-key pp \
-			-cpp-extra-args="-nostdinc -I framac/include  -I $(LIBUSB_DIR)/api -I $(LIBUSB_DIR) -I $(LIBSTD_API_DIR) -I $(USBOTGHS_DIR) -I $(USBOTGHS_DEVHEADER_PATH) -I $(EWOK_API_DIR)"  \
+			-cpp-extra-args="-nostdinc -I framac/include  -I $(LIBUSB_API_DIR) -I $(LIBSTD_API_DIR) -I $(USBOTGHS_DIR) -I $(USBOTGHS_DEVHEADER_PATH) -I $(EWOK_API_DIR)"  \
 		    -rte \
 		    -instantiate
 
@@ -199,20 +199,20 @@ FRAMAC_WP_FLAGS:=\
 
 
 frama-c-parsing:
-	frama-c framac/entrypoint.c usbhid*.c $(LIBUSB_DIR)/usbctrl.c $(USBOTGHS_DIR)/usbotghs.c \
+	frama-c framac/entrypoint.c usbhid*.c $(LIBUSB_API_DIR) $(USBOTGHS_DIR)/usbotghs.c \
 		 -c11 \
 		 -no-frama-c-stdlib \
-		 -cpp-extra-args="-nostdinc -I framac/include -I $(LIBUSB_DIR)/api -I $(LIBUSB_DIR) -I $(LIBSTD_API_DIR) -I $(USBOTGHS_DIR) -I $(USBOTGHS_DEVHEADER_PATH) -I $(EWOK_API_DIR)"
+		 -cpp-extra-args="-nostdinc -I framac/include -I $(LIBUSB_API_DIR) -I $(LIBSTD_API_DIR) -I $(USBOTGHS_DIR) -I $(USBOTGHS_DEVHEADER_PATH) -I $(EWOK_API_DIR)"
 
 frama-c-eva:
-	frama-c framac/entrypoint.c usbhid*.c $(LIBUSB_DIR)/usbctrl.c $(USBOTGHS_DIR)/usbotghs.c $(USBOTGHS_DIR)/usbotghs_fifos.c -c11 \
+	frama-c framac/entrypoint.c usbhid*.c $(LIBUSB_API_DIR) $(USBOTGHS_DIR)/usbotghs.c $(USBOTGHS_DIR)/usbotghs_fifos.c -c11 \
 		    $(FRAMAC_GEN_FLAGS) \
 			$(FRAMAC_EVA_FLAGS) \
 			-save $(EVA_SESSION) \
    			-time $(TIMESTAMP)
 
 frama-c:
-	frama-c framac/entrypoint.c usbhid*.c $(LIBUSB_DIR)/usbctrl.c $(USBOTGHS_DIR)/usbotghs.c $(USBOTGHS_DIR)/usbotghs_fifos.c -c11 \
+	frama-c framac/entrypoint.c usbhid*.c $(LIBUSB_API_DIR) $(USBOTGHS_DIR)/usbotghs.c $(USBOTGHS_DIR)/usbotghs_fifos.c -c11 \
 		    $(FRAMAC_GEN_FLAGS) \
 			$(FRAMAC_EVA_FLAGS) \
    		    -then \
@@ -221,7 +221,7 @@ frama-c:
    			-time $(TIMESTAMP)
 
 frama-c-instantiate:
-	frama-c framac/entrypoint.c usbctrl.c -c11 -machdep x86_32 \
+	frama-c framac/entrypoint.c -c11 -machdep x86_32 \
 			$(FRAMAC_GEN_FLAGS) \
 			-instantiate
 
