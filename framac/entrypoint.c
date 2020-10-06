@@ -225,7 +225,8 @@ mbed_error_t set_report_cb(uint8_t hid_handler, uint8_t index)
     return MBED_ERROR_NONE;
 }
 
-mbed_error_t set_proto_cb(uint8_t hid_handler, uint8_t index) {
+mbed_error_t set_proto_cb(uint8_t hid_handler, uint8_t index)
+{
     hid_handler = hid_handler;
     index = index;
     /* FIXME: interval on errors */
@@ -233,7 +234,8 @@ mbed_error_t set_proto_cb(uint8_t hid_handler, uint8_t index) {
 
 }
 
-mbed_error_t set_idle_cb(uint8_t hid_handler, uint8_t idle) {
+mbed_error_t set_idle_cb(uint8_t hid_handler, uint8_t idle)
+{
     hid_handler = hid_handler;
     idle = idle;
     /* FIXME: interval on errors */

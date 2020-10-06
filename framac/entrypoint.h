@@ -46,4 +46,22 @@ uint32_t Frama_C_interval_32(uint32_t min, uint32_t max);
  */
 uint16_t usbhid_get_requested_idle(uint8_t hid_handler, uint8_t index);
 
+/*
+ * prototypes only
+ */
+/* assigns \nothing */
+usbhid_report_infos_t   *oneidx_get_report_cb(uint8_t hid_handler, uint8_t index);
+
+/* assigns \nothing */
+usbhid_report_infos_t   *twoidx_get_report_cb(uint8_t hid_handler, uint8_t index);
+
+/* assigns \nothing */
+mbed_error_t set_report_cb(uint8_t hid_handler, uint8_t index);
+
+/* assigns \nothing */
+mbed_error_t set_proto_cb(uint8_t hid_handler, uint8_t index);
+
+/* assigns \nothing */
+mbed_error_t set_idle_cb(uint8_t hid_handler, uint8_t idle);
+
 #endif/*!ENTRY_H_*/

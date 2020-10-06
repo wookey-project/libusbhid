@@ -92,7 +92,15 @@ static inline uint8_t get_hid_handler_from_iface(uint8_t iface)
 {
     /* ctx checked by parent function */
     usbhid_context_t *ctx = usbhid_get_context();
-    for (uint8_t i = 0; i < ctx->num_iface; ++i) {
+
+    uint8_t i = 0;
+    uint8_t num_iface = ctx->num_iface;
+    /*@
+      @ loop invariant 0 <= i <= num_iface ;
+      @ loop assigns \nothing ;
+      @ loop variant num_iface - i;
+      */
+    for (i = 0; i < num_iface; ++i) {
         if (ctx->hid_ifaces[i].iface.id == iface) {
             return i;
         }
