@@ -292,7 +292,7 @@ uint8_t  hid_handler;
   @   assumes ctxh1 >= GHOST_num_ctx ;
   @   ensures ctxh1 == \old(GHOST_num_ctx)  && (GHOST_num_ctx == (\old(GHOST_num_ctx) +1)) &&  ctx_list[\old(num_ctx)].dev_id == USB_OTG_HS_ID && ctx_list[GHOST_num_ctx-1] == ctx_list[num_ctx-1] ; 
   @   ensures ctx_list[ctxh1] == \old(ctx_list[ctxh1]) ;
-  @   ensures \result == MBED_ERROR_INVPARAM || \result == MBED_ERROR_UNKNOWN;
+  @   ensures \result == MBED_ERROR_NOBACKEND || \result == MBED_ERROR_UNKNOWN || \result == MBED_ERROR_NONE;
   @
   @  behavior ok:
   @   assumes num_ctx < MAX_USB_CTRL_CTX ; 
@@ -308,13 +308,15 @@ mbed_error_t prepare_ctrl_ctx(){
     mbed_error_t errcode;
     errcode = usbctrl_declare(USB_OTG_HS_ID, &ctxh1);
     if (errcode != MBED_ERROR_NONE) {
-        goto err;
+      /*@ assert errcode == MBED_ERROR_NOBACKEND || errcode == MBED_ERROR_UNKNOWN || errcode == MBED_ERROR_NONE;*/
+      goto err;
     }
     /*@ assert errcode == MBED_ERROR_NONE ; */
     /*@ assert ctxh1 == 0 ; */
 
     errcode = usbctrl_initialize(ctxh1);
     if (errcode != MBED_ERROR_NONE) {
+            /*@ assert errcode == MBED_ERROR_NOBACKEND || errcode == MBED_ERROR_UNKNOWN || errcode == MBED_ERROR_NONE;*/
         goto err;
     }
     /*@ assert errcode == MBED_ERROR_NONE ; */
