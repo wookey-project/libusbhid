@@ -487,13 +487,14 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler,
   @ behavior uisr_ok :
   @   assumes index < MAX_HID_REPORTS ;
   @   assumes hid_handler < MAX_USBHID_IFACES ;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true ;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured != \false ;
   @   ensures \result == usbhid_ctx.hid_ifaces[hid_handler].inep.silence[index] ;
 
-  @ complete behaviors ;
+  @ complete behaviors ; 
   @ disjoint behaviors ;
 
  */
+/* pmo todo complete pas prouvé !? */
 bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
 
 

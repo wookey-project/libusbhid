@@ -685,8 +685,8 @@ bool usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index)
     }
     if (usbhid_ctx.hid_ifaces[hid_handler].configured == false) {
         return true;
-    }
-
+    } 
+    /*@ assert index < MAX_HID_REPORTS && hid_handler < MAX_USBHID_IFACES && usbhid_ctx.hid_ifaces[hid_handler].configured != \false ;*/
     /* when setting idle_ms to 0, silence is requested while no event arrise on the
      * corresponding report index */
     return usbhid_ctx.hid_ifaces[hid_handler].inep.silence[index];

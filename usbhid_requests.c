@@ -72,7 +72,7 @@ static inline uint8_t is_iface_using_out_ep(uint8_t iface)
                 /* invalid behavior */
                 return false;
             }
-            /* @ assert ctx->hid_ifaces[i].iface.usb_ep_number < MAX_EP_PER_INTERFACE; */
+            /*@ assert ctx->hid_ifaces[i].iface.usb_ep_number < MAX_EP_PER_INTERFACE; */
             /*@
               @ loop invariant 0 <= j <= ctx->hid_ifaces[i].iface.usb_ep_number ;
               @ loop assigns j;
