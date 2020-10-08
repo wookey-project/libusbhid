@@ -507,11 +507,21 @@ err:
     return errcode;
 }
 /*@ requires true;
-  @ assigns \nothing;
+  @
   @ behavior not_exist:
   @    assumes !(hid_handler < usbhid_ctx.num_iface ∧ hid_handler < 4);
   @    assumes (usbhid_ctx.hid_ifaces[hid_handler].declared ≢ 0) != \true ;
+  @    assigns \nothing;
   @    ensures \result == MBED_ERROR_INVPARAM;
+  @
+  @ behavior exists:
+  @     assumes hid_handler < usbhid_ctx.num_iface ∧ hid_handler < 4;
+  @    assumes (usbhid_ctx.hid_ifaces[hid_handler].declared ≢ 0) == \true ;
+  @    assigns *((uint32_t *)(0x40040000 .. 0x40044000));
+  @    ensures \result==MBED_ERROR_NONE;
+  @
+  @ complete behaviors;
+  @ disjoint behaviors; 
 */
 
 mbed_error_t usbhid_response_done(uint8_t hid_handler)
