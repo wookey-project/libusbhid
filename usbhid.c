@@ -506,6 +506,13 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
 err:
     return errcode;
 }
+/*@ requires true;
+  @ assigns \nothing;
+  @ behavior not_exist:
+  @    assumes !(hid_handler < usbhid_ctx.num_iface ∧ hid_handler < 4);
+  @    assumes (usbhid_ctx.hid_ifaces[hid_handler].declared ≢ 0) != \true ;
+  @    ensures \result == MBED_ERROR_INVPARAM;
+*/
 
 mbed_error_t usbhid_response_done(uint8_t hid_handler)
 {
