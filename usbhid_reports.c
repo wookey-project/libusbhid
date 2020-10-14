@@ -28,7 +28,7 @@
 #include "usbhid.h"
 #include "usbhid_descriptor.h"
 #include "autoconf.h"
-
+#include "framac/entrypoint.h"
 
 #define USBHID_STD_ITEM_LEN             4
 
@@ -47,13 +47,13 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
         goto err;
     }
 
-    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {oneidx_get_report_cb,  twoidx_get_report_cb} ;)*/
+    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {oneidx_get_report_cb,  twoidx_get_report_cb} ;*/
     /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
-      @ loop assigns \nothing;
+      @ loop assigns iterator;
       @ loop variant report->num_items - iterator ;
       */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
@@ -84,7 +84,7 @@ uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index)
 
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
-      @ loop assigns \nothing ;
+      @ loop assigns iterator ;
       @ loop variant report->num_items - iterator ;
       */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
@@ -204,8 +204,10 @@ err:
 /*
  * TODO: return mbed_error_t type, to handle errcode
  */
-/*@  requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+/*@
+  @ requires \separated( &usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
   @ assigns \nothing;
+  @ ensures 0<= \result <= 255 ; 
   */
 uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
 {
@@ -219,13 +221,17 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
         goto err;
     }
     /* TODO: add usbhid_interface_configured() */
+
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb} ;*/
+    /*@ calls oneidx_get_report_cb ; */
     if (ctx->hid_ifaces[hid_handler].get_report_cb == NULL) {
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb != NULL; */
 
-    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;)*/
-    /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb} ;*/
+    /* @ calls oneidx_get_report_cb ; */
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     if (report == NULL) {
@@ -234,7 +240,7 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
 
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
-      @ loop assigns offset ;
+      @ loop assigns offset, iterator ;
       @ loop variant report->num_items - iterator ;
       */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
@@ -309,7 +315,7 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
 
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
-      @ loop assigns offset, *buf ;
+      @ loop assigns offset, *buf, iterator ;
       @ loop variant report->num_items - iterator ;
       */
     for (iterator = 0; iterator < report->num_items; ++iterator) {
