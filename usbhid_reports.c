@@ -28,7 +28,9 @@
 #include "usbhid.h"
 #include "usbhid_descriptor.h"
 #include "autoconf.h"
+#ifdef __FRAMAC__
 #include "framac/entrypoint.h"
+#endif
 
 #define USBHID_STD_ITEM_LEN             4
 
@@ -207,7 +209,7 @@ err:
 /*@
   @ requires \separated( &usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
   @ assigns \nothing;
-  @ ensures 0<= \result <= 255 ; 
+  @ ensures 0<= \result <= 255 ;
   */
 uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
 {
