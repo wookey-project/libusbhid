@@ -49,9 +49,13 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
         goto err;
     }
 
-    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {oneidx_get_report_cb,  twoidx_get_report_cb} ;*/
-    /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
-    usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
+    
+  
+    usbhid_report_infos_t *report;
+    
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {oneidx_get_report_cb,  twoidx_get_report_cb} ;*/
+    /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
+    report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
@@ -80,9 +84,10 @@ uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index)
         goto err;
     }
 
-    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;)*/
-    /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
-    usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
+    usbhid_report_infos_t *report;
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;*/
+    /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
+    report  = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
@@ -100,8 +105,12 @@ err:
     return id;
 }
 
+/*@
+  @ requires \separated(&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ assigns \nothing;
+  @ ensures 0<= \result <= 255 ; 
+  */
 
-/*@ assigns \nothing; */
 uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index)
 {
 
@@ -121,11 +130,14 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
     if (!ctx->hid_ifaces[hid_handler].get_report_cb) {
         goto err;
     }
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb != \null ;*/
 
-
-    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;)*/
-    /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
-    usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
+    
+    usbhid_report_infos_t *report;
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;*/
+    /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
+    report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
+    
     if (report == NULL) {
         goto err;
     }
@@ -195,11 +207,11 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
                 goto err;
             }
             report_len += local_report_len;
-            /* @ assert 0 <= report_len <= MAX_HID_REPORT_SIZE; */
+            /*@ assert 0 <= report_len <= MAX_HID_REPORT_SIZE; */
         }
     }
 err:
-    /* @ assert 0 <= report_len <= MAX_HID_REPORT_SIZE; */
+    /*@ assert 0 <= report_len <= MAX_HID_REPORT_SIZE; */
     return report_len;
 }
 
@@ -222,18 +234,20 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uin
     }
     /* TODO: add usbhid_interface_configured() */
 
-    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb} ;*/
-    /*@ calls oneidx_get_report_cb ; */
+    
+    
     if (ctx->hid_ifaces[hid_handler].get_report_cb == NULL) {
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb != NULL; */
 
+    usbhid_report_infos_t *report ;
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb} ;*/
-    /* @ calls oneidx_get_report_cb ; */
-    usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
-
+    /*@ calls oneidx_get_report_cb ; */ 
+    report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
+  
+    
     if (report == NULL) {
         errcode = MBED_ERROR_NOSTORAGE;
         goto err;
@@ -299,9 +313,12 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
 
     uint32_t offset = 0;
     uint32_t iterator = 0;
-    /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;)*/
-    /* @ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
-    usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
+    usbhid_report_infos_t *report;
+
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;*/
+    /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
+    report  = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
+
     if (report == NULL) {
         log_printf("[USBHID] report for handler %d/index %d not found!\n", hid_handler, index);
         errcode = MBED_ERROR_INVPARAM;

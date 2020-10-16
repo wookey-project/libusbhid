@@ -207,11 +207,16 @@ usbhid_report_infos_t report_twoindex = {
 /*********************************************************************
  * Callbacks implementations that are required by libusbhid API
  */
+/*@ assigns \nothing;
+@ ensures \result == &report_oneindex;
+*/
 usbhid_report_infos_t   *oneidx_get_report_cb(uint8_t hid_handler, uint8_t index)
 {
     return &report_oneindex;
 }
-
+/*@ assigns \nothing;
+@ ensures \result == &report_twoindex;
+*/
 usbhid_report_infos_t   *twoidx_get_report_cb(uint8_t hid_handler, uint8_t index)
 {
     return &report_twoindex;
