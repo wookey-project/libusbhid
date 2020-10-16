@@ -99,7 +99,13 @@ typedef struct {
 
 
 static usbhid_context_t usbhid_ctx = { 0 };
+// pmo addition done for FC 
+usbhid_report_infos_t report_oneindex;
 
+usbhid_report_infos_t report_twoindex;
+
+#define TWOINDEX_ITEMS_NUM 25
+#define ONEINDEX_ITEMS_NUM 16
 #endif
 
 #endif/*!LIBUSBHID_FRAMAC_H_*/
