@@ -33,7 +33,7 @@
  * argument length is encoded in a 8 bits field in the HID descriptor. As a consequence,
  * its size can't be bigger than 255.
  */
-uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index);
+uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uint8_t *len);
 
 /*
  * forge report descriptor based on the upper stack item lists of the given report id.

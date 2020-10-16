@@ -203,15 +203,13 @@ err:
     return report_len;
 }
 
-/*
- * TODO: return mbed_error_t type, to handle errcode
- */
 /*@
   @ requires \separated( &usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ requires \valid(len);
   @ assigns \nothing;
   @ ensures 0<= \result <= 255 ;
   */
-uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
+uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uint8_t *len)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint32_t offset = 0;
@@ -237,6 +235,7 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
     usbhid_report_infos_t *report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     if (report == NULL) {
+        errcode = MBED_ERROR_NOSTORAGE;
         goto err;
     }
 
@@ -264,8 +263,9 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index)
         log_printf("[USBHID] invalid descriptor size: %d!\n", offset);
         offset = 0;
     }
+    *len = offset;
 err:
-    return offset;
+    return errcode;
 }
 
 

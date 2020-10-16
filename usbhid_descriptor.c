@@ -152,7 +152,12 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
       */
     for (descid = 0; descid < num_desc; ++descid) {
         desc->descriptors[descid].bDescriptorType = REPORT_DESCRIPTOR_TYPE;
-        desc->descriptors[descid].wDescriptorLength = usbhid_get_report_desc_len(i, descid);
+        uint8_t len = 0;
+        errcode = usbhid_get_report_desc_len(i, descid, &len);
+        if (errcode != MBED_ERROR_NONE) {
+            goto err;
+        }
+        desc->descriptors[descid].wDescriptorLength = len;
     }
     *desc_size = size;
 err:
