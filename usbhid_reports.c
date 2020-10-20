@@ -34,38 +34,7 @@
 
 #define USBHID_STD_ITEM_LEN             4
 
-/*@
-  @ requires \separated(&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
-  @ assigns \nothing;
-  @
-  @ behavior uie_undeclared_iface:
-  @   assumes hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES ;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \false;
-  @   ensures \result == \false;
-  @
-  @ behavior report_null:
-  @   assumes !usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
-  @   assumes !(hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES) ;
-  @   assumes !(usbhid_ctx.hid_ifaces[hid_handler].declared == \false);
-  @   ensures \result == \false;
-  @
-  @ behavior not_found:
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
-  @   assumes !(hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES) ;
-  @   assumes !(usbhid_ctx.hid_ifaces[hid_handler].declared == \false);
-  @  assumes  !(\forall integer i; 0 <= i <= ONEINDEX_ITEMS_NUM ==> !(report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) &&  \forall integer i; 0 <= i <= TWOINDEX_ITEMS_NUM ==> !(report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) ;
-  @   ensures \result == \false;
-  @
-  @ behavior found:
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
-  @   assumes !(hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES) ;
-  @   assumes !(usbhid_ctx.hid_ifaces[hid_handler].declared == \false);
-  @  assumes !(\forall integer i; 0 <= i <= ONEINDEX_ITEMS_NUM ==> !(report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) &&  \forall integer i; 0 <= i <= TWOINDEX_ITEMS_NUM ==> !(report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID));
-  @   ensures \result == \true;
-  @
-  @ complete behaviors;
-  @ disjoint behaviors;
-*/
+
 bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -102,11 +71,7 @@ err:
     return false;
 }
 
-/*@
-  @ requires \separated(&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
-  @ assigns \nothing;
-  @ ensures 0<= \result <= 255 ;
-  */
+
 uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -140,11 +105,7 @@ err:
     return id;
 }
 
-/*@
-  @ requires \separated(&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
-  @ assigns \nothing;
-  @ ensures 0<= \result <= 255 ;
-  */
+
 uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index)
 {
 
@@ -249,12 +210,7 @@ err:
     return report_len;
 }
 
-/*@
-  @ requires \separated( &usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
-  @ requires \valid(len);
-  @ assigns \nothing;
-  @ ensures 0<= \result <= 255 ;
-  */
+
 uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uint8_t *len)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -318,11 +274,7 @@ err:
 
 
 
-/*@
-  @ requires \separated(&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
-  @ assigns \nothing;
-  @ ensures 0<= \result <= 255 ; 
-  */
+
 mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, uint32_t *bufsize, uint8_t index)
 {
     log_printf("[USBHID] forging report descriptor\n");
@@ -354,8 +306,8 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
     uint32_t iterator = 0;
     usbhid_report_infos_t *report;
 
-    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;*/
-    /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb} ;*/
+    /*@ calls oneidx_get_report_cb; */
     report  = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     if (report == NULL) {
@@ -370,10 +322,10 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
 
     /* let's forge the report */
     log_printf("[USBHID] collection size is %d\n", report->num_items);
-
+ Previous:
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
-      @ loop assigns offset, *buf, iterator ;
+      @ loop assigns offset, buf[0..256], iterator ;
       @ loop variant report->num_items - iterator ;
       */
     for (iterator = 0; iterator < report->num_items; ++iterator) {
@@ -395,6 +347,7 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
             goto err;
         }
     }
+    /*@ assert \at(*report, Previous) == \at(*report, Here); */
     usbhid_report_sent_trigger(hid_handler, index);
     /* and update the size with the report one */
     *bufsize = offset;

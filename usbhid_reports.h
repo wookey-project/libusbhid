@@ -33,6 +33,13 @@
  * argument length is encoded in a 8 bits field in the HID descriptor. As a consequence,
  * its size can't be bigger than 255.
  */
+
+/*@
+  @ requires \separated( &usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ requires \valid(len);
+  @ assigns *len;
+  @ ensures \result== MBED_ERROR_INVPARAM || \result== MBED_ERROR_NONE || \result== MBED_ERROR_INVSTATE || \result== MBED_ERROR_NOSTORAGE;
+  */
 uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uint8_t *len);
 
 /*
@@ -40,6 +47,12 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uin
  * The upper stack handle its own item list, but not the HID item encoding, which is
  * handled by this function.
  */
+
+/*@
+  @ requires \separated(&report_oneindex,buf +(0 .. 255),bufsize,&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ assigns *bufsize, buf[0..255] ;
+  @ ensures  \result == MBED_ERROR_NONE || \result ==  MBED_ERROR_INVSTATE || \result == MBED_ERROR_INVPARAM ; 
+  */
 mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, uint32_t *bufsize, uint8_t index);
 
 
@@ -48,16 +61,61 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
  * identifier, all reports have the same size, based on two global tags: REPORT_SIZE and
  * REPORT_COUNT.
  */
+
+/*@
+  @ requires \separated(&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ assigns \nothing;
+  @ ensures 0<= \result <= 255 ;
+  */
 uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index);
 
 /*
  * is report to send needs to be prefixed by its Report Identifier ?
  */
+
+/*@
+  @ requires \separated(&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ assigns \nothing;
+  @
+  @ behavior uie_undeclared_iface:
+  @   assumes hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES ;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \false;
+  @   ensures \result == \false;
+  @
+  @ behavior report_null:
+  @   assumes !usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
+  @   assumes !(hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES) ;
+  @   assumes !(usbhid_ctx.hid_ifaces[hid_handler].declared == \false);
+  @   ensures \result == \false;
+  @
+  @ behavior not_found:
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
+  @   assumes !(hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES) ;
+  @   assumes !(usbhid_ctx.hid_ifaces[hid_handler].declared == \false);
+  @  assumes  !(\forall integer i; 0 <= i <= ONEINDEX_ITEMS_NUM ==> !(report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) &&  \forall integer i; 0 <= i <= TWOINDEX_ITEMS_NUM ==> !(report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) ;
+  @   ensures \result == \false;
+  @
+  @ behavior found:
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
+  @   assumes !(hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES) ;
+  @   assumes !(usbhid_ctx.hid_ifaces[hid_handler].declared == \false);
+  @  assumes !(\forall integer i; 0 <= i <= ONEINDEX_ITEMS_NUM ==> !(report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) &&  \forall integer i; 0 <= i <= TWOINDEX_ITEMS_NUM ==> !(report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID));
+  @   ensures \result == \true;
+  @
+  @ complete behaviors;
+  @ disjoint behaviors;
+*/
 bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index);
 
 /*
  * get back report identifier for report based on its index
  */
+
+/*@
+  @ requires \separated(&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ assigns \nothing;
+  @ ensures 0<= \result <= 255 ;
+*/
 uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index);
 
 #endif/*!USBHID_REPORTS_H_*/
