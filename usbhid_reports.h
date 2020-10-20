@@ -49,6 +49,7 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uin
  */
 
 /*@
+  @ requires \valid_read(buf + (0 .. 255));
   @ requires \separated(&report_oneindex,buf +(0 .. 255),bufsize,&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
   @ assigns *bufsize, buf[0..255] ;
   @ ensures  \result == MBED_ERROR_NONE || \result ==  MBED_ERROR_INVSTATE || \result == MBED_ERROR_INVPARAM ; 
