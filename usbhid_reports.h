@@ -75,32 +75,28 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
  */
 
 /*@
-  @ requires \separated(&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ requires \separated(&report_oneindex,&report_twoindex,&usbhid_ctx, &usbotghs_ctx, &GHOST_num_ctx, ctx_list+(..), ((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
   @ assigns \nothing;
   @
   @ behavior uie_undeclared_iface:
-  @   assumes hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES ;
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \false;
+  @   assumes ((hid_handler >= usbhid_ctx.num_iface || hid_handler >=MAX_USBHID_IFACES) || (usbhid_ctx.hid_ifaces[hid_handler].declared == \false));
   @   ensures \result == \false;
   @
   @ behavior report_null:
+  @   assumes !((hid_handler >= usbhid_ctx.num_iface || hid_handler >=MAX_USBHID_IFACES) || (usbhid_ctx.hid_ifaces[hid_handler].declared == \false));
   @   assumes !usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
-  @   assumes !(hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES) ;
-  @   assumes !(usbhid_ctx.hid_ifaces[hid_handler].declared == \false);
   @   ensures \result == \false;
   @
   @ behavior not_found:
+  @   assumes !((hid_handler >= usbhid_ctx.num_iface || hid_handler >=MAX_USBHID_IFACES) || (usbhid_ctx.hid_ifaces[hid_handler].declared == \false));
   @   assumes usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
-  @   assumes !(hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES) ;
-  @   assumes !(usbhid_ctx.hid_ifaces[hid_handler].declared == \false);
-  @  assumes  !(\forall integer i; 0 <= i <= ONEINDEX_ITEMS_NUM ==> !(report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) &&  \forall integer i; 0 <= i <= TWOINDEX_ITEMS_NUM ==> !(report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) ;
+  @  assumes  (\forall integer i; 0 <= i <= ONEINDEX_ITEMS_NUM ==> !(report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) && (\forall integer i; 0 <= i <= TWOINDEX_ITEMS_NUM ==> !(report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) ;
   @   ensures \result == \false;
   @
   @ behavior found:
+  @   assumes !((hid_handler >= usbhid_ctx.num_iface || hid_handler >=MAX_USBHID_IFACES) || (usbhid_ctx.hid_ifaces[hid_handler].declared == \false));
   @   assumes usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
-  @   assumes !(hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES) ;
-  @   assumes !(usbhid_ctx.hid_ifaces[hid_handler].declared == \false);
-  @  assumes !(\forall integer i; 0 <= i <= ONEINDEX_ITEMS_NUM ==> !(report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) &&  \forall integer i; 0 <= i <= TWOINDEX_ITEMS_NUM ==> !(report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID));
+  @  assumes  (\exists integer i; 0 <= i <= ONEINDEX_ITEMS_NUM && (report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) || (\exists integer i; 0 <= i <= TWOINDEX_ITEMS_NUM && (report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) ;
   @   ensures \result == \true;
   @
   @ complete behaviors;

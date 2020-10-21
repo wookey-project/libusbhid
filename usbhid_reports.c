@@ -34,11 +34,12 @@
 
 #define USBHID_STD_ITEM_LEN             4
 
-
+// PMO todo handle errcode 
 bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     usbhid_context_t *ctx = usbhid_get_context();
+    /*@ assert ctx != \null; */
     /* sanitize */
     if (!usbhid_interface_exists(hid_handler)) {
         errcode = MBED_ERROR_INVPARAM;
@@ -49,15 +50,16 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
-
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb  ; */
     usbhid_report_infos_t *report;
 
-    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {oneidx_get_report_cb,  twoidx_get_report_cb} ;*/
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;*/
     /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
-
+    /*@ assert (report == &report_oneindex || report ==  &report_twoindex); */
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
+      @ loop invariant \forall integer prei; 0<= prei<iterator ==> !(report->items[prei].type == USBHID_ITEM_TYPE_GLOBAL && report->items[prei].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID);
       @ loop assigns iterator;
       @ loop variant report->num_items - iterator ;
       */
@@ -67,6 +69,7 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
             return true;
         }
     }
+    /*@ assert \forall integer i; 0<=i<report->num_items ==> !(report->items[i].type == USBHID_ITEM_TYPE_GLOBAL && report->items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID);*/
 err:
     return false;
 }

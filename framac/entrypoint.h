@@ -84,9 +84,12 @@ mbed_error_t set_proto_cb(uint8_t hid_handler, uint8_t index);
 mbed_error_t set_idle_cb(uint8_t hid_handler, uint8_t idle);
 
 uint32_t ctxh1;
+uint32_t hid_handler_valid;
+
+uint8_t  hid_handler;
 
 /*@ 
-  @ requires \separated(&usbotghs_ctx,&ctxh1, ctx_list+ (..));
+  @ requires \separated(&usbotghs_ctx,&ctxh1,&hid_handler_valid,&hid_handler, ctx_list+ (..));
   @ requires \valid(ctx_list + (0..(GHOST_num_ctx-1))) ;
   @ ensures GHOST_num_ctx == num_ctx ;
   
