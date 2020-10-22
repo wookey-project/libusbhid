@@ -34,7 +34,7 @@
 
 #define USBHID_STD_ITEM_LEN             4
 
-// PMO todo handle errcode 
+// PMO todo handle errcode
 bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -130,12 +130,12 @@ uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
     }
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb != \null ;*/
 
-    
+
     usbhid_report_infos_t *report;
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;*/
     /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
-    
+
     if (report == NULL) {
         goto err;
     }
@@ -227,8 +227,8 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uin
     }
     /* TODO: add usbhid_interface_configured() */
 
-    
-    
+
+
     if (ctx->hid_ifaces[hid_handler].get_report_cb == NULL) {
         errcode = MBED_ERROR_INVSTATE;
         goto err;
@@ -237,10 +237,10 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uin
 
     usbhid_report_infos_t *report ;
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb} ;*/
-    /*@ calls oneidx_get_report_cb ; */ 
+    /*@ calls oneidx_get_report_cb ; */
     report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
-  
-    
+
+
     if (report == NULL) {
         errcode = MBED_ERROR_NOSTORAGE;
         goto err;
@@ -325,7 +325,9 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
 
     /* let's forge the report */
     log_printf("[USBHID] collection size is %d\n", report->num_items);
+#ifdef __FRAMAC__
  Previous:
+#endif
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
       @ loop assigns offset, buf[0..256], iterator ;
