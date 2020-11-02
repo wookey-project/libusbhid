@@ -15,6 +15,8 @@
  * Support for Frama-C testing
  */
 
+bool reset_requested = false;
+
 /* defined in usbhid.c, not exported  */
 mbed_error_t usbhid_ep_trigger(uint32_t dev_id, uint32_t size, uint8_t ep_id);
 
@@ -276,15 +278,15 @@ uint32_t hid_handler_valid=0;
 
 uint8_t  hid_handler;
 
-/*@ 
+/*@
   @ requires \separated(&usbotghs_ctx,&ctxh1, ctx_list+ (..));
   @ requires \valid(ctx_list + (0..(GHOST_num_ctx-1))) ;
   @ ensures GHOST_num_ctx == num_ctx ;
-  
+
   @ assigns ctxh1, num_ctx, usbotghs_ctx, GHOST_num_ctx, ctx_list[\old(num_ctx)] ;
   @ assigns ctx_list[ctxh1].cfg[ctx_list[ctxh1].curr_cfg].interfaces[0..(MAX_INTERFACES_PER_DEVICE-1)];
   @ assigns ctx_list[ctxh1];
-  
+
 
   @ behavior bad_num_ctx:
   @   assumes num_ctx >= MAX_USB_CTRL_CTX   ;
@@ -293,16 +295,16 @@ uint8_t  hid_handler;
   @
   @
   @ behavior bad_ctxh:
-  @   assumes num_ctx < MAX_USB_CTRL_CTX  ; 
+  @   assumes num_ctx < MAX_USB_CTRL_CTX  ;
   @   assumes ctxh1 >= GHOST_num_ctx ;
-  @   ensures ctxh1 == \old(GHOST_num_ctx)  && (GHOST_num_ctx == (\old(GHOST_num_ctx) +1)) &&  ctx_list[\old(num_ctx)].dev_id == USB_OTG_HS_ID && ctx_list[GHOST_num_ctx-1] == ctx_list[num_ctx-1] ; 
+  @   ensures ctxh1 == \old(GHOST_num_ctx)  && (GHOST_num_ctx == (\old(GHOST_num_ctx) +1)) &&  ctx_list[\old(num_ctx)].dev_id == USB_OTG_HS_ID && ctx_list[GHOST_num_ctx-1] == ctx_list[num_ctx-1] ;
   @   ensures ctx_list[ctxh1] == \old(ctx_list[ctxh1]) ;
   @   ensures \result == MBED_ERROR_NOBACKEND || \result == MBED_ERROR_UNKNOWN || \result == MBED_ERROR_NONE;
   @
   @  behavior ok:
-  @   assumes num_ctx < MAX_USB_CTRL_CTX ; 
+  @   assumes num_ctx < MAX_USB_CTRL_CTX ;
   @   assumes ctxh1 < GHOST_num_ctx ;
-  @   ensures ctxh1 == \old(GHOST_num_ctx)  && (GHOST_num_ctx == (\old(GHOST_num_ctx) +1)) &&  ctx_list[\old(num_ctx)].dev_id == USB_OTG_HS_ID && ctx_list[GHOST_num_ctx-1] == ctx_list[num_ctx-1] ; 
+  @   ensures ctxh1 == \old(GHOST_num_ctx)  && (GHOST_num_ctx == (\old(GHOST_num_ctx) +1)) &&  ctx_list[\old(num_ctx)].dev_id == USB_OTG_HS_ID && ctx_list[GHOST_num_ctx-1] == ctx_list[num_ctx-1] ;
   @   ensures ctx_list[ctxh1].state == USB_DEVICE_STATE_POWERED ;
   @   ensures \result == MBED_ERROR_NONE  ;
   @

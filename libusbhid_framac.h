@@ -27,9 +27,7 @@
 /* ifndef should be useless (caller responsability), but is also added here for protection */
 #ifdef __FRAMAC__
 
-#include "usbotghs.h"
-#include "usbotghs_fifos.h"
-
+#include "libusbotghs.h"
 
 #define usb_backend_drv_declare usbotghs_declare
 #define usb_backend_drv_stall usbotghs_endpoint_stall
