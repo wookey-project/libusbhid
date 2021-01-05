@@ -293,7 +293,7 @@ static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
             if (is_iface_using_out_ep(iface)) {
                 log_printf("[USBHID] iface %d is using OUT EP, Set_Report class request should not be received!\n", iface);
                 /* Set_Report is replaced by sending report directly to OUT EP */
-                usb_backend_drv_stall(0, USB_EP_DIR_OUT);
+                usb_backend_drv_stall(0, USB_BACKEND_DRV_EP_DIR_OUT);
             } else {
                 /* 1. get back report content */
                 /* 2. push it to the upper stack */
