@@ -396,7 +396,7 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
     \forall integer x,y,z,w; (x<=y) || (x>y && z<w) || (x>y && z>=w) <==> (x<=y)||((x>y)&&(z<w || z>=w)) ;
 */
 
-/*@ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+/*@ requires \separated(&usbhid_ctx,&GHOST_opaque_drv_privates);
 
   @ behavior uc_inviface:
   @    assumes hid_handler >= usbhid_ctx.num_iface ;
@@ -427,9 +427,8 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
  */
 
 /*@
-  @ requires \separated(report,&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
-  @ assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
-  @ assigns usbotghs_ctx ;
+  @ requires \separated(report,&usbhid_ctx,&GHOST_opaque_drv_privates);
+  @ assigns GHOST_opaque_drv_privates ;
   @ assigns data_being_sent ;
   */
 mbed_error_t usbhid_send_report(uint8_t hid_handler,
@@ -448,9 +447,8 @@ mbed_error_t usbhid_send_report(uint8_t hid_handler,
  */
 
 /*@
-  @ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
-  @ assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
-  @ assigns usbotghs_ctx ;
+  @ requires \separated(&usbhid_ctx,&GHOST_opaque_drv_privates);
+  @ assigns GHOST_opaque_drv_privates ;
   */
 mbed_error_t usbhid_recv_report(uint8_t hid_handler,
                                 uint8_t *report,
@@ -466,7 +464,7 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler,
  * PROTOCOL (Set_Procotol command)
  */
 
-/*@  requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+/*@  requires \separated(&usbhid_ctx,&GHOST_opaque_drv_privates);
   @ assigns \nothing ;
 
   @ behavior uisr_invalid_idx :
@@ -490,7 +488,7 @@ mbed_error_t usbhid_recv_report(uint8_t hid_handler,
   @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured != \false ;
   @   ensures \result == usbhid_ctx.hid_ifaces[hid_handler].inep.silence[index] ;
 
-  @ complete behaviors ; 
+  @ complete behaviors ;
   @ disjoint behaviors ;
 
  */
@@ -504,7 +502,7 @@ bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
  * report specific format.
  */
 /*@
-  @ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+  @ requires \separated(&usbhid_ctx,&GHOST_opaque_drv_privates);
 
   @ behavior inv_response:
   @   assumes response == NULL ;
@@ -535,8 +533,7 @@ bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
   @   assumes response != NULL ;
   @   assumes response_len != 0 ;
   @   assumes (hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES && usbhid_ctx.hid_ifaces[hid_handler].declared != \false);
-  @   assigns *((uint32_t *) (USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)) ;
-  @   assigns usbotghs_ctx, usbotghs_ctx.in_eps[0..255] ;
+  @   assigns GHOST_opaque_drv_privates ;
   @   assigns data_being_sent ;
   @   ensures \valid(response);
   @   ensures data_being_sent == \false; // should be false at the end, whatever it is at start
@@ -545,7 +542,7 @@ bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
   @ complete behaviors ;
   @ disjoint behaviors ;
   */
-//pmo before    assigns usbotghs_ctx, usbotghs_ctx.out_eps[0..(USBOTGHS_MAX_OUT_EP-1)] ;
+//pmo before    assigns GHOST_opaque_drv_privates, GHOST_opaque_drv_privates.out_eps[0..(USBOTGHS_MAX_OUT_EP-1)] ;
 mbed_error_t usbhid_send_response(uint8_t              hid_handler,
                                   uint8_t*             response,
                                   uint8_t              response_len);

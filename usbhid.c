@@ -126,7 +126,7 @@ err:
 #ifndef __FRAMAC__
 static
 #endif
-/*@ requires \separated(&usbhid_ctx,&usbotghs_ctx,((uint32_t*)(USB_BACKEND_MEMORY_BASE .. USB_BACKEND_MEMORY_END)));
+/*@ requires \separated(&usbhid_ctx,&GHOST_opaque_drv_privates);
   @ assigns \nothing; */
 mbed_error_t usbhid_received(uint32_t dev_id __attribute__((unused)), uint32_t size, uint8_t ep_id)
 {
@@ -502,7 +502,7 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
     ctx->hid_ifaces[hid_handler].configured = true;
     /*@ assert errcode==MBED_ERROR_NONE; */
     /*@ assert  errcode==MBED_ERROR_NONE ==> (hid_handler < usbhid_ctx.num_iface && get_report != NULL) ;*/
-    
+
 err:
     return errcode;
 }
@@ -517,11 +517,11 @@ err:
   @ behavior exists:
   @     assumes hid_handler < usbhid_ctx.num_iface ∧ hid_handler < 4;
   @    assumes (usbhid_ctx.hid_ifaces[hid_handler].declared ≢ 0) == \true ;
-  @    assigns *((uint32_t *)(0x40040000 .. 0x40044000));
+  @    assigns GHOST_opaque_drv_privates;
   @    ensures \result==MBED_ERROR_NONE;
   @
   @ complete behaviors;
-  @ disjoint behaviors; 
+  @ disjoint behaviors;
 */
 
 mbed_error_t usbhid_response_done(uint8_t hid_handler)
@@ -702,7 +702,7 @@ bool usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index)
     }
     if (usbhid_ctx.hid_ifaces[hid_handler].configured == false) {
         return true;
-    } 
+    }
     /*@ assert index < MAX_HID_REPORTS && hid_handler < MAX_USBHID_IFACES && usbhid_ctx.hid_ifaces[hid_handler].configured != \false ;*/
     /* when setting idle_ms to 0, silence is requested while no event arrise on the
      * corresponding report index */
