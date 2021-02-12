@@ -146,11 +146,11 @@ EWOK_API_DIR ?= $(PROJ_FILES)/kernel/src/C/exported
 
 FRAMAC_RESULTSDIR := framac/results
 
-SESSION     := framac/results/frama-c-rte-eva-wp-ref.session
-LOGFILE     := framac/results/frama-c-rte-eva-wp-ref.log
-EVA_SESSION := framac/results/frama-c-rte-eva.session
-EVA_LOGFILE := framac/results/frama-c-rte-eva.log
-TIMESTAMP   := framac/results/timestamp-calcium_wp-eva.txt
+SESSION     := $(FRAMAC_RESULTSDIR)/frama-c-rte-eva-wp-ref.session
+LOGFILE     := $(FRAMAC_RESULTSDIR)/frama-c-rte-eva-wp-ref.log
+EVA_SESSION := $(FRAMAC_RESULTSDIR)/frama-c-rte-eva.session
+EVA_LOGFILE := $(FRAMAC_RESULTSDIR)/frama-c-rte-eva.log
+TIMESTAMP   := $(FRAMAC_RESULTSDIR)/timestamp-calcium_wp-eva.txt
 JOBS        := $(shell nproc)
 # Does this flag could be overriden by env (i.e. using ?=)
 TIMEOUT     := 15
@@ -200,12 +200,17 @@ FRAMAC_WP_FLAGS:=\
 	        -wp \
   			-wp-model "Typed+ref+int" \
   			-wp-literals \
-  			-wp-prover alt-ergo,cvc4,z3 \
+  			-wp-prover alt-ergo,cvc4,z3,tip \
+			-wp-prop="-@lemma" \
+			-wp-time-margin 25 \
    			-wp-timeout $(TIMEOUT) \
 			-wp-smoke-tests \
 			-wp-no-smoke-dead-code \
    			-wp-log a:$(LOGFILE)
 
+FRAMAC_WP_LEMMAS_FLAGS:=\
+			-wp-prop="@lemma" \
+			-wp-auto="wp:split,wp:bitrange"
 
 frama-c-parsing: $(FRAMAC_RESULTSDIR)
 	frama-c framac/entrypoint.c usbhid*.c  \
@@ -227,7 +232,9 @@ frama-c: $(FRAMAC_RESULTSDIR)
    		    -then \
 			$(FRAMAC_WP_FLAGS) \
    			-save $(SESSION) \
-   			-time $(TIMESTAMP)
+			-then \
+			$(FRAMAC_WP_LEMMAS_FLAGS) \
+			-time $(TIMESTAMP)
 
 frama-c-instantiate: $(FRAMAC_RESULTSDIR)
 	frama-c framac/entrypoint.c -c11 -machdep x86_32 \
