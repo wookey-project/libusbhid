@@ -130,12 +130,12 @@ err:
 }
 
 
-uint16_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index)
+mbed_error_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index, uint16_t *len)
 {
 
     mbed_error_t errcode = MBED_ERROR_NONE;
     usbhid_context_t *ctx = usbhid_get_context();
-    uint32_t report_len = 0;
+    uint16_t report_len = 0;
 
     /* sanitize */
     if (!usbhid_interface_exists(hid_handler)) {
@@ -146,18 +146,18 @@ uint16_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    if (!ctx->hid_ifaces[hid_handler].get_report_cb) {
+    if (ctx->hid_ifaces[hid_handler].configured != true) {
+        errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
-    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb != \null ;*/
-
-
     usbhid_report_infos_t *report;
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb != \null ;*/
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;*/
     /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     if (report == NULL) {
+        errcode = MBED_ERROR_NOBACKEND;
         goto err;
     }
     uint8_t report_size = 0;
@@ -223,15 +223,17 @@ uint16_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, u
             if (local_total > MAX_HID_REPORT_SIZE) {
                 log_printf("[USBHID] current report size is bigger than max report size!\n");
                 report_len = 0;
+                errcode = MBED_ERROR_NOMEM;
                 goto err;
             }
             report_len += local_report_len;
             /*@ assert 0 <= report_len <= MAX_HID_REPORT_SIZE; */
         }
     }
-err:
     /*@ assert 0 <= report_len <= MAX_HID_REPORT_SIZE; */
-    return report_len;
+    *len = report_len;
+err:
+    return errcode;
 }
 
 

@@ -671,10 +671,15 @@ mbed_error_t usbhid_send_report(uint8_t               hid_handler,
      * We assume that if report is a valid_read pointer, given report length is correct (i.e. smaller or equal to the
      * effective report buffer.
      */
-    len = usbhid_get_report_len(hid_handler, type, report_index);
-    if (len == 0 || len > MAX_HID_REPORT_SIZE) {
+    errcode = usbhid_get_report_len(hid_handler, type, report_index, &len);
+    if (errcode != MBED_ERROR_NONE) {
+        /* failed to get back report len (too big, no storage for given index, hid handler invalid...) */
         log_printf("[USBHID] unable to get back report len for iface %d/idx %d\n", hid_handler, report_index);
-        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (len == 0) {
+        /* this means that the report len is 0. This should not happen. considered as nostorage. */
+        errcode = MBED_ERROR_NOSTORAGE;
         goto err;
     }
     /*@ assert 0 < len <= MAX_HID_REPORT_SIZE ; */
