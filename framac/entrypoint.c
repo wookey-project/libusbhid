@@ -102,26 +102,24 @@ void Frama_C_update_entropy_32(void) {
   Frama_C_entropy_source_32 = Frama_C_entropy_source_32;
 }
 
-
 bool Frama_C_interval_b(bool min, bool max)
 {
   bool r,aux;
-  Frama_C_update_entropy_b();
-  aux = Frama_C_entropy_source_b;
+  static volatile bool __Frama_C_entropy_source_b __attribute__((FRAMA_C_MODEL));
+  aux = __Frama_C_entropy_source_b;
   if ((aux>=min) && (aux <=max))
     r = aux;
   else
     r = min;
   return r;
 }
-
 
 
 uint8_t Frama_C_interval_8(uint8_t min, uint8_t max)
 {
   uint8_t r,aux;
-  Frama_C_update_entropy_8();
-  aux = Frama_C_entropy_source_8;
+  static volatile uint8_t __Frama_C_entropy_source_8 __attribute__((FRAMA_C_MODEL));
+  aux = __Frama_C_entropy_source_8;
   if ((aux>=min) && (aux <=max))
     r = aux;
   else
@@ -129,12 +127,11 @@ uint8_t Frama_C_interval_8(uint8_t min, uint8_t max)
   return r;
 }
 
-
 uint16_t Frama_C_interval_16(uint16_t min, uint16_t max)
 {
   uint16_t r,aux;
-  Frama_C_update_entropy_16();
-  aux = Frama_C_entropy_source_16;
+  static volatile uint16_t __Frama_C_entropy_source_16 __attribute__((FRAMA_C_MODEL));
+  aux = __Frama_C_entropy_source_16;
   if ((aux>=min) && (aux <=max))
     r = aux;
   else
@@ -145,8 +142,8 @@ uint16_t Frama_C_interval_16(uint16_t min, uint16_t max)
 uint32_t Frama_C_interval_32(uint32_t min, uint32_t max)
 {
   uint32_t r,aux;
-  Frama_C_update_entropy_32();
-  aux = Frama_C_entropy_source_32;
+  static volatile uint16_t __Frama_C_entropy_source_32 __attribute__((FRAMA_C_MODEL));
+  aux = __Frama_C_entropy_source_32;
   if ((aux>=min) && (aux <=max))
     r = aux;
   else
@@ -179,63 +176,83 @@ usbhid_report_infos_t report_twoindex = {
  * Callbacks implementations that are required by libusbhid API
  */
 
+
 usbhid_report_infos_t   *oneidx_get_report_cb(uint8_t hid_handler, uint8_t index)
 {
-    return &report_oneindex;
+    if (index == 0) {
+        return &report_oneindex;
+    } else if (index == 1) {
+        return &report_twoindex;
+    } else {
+        return NULL;
+    }
 }
+
 
 usbhid_report_infos_t   *twoidx_get_report_cb(uint8_t hid_handler, uint8_t index)
 {
-    return &report_twoindex;
+    if (index == 0) {
+        return &report_oneindex;
+    } else if (index == 1) {
+        return &report_twoindex;
+    } else {
+        return NULL;
+    }
 }
 
-mbed_error_t set_report_cb(uint8_t hid_handler, uint8_t index)
+/*@
+  @ assigns \nothing;
+  @ ensures is_valid_error(\result);
+  */
+mbed_error_t FC_return_errcode(void) {
+    mbed_error_t err = Frama_C_interval_8(MBED_ERROR_NONE, MBED_ERROR_INTR);
+    /*@ assert is_valid_error(err); */
+    return err;
+}
+
+mbed_error_t set_report_cb(uint8_t hid_handler __attribute__((unused)),
+                           uint8_t index __attribute__((unused)))
 {
-    hid_handler = hid_handler;
-    index = index;
-    /* FIXME: interval on errors */
-    return MBED_ERROR_NONE;
+    return FC_return_errcode();
 }
 
-mbed_error_t set_proto_cb(uint8_t hid_handler, uint8_t index)
+
+mbed_error_t set_proto_cb(uint8_t hid_handler __attribute__((unused)),
+                          uint8_t index __attribute__((unused)))
 {
-    hid_handler = hid_handler;
-    index = index;
-    /* FIXME: interval on errors */
-    return MBED_ERROR_NONE;
+    return FC_return_errcode();
 
 }
 
-mbed_error_t set_idle_cb(uint8_t hid_handler, uint8_t idle)
+mbed_error_t set_idle_cb(uint8_t hid_handler __attribute__((unused)),
+                         uint8_t idle __attribute__((unused)))
 {
-    hid_handler = hid_handler;
-    idle = idle;
-    /* FIXME: interval on errors */
-    return MBED_ERROR_NONE;
+    return FC_return_errcode();
 }
 
-
-void usbhid_report_sent_trigger(uint8_t hid_handler,
-                                       uint8_t index) {
-    hid_handler = hid_handler;
-    index = index;
+/*@
+  @ assigns \nothing;
+  */
+void usbhid_report_sent_trigger(uint8_t hid_handler __attribute__((unused)),
+                                       uint8_t index __attribute__((unused))) {
     return;
 }
 
-mbed_error_t usbhid_request_trigger(uint8_t hid_handler,
-                                    uint8_t hid_req) {
-    hid_handler = hid_handler;
-    hid_req = hid_req;
-    /* FIXME: replace with interval on mbed_error_t */
-    return MBED_ERROR_NONE;
+/*@
+  @ assigns \nothing;
+  */
+mbed_error_t usbhid_request_trigger(uint8_t hid_handler __attribute__((unused)),
+                                    uint8_t hid_req __attribute__((unused))) {
+    return FC_return_errcode();
 }
 
-mbed_error_t usbhid_report_received_trigger(uint8_t hid_handler,
-                                            uint16_t size) {
-    hid_handler = hid_handler;
-    size = size;
-    /* FIXME: replace with interval on mbed_error_t */
-    return MBED_ERROR_NONE;
+/*@
+  @ assigns \nothing;
+  */
+mbed_error_t usbhid_report_received_trigger(uint8_t hid_handler __attribute__((unused)),
+                                            uint16_t size __attribute__((unused)))
+{
+    return FC_return_errcode();
 }
 
 uint32_t ctxh1=0;
@@ -245,9 +262,11 @@ uint8_t  hid_handler;
 
 mbed_error_t prepare_ctrl_ctx(void){
     mbed_error_t errcode;
+    /* we assumes that USB_OTG_HS_ID is a well known backend for usbctrl. As a a consequence,
+     * MBED_ERROR_NOBACKEND can't be reached from here. */
     errcode = usbctrl_declare(USB_OTG_HS_ID, &ctxh1);
     if (errcode != MBED_ERROR_NONE) {
-      /*@ assert errcode == MBED_ERROR_NOBACKEND || errcode == MBED_ERROR_UNKNOWN || errcode == MBED_ERROR_NONE;*/
+      /*@ assert errcode == MBED_ERROR_NOMEM || errcode == MBED_ERROR_UNKNOWN;*/
       goto err;
     }
     /*@ assert errcode == MBED_ERROR_NONE ; */
@@ -255,7 +274,7 @@ mbed_error_t prepare_ctrl_ctx(void){
 
     errcode = usbctrl_initialize(ctxh1);
     if (errcode != MBED_ERROR_NONE) {
-            /*@ assert errcode == MBED_ERROR_NOBACKEND || errcode == MBED_ERROR_UNKNOWN || errcode == MBED_ERROR_NONE;*/
+            /*@ assert errcode == MBED_ERROR_UNKNOWN || errcode == MBED_ERROR_NONE;*/
         goto err;
     }
     /*@ assert errcode == MBED_ERROR_NONE ; */
@@ -265,6 +284,7 @@ err:
 }
 
 
+    uint8_t  report_buf[255];
 
 void test_fcn_usbhid(){
 
@@ -282,6 +302,7 @@ void test_fcn_usbhid(){
     uint16_t maxlen = Frama_C_interval_16(0,65535);
     uint8_t  poll = Frama_C_interval_8(0,255);
     bool     dedicated_out = Frama_C_interval_b(false, true);
+
 
     uint8_t my_report_type = report_type;
     uint8_t my_report_index = report_index;
@@ -326,9 +347,9 @@ void test_fcn_usbhid(){
     my_report_type = Frama_C_interval_8(0, 255);
     my_report_index= Frama_C_interval_8(0, 2);
     errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_buf[0], my_report_type, 0);
     errcode = usbhid_configure(hid_handler, twoidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_buf[0], my_report_type, 1);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
 
@@ -349,9 +370,9 @@ void test_fcn_usbhid(){
     my_report_type = Frama_C_interval_8(0, 255);
     my_report_index= Frama_C_interval_8(0, 2);
     errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_buf[0], my_report_type, 0);
     errcode = usbhid_configure(hid_handler, twoidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_buf[0], my_report_type, 1);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
 
@@ -385,9 +406,9 @@ void test_fcn_usbhid(){
     my_report_type = Frama_C_interval_8(0, 2);
     my_report_index= Frama_C_interval_8(0, 2);
     errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_buf[0], my_report_type, 0);
     errcode = usbhid_configure(hid_handler, twoidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_buf[0], my_report_type, 1);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
 
@@ -501,14 +522,13 @@ void test_fcn_usbhid_erreur(){
     my_report_type = Frama_C_interval_8(0, 2);
     my_report_index= Frama_C_interval_8(0, 2);
     errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler_err, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
-    usbhid_send_report(hid_handler_err, (uint8_t*)&report_oneindex, my_report_type, 0);
+    usbhid_send_report(hid_handler_err, (uint8_t*)&report_buf[0], my_report_type, 0);
+    usbhid_send_report(hid_handler_err, (uint8_t*)&report_buf[0], my_report_type, 0);
     errcode = usbhid_configure(hid_handler, twoidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler_err, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
-    usbhid_send_report(hid_handler_err, (uint8_t*)&report_twoindex, my_report_type, 0);
+    usbhid_send_report(hid_handler_err, (uint8_t*)&report_buf[0], my_report_type, 1);
+    usbhid_send_report(hid_handler_err, (uint8_t*)&report_buf[0], my_report_type, 1);
     usbhid_send_report(hid_handler_err, NULL, my_report_type, Frama_C_interval_8(my_report_index,5));
     errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler_err, (uint8_t*)&report_oneindex, my_report_type, Frama_C_interval_8(my_report_index,5));
     usbhid_send_response(hid_handler_err + 42, &(my_report[0]), my_response_len);
     usbhid_send_response(hid_handler_err, NULL, my_response_len);
     usbhid_send_response(hid_handler_err, &(my_report[0]), Frama_C_interval_16(0,my_response_len));
@@ -529,28 +549,14 @@ void test_fcn_driver_eva() {
     uint8_t my_report_type = report_type;
     uint8_t my_report_index = report_index;
     mbed_error_t errcode;
-    usbctrl_context_t *ctx = NULL;
-    usbctrl_get_context(7, &ctx);
 
     uint16_t maxlen = Frama_C_interval_16(0,65535);
-    /*@ assert ctx != (usbctrl_context_t*)NULL ; */
     uint8_t curr_cfg = 0; /* first cfg declared */
     uint8_t iface = 0; /* first iface declared */
-
-    /* @ assert ctx->cfg[curr_cfg].interfaces[iface].configured == \true; */
-    /* @ assert ctx->cfg[curr_cfg].interfaces[iface].usb_ep_number < MAX_EP_PER_INTERFACE; */
-
-    uint8_t max_ep = ctx->cfg[curr_cfg].interfaces[iface].usb_ep_number ;  // cyril : meme chose que pour max_iface, wp passe maintenant
-    /* @ assert max_ep < MAX_EP_PER_INTERFACE; */
 
 
     /* we set properly backend driver content to be sure that IN/OUT functions have
      * correct driver state on their EP */
-    if (ctx->cfg[curr_cfg].interfaces[iface].id != ctxh1) {
-        /* received context different from the one declared through HID */
-        goto err;
-    }
-    /* @ assert ctx->cfg[curr_cfg].interfaces[iface].id == ctxh1; */
 
     /* here, we got back the USB Ctrl context associated to the current USB HID interface. This
      * allows us to dirrectly manipulate the control plane context to activate/configure the
@@ -573,7 +579,6 @@ void test_fcn_driver_eva() {
             64, /* mpsize */
             USB_BACKEND_EP_ODDFRAME,
             usbhid_ep_trigger);
-    ctx->cfg[curr_cfg].interfaces[iface].eps[0].configured = true;
 
     usbctrl_configuration_set();
 
@@ -611,11 +616,9 @@ void test_fcn_driver_eva() {
     usbhid_dflt_set_idle(dflt_hid_handler,dflt_idle);
 
     errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, my_report_index);
     usbhid_send_report(hid_handler, (uint8_t*)&report_oneindex, my_report_type, 0);
     errcode = usbhid_configure(hid_handler, twoidx_get_report_cb, NULL, NULL, NULL);
-    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, my_report_index);
-    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, 0);
+    usbhid_send_report(hid_handler, (uint8_t*)&report_twoindex, my_report_type, 1);
     usbhid_ep_trigger(6, 255, 1);
     usbhid_handle_set_protocol(&pkt);
 
@@ -626,6 +629,15 @@ err:
 int main(void)
 {
     mbed_error_t errcode;
+    /*@
+      @ loop invariant 0 <= i <= 255;
+      @ loop assigns i, report_buf[0 .. 255];
+      @ loop variant 255 -i;
+      */
+    for (uint8_t i = 0; i < 255; ++i) {
+        /* set garbage */
+        report_buf[i] = Frama_C_interval_8(0,255);
+    }
 
     errcode = prepare_ctrl_ctx();
     if (errcode != MBED_ERROR_NONE) {

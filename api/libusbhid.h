@@ -367,6 +367,8 @@ typedef mbed_error_t          (*usbhid_set_idle_t)(uint8_t hid_handler,
   @   assumes num_descriptor != 0 && num_descriptor < MAX_HID_DESCRIPTORS && hid_handler != NULL ;
   @   assumes usbhid_ctx.num_iface < MAX_USBHID_IFACES && in_buff != NULL && in_buff_len > 0 ;
   @   assigns usbhid_ctx ;
+  @   assigns ctx_list[usbxdci_handler];
+  @   assigns *hid_handler;
   @   ensures \result >= MBED_ERROR_NONE && \result <= MBED_ERROR_INTR ;
 
   @ complete behaviors ;
@@ -428,7 +430,7 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
 
 /*@
   @ requires \separated(report,&usbhid_ctx,&GHOST_opaque_drv_privates);
-  @ assigns GHOST_opaque_drv_privates ;
+  @ assigns GHOST_opaque_drv_privates, GHOST_in_eps[0 .. USBOTGHS_MAX_IN_EP-1].state;
   @ assigns data_being_sent ;
   */
 mbed_error_t usbhid_send_report(uint8_t hid_handler,
@@ -533,7 +535,7 @@ bool     usbhid_is_silence_requested(uint8_t hid_handler, uint8_t index);
   @   assumes response != NULL ;
   @   assumes response_len != 0 ;
   @   assumes (hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES && usbhid_ctx.hid_ifaces[hid_handler].declared != \false);
-  @   assigns GHOST_opaque_drv_privates ;
+  @   assigns GHOST_in_eps[0 .. USBOTGHS_MAX_IN_EP-1].state ;
   @   assigns data_being_sent ;
   @   ensures \valid(response);
   @   ensures data_being_sent == \false; // should be false at the end, whatever it is at start

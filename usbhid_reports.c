@@ -34,8 +34,7 @@
 
 #define USBHID_STD_ITEM_LEN             4
 
-// PMO todo handle errcode
-bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
+mbed_error_t usbhid_report_needs_id(uint8_t hid_handler, uint8_t index, bool *id_needed)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     usbhid_context_t *ctx = usbhid_get_context();
@@ -46,7 +45,7 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
         goto err;
     }
     /* TODO: add usbhid_interface_configured() */
-    if (!ctx->hid_ifaces[hid_handler].get_report_cb) {
+    if (ctx->hid_ifaces[hid_handler].configured == false) {
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
@@ -56,6 +55,10 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb,  &twoidx_get_report_cb} ;*/
     /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
+    if (report == NULL) {
+        errcode = MBED_ERROR_UNKNOWN;
+        goto err;
+    }
     /*@ assert (report == &report_oneindex || report ==  &report_twoindex); */
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
@@ -66,12 +69,14 @@ bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index)
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
             report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) {
-            return true;
+            *id_needed = true;
+            goto err;
         }
     }
     /*@ assert \forall integer i; 0<=i<report->num_items ==> !(report->items[i].type == USBHID_ITEM_TYPE_GLOBAL && report->items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID);*/
+    *id_needed = false;
 err:
-    return false;
+    return errcode;
 }
 
 
@@ -91,17 +96,21 @@ uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index)
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&twoidx_get_report_cb} ;*/
     /*@ calls twoidx_get_report_cb ; */
     report  = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
+    if (report == NULL) {
+        goto err;
+    }
+    /*@ assert \valid_read(report); */
 
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
-      @ loop assigns iterator ;
+      @ loop assigns iterator, id ;
       @ loop variant report->num_items - iterator ;
       */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
             report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) {
             id = report->items[iterator].data1;
-            return id;
+            goto err;
         }
     }
 err:
@@ -109,7 +118,7 @@ err:
 }
 
 
-uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index)
+uint16_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index)
 {
 
     mbed_error_t errcode = MBED_ERROR_NONE;
@@ -275,7 +284,51 @@ err:
     return errcode;
 }
 
+/*@
+  @ requires \valid_read(item_info);
+  @ requires \valid(buf + (0 .. sizeof(usbhid_short_item_t)-1));
+  @ requires \valid(offset);
+  @ assigns buf[0 .. sizeof(usbhid_short_item_t)-1], *offset;
+*/
+#ifndef __FRAMAC__
+static inline
+#endif
+mbed_error_t set_short_item(usbhid_item_info_t const * const item_info, uint8_t *buf, uint32_t *offset)
+{
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    union short_item {
+        uint8_t             buf[3];
+        usbhid_short_item_t item;
+    };
+    union short_item si;
+    usbhid_short_item_t *item = &si.item;
 
+        item->bSize =  item_info->size;
+        item->bType =  item_info->type;
+        item->bTag =  item_info->tag;
+        /* done for first byte, copy to buff */
+        buf[0] = si.buf[0];
+
+        if (item_info->size == 0) {
+            *offset += 1;
+        } else if (item_info->size == 1) {
+            item->data1 =  item_info->data1;
+            buf[1] = si.buf[1];
+            *offset += 2;
+        } else if (item_info->size == 2) {
+            item->data1 =  item_info->data1;
+            item->data2 =  item_info->data2;
+            buf[1] = si.buf[1];
+            buf[2] = si.buf[2];
+            *offset += 3;
+        } else {
+            log_printf("[USBHID] invalid item size %d!\n", item_info->size);
+            errcode = MBED_ERROR_INVPARAM;
+            goto err;
+        }
+err:
+        return errcode;
+}
 
 
 mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, uint32_t *bufsize, uint8_t index)
@@ -306,7 +359,6 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
     }
 
     uint32_t offset = 0;
-    uint32_t iterator = 0;
     usbhid_report_infos_t *report;
 
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb} ;*/
@@ -330,29 +382,15 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
 #endif
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
-      @ loop assigns offset, buf[0..256], iterator ;
+      @ loop assigns offset, buf[0..255], iterator, errcode ;
       @ loop variant report->num_items - iterator ;
       */
-    for (iterator = 0; iterator < report->num_items; ++iterator) {
-        usbhid_short_item_t *item = (usbhid_short_item_t*)&(buf[offset]);
-        item->bSize =  report->items[iterator].size;
-        item->bType =  report->items[iterator].type;
-        item->bTag =  report->items[iterator].tag;
-        if (report->items[iterator].size == 0) {
-            offset += 1;
-        } else if (report->items[iterator].size == 1) {
-            item->data1 =  report->items[iterator].data1;
-            offset += 2;
-        } else if (report->items[iterator].size == 2) {
-            item->data1 =  report->items[iterator].data1;
-            item->data2 =  report->items[iterator].data2;
-            offset += 3;
-        } else {
-            log_printf("[USBHID] invalid item size %d!\n", report->items[iterator].size);
+    for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
+        /*@ assert (offset < (255 - sizeof(usbhid_short_item_t))); */
+        if ((errcode = set_short_item(&(report->items[iterator]), &(buf[offset]), &offset)) != MBED_ERROR_NONE) {
             goto err;
         }
     }
-    /*@ assert \at(*report, Previous) == \at(*report, Here); */
     usbhid_report_sent_trigger(hid_handler, index);
     /* and update the size with the report one */
     *bufsize = offset;

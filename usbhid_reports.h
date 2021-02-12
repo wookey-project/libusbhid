@@ -27,6 +27,9 @@
 #include "libc/types.h"
 #include "libc/syscall.h"
 #include "autoconf.h"
+#ifdef __FRAMAC__
+# include "framac/entrypoint.h"
+#endif
 
 /*
  * Return the report descriptor length associated to the descriptor identifier given in
@@ -47,13 +50,15 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uin
  * The upper stack handle its own item list, but not the HID item encoding, which is
  * handled by this function.
  */
-
 /*@
-  @ requires \valid_read(buf + (0 .. 255));
-  @ requires \separated(&report_oneindex,buf +(0 .. 255),bufsize,&usbhid_ctx, &GHOST_opaque_drv_privates, &GHOST_num_ctx, ctx_list+(..));
+  @ requires \valid(buf + (0 .. 255));
+  @ requires \valid(bufsize);
+  @ requires \separated(&report_oneindex,&report_twoindex,buf +(0 .. 255),bufsize,&usbhid_ctx, &GHOST_opaque_drv_privates, &GHOST_num_ctx, ctx_list+(..));
+
   @ assigns *bufsize, buf[0..255] ;
   @ ensures  \result == MBED_ERROR_NONE || \result ==  MBED_ERROR_INVSTATE || \result == MBED_ERROR_INVPARAM ;
   */
+
 mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, uint32_t *bufsize, uint8_t index);
 
 
@@ -68,41 +73,57 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
   @ assigns \nothing;
   @ ensures 0<= \result <= 255 ;
   */
-uint32_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index);
+uint16_t usbhid_get_report_len(uint8_t hid_handler, usbhid_report_type_t type, uint8_t index);
 
 /*
  * is report to send needs to be prefixed by its Report Identifier ?
  */
 
 /*@
-  @ requires \separated(&report_oneindex,&report_twoindex,&usbhid_ctx, &GHOST_opaque_drv_privates, &GHOST_num_ctx, ctx_list+(..));
-  @ assigns \nothing;
+  @ requires \separated(id_needed,&report_oneindex,&report_twoindex,&usbhid_ctx, &GHOST_opaque_drv_privates, &GHOST_num_ctx, ctx_list+(..));
+  @ requires \valid(id_needed);
+  @ assigns *id_needed;
   @
-  @ behavior uie_undeclared_iface:
+  @ behavior undeclared_iface:
   @   assumes ((hid_handler >= usbhid_ctx.num_iface || hid_handler >=MAX_USBHID_IFACES) || (usbhid_ctx.hid_ifaces[hid_handler].declared == \false));
-  @   ensures \result == \false;
-  @
-  @ behavior report_null:
+  @   ensures \result == MBED_ERROR_INVPARAM;
+  @   ensures *id_needed == \old(*id_needed);
+
+  @ behavior unconfigured_iface:
   @   assumes !((hid_handler >= usbhid_ctx.num_iface || hid_handler >=MAX_USBHID_IFACES) || (usbhid_ctx.hid_ifaces[hid_handler].declared == \false));
-  @   assumes !usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
-  @   ensures \result == \false;
-  @
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \false;
+  @   ensures \result == MBED_ERROR_INVSTATE;
+  @   ensures *id_needed == \old(*id_needed);
+
   @ behavior not_found:
   @   assumes !((hid_handler >= usbhid_ctx.num_iface || hid_handler >=MAX_USBHID_IFACES) || (usbhid_ctx.hid_ifaces[hid_handler].declared == \false));
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
-  @  assumes  (\forall integer i; 0 <= i <= ONEINDEX_ITEMS_NUM ==> !(report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) && (\forall integer i; 0 <= i <= TWOINDEX_ITEMS_NUM ==> !(report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) ;
-  @   ensures \result == \false;
-  @
-  @ behavior found:
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;
+  @   assumes  (\forall integer i; 0 <= i <= ONEINDEX_ITEMS_NUM ==> !(report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) && (\forall integer i; 0 <= i <= TWOINDEX_ITEMS_NUM ==> !(report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) ;
+  @   ensures usbhid_ctx.hid_ifaces[hid_handler].get_report_cb == oneidx_get_report_cb || usbhid_ctx.hid_ifaces[hid_handler].get_report_cb == twoidx_get_report_cb;
+  @   ensures \result == MBED_ERROR_NONE ==> *id_needed == \false;
+  @   ensures \result == MBED_ERROR_UNKNOWN ==> *id_needed == \old(*id_needed);
+
+  @ behavior found_oneidx:
   @   assumes !((hid_handler >= usbhid_ctx.num_iface || hid_handler >=MAX_USBHID_IFACES) || (usbhid_ctx.hid_ifaces[hid_handler].declared == \false));
-  @   assumes usbhid_ctx.hid_ifaces[hid_handler].get_report_cb  ;
-  @  assumes  (\exists integer i; 0 <= i <= ONEINDEX_ITEMS_NUM && (report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) || (\exists integer i; 0 <= i <= TWOINDEX_ITEMS_NUM && (report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID)) ;
-  @   ensures \result == \true;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].get_report_cb == oneidx_get_report_cb;
+  @   assumes (usbhid_ctx.hid_ifaces[hid_handler].get_report_cb == oneidx_get_report_cb && \exists integer i; 0 <= i <= ONEINDEX_ITEMS_NUM && (report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID));
+  @   ensures \result == MBED_ERROR_NONE ==> *id_needed == \true;
+  @   ensures \result == MBED_ERROR_UNKNOWN ==> *id_needed == \old(*id_needed);
+
+  @ behavior found_twoidx:
+  @   assumes !((hid_handler >= usbhid_ctx.num_iface || hid_handler >=MAX_USBHID_IFACES) || (usbhid_ctx.hid_ifaces[hid_handler].declared == \false));
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].get_report_cb == twoidx_get_report_cb;
+  @   assumes (usbhid_ctx.hid_ifaces[hid_handler].get_report_cb == twoidx_get_report_cb && \exists integer i; 0 <= i <= TWOINDEX_ITEMS_NUM && (report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID));
+  @   ensures \result == MBED_ERROR_NONE ==> *id_needed == \true;
+  @   ensures \result == MBED_ERROR_UNKNOWN ==> *id_needed == \old(*id_needed);
+
   @
   @ complete behaviors;
   @ disjoint behaviors;
 */
-bool usbhid_report_needs_id(uint8_t hid_handler, uint8_t index);
+mbed_error_t usbhid_report_needs_id(uint8_t hid_handler, uint8_t index, bool *id_needed);
 
 /*
  * get back report identifier for report based on its index

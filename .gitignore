@@ -1,3 +1,4 @@
 .scannerwork
+framac/results/*
 .frama-c
 *.sw*

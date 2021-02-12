@@ -56,56 +56,76 @@ __attribute__((weak)) mbed_error_t usbhid_request_trigger(uint8_t hid_handler __
 /*
  * TODO: behaviors
  */
-static inline uint8_t is_iface_using_out_ep(uint8_t iface)
+#ifndef __FRAMAC__
+static inline
+#endif
+uint8_t is_iface_using_out_ep(uint8_t iface)
 {
     /* ctx checked by parent function */
     usbhid_context_t *ctx = usbhid_get_context();
-    uint8_t i, j;
+    bool result = false;
     /*@
       @ loop invariant 0 <= i <= ctx->num_iface ;
-      @ loop assigns i, j;
+      @ loop assigns i, result;
       @ loop variant (ctx->num_iface - i);
       */
-    for (i = 0; i < ctx->num_iface; ++i) {
+    for (uint8_t i = 0; i < ctx->num_iface; ++i) {
         if (ctx->hid_ifaces[i].iface.id == iface) {
             if (ctx->hid_ifaces[i].configured == false) {
                 /* invalid behavior */
-                return false;
+                result = false;
+                goto err;
             }
-            /*@ assert ctx->hid_ifaces[i].iface.usb_ep_number < MAX_EP_PER_INTERFACE; */
+            if (ctx->hid_ifaces[i].iface.usb_ep_number >= MAX_EP_PER_INTERFACE) {
+                /* current iface config is invalid, this should not happen
+                 * (fault injection, invalid lib entry) */
+                result = false;
+                goto err;
+            }
             /*@
               @ loop invariant 0 <= j <= ctx->hid_ifaces[i].iface.usb_ep_number ;
-              @ loop assigns j;
+              @ loop invariant 0 <= i <= ctx->num_iface ;
+              @ loop assigns j, result;
               @ loop variant (ctx->hid_ifaces[i].iface.usb_ep_number - j);
               */
-            for (j = 0; j < ctx->hid_ifaces[i].iface.usb_ep_number; ++j) {
+            for (uint8_t j = 0; j < ctx->hid_ifaces[i].iface.usb_ep_number; ++j) {
                 if (ctx->hid_ifaces[i].iface.eps[j].dir == USB_EP_DIR_OUT) {
-                    return true;
+                    result = true;
+                    goto err;
                 }
             }
         }
     }
-    return false;
+err:
+    return result;
 }
 
-static inline uint8_t get_hid_handler_from_iface(uint8_t iface)
+/*
+  // behaviors to define properly
+ */
+#ifndef __FRAMAC__
+static inline
+#endif
+uint8_t get_hid_handler_from_iface(uint8_t iface)
 {
     /* ctx checked by parent function */
     usbhid_context_t *ctx = usbhid_get_context();
 
-    uint8_t i = 0;
+    uint8_t handler = 0;
     uint8_t num_iface = ctx->num_iface;
     /*@
       @ loop invariant 0 <= i <= num_iface ;
-      @ loop assigns \nothing ;
+      @ loop assigns i, handler ;
       @ loop variant num_iface - i;
       */
-    for (i = 0; i < num_iface; ++i) {
+    for (uint8_t i = 0; i < num_iface; ++i) {
         if (ctx->hid_ifaces[i].iface.id == iface) {
-            return i;
+            handler = i;
+            goto end;
         }
     }
-    return 0;
+end:
+    return handler;
 }
 
 
@@ -142,7 +162,10 @@ err:
     return errcode;
 }
 
-static mbed_error_t usbhid_handle_set_idle(usbctrl_setup_pkt_t *pkt)
+#ifndef __FRAMAC__
+static
+#endif
+mbed_error_t usbhid_handle_set_idle(usbctrl_setup_pkt_t *pkt)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     usbhid_context_t *ctx = usbhid_get_context();
@@ -153,6 +176,7 @@ static mbed_error_t usbhid_handle_set_idle(usbctrl_setup_pkt_t *pkt)
     uint16_t idle_ms = 0;
     uint16_t wvalue = pkt->wValue;
     uint8_t hbyte = ((wvalue >> 4) & 0xff);
+    /* lbyte: HID descriptor identifier */
     uint8_t lbyte = wvalue & 0xff;
 
     uint8_t iface = pkt->wIndex & 0xff;
@@ -173,6 +197,11 @@ static mbed_error_t usbhid_handle_set_idle(usbctrl_setup_pkt_t *pkt)
                 ctx->hid_ifaces[hid_handler].inep.silence[i] = true;
             }
         }
+    } else if (lbyte >= MAX_HID_REPORTS) {
+        /* invalid report targeted! */
+        log_printf("[USBHID] invalid report %d targetted by setup packet!\n", lbyte);
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
     } else {
         /* applicable to report given by lbyte only */
         ctx->hid_ifaces[hid_handler].inep.idle_ms[lbyte] = idle_ms;
@@ -186,7 +215,10 @@ err:
 }
 
 
-static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
+#ifndef __FRAMAC__
+static
+#endif
+mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     /* get the high byte */
@@ -197,6 +229,10 @@ static mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
     usbhid_context_t *ctx = usbhid_get_context();
     if (ctx == NULL) {
         errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
+    if (descriptor_index >= MAX_HID_REPORTS) {
+        errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
     switch (action) {
@@ -263,7 +299,10 @@ err:
     return errcode;
 }
 
-static mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
+#ifndef __FRAMAC__
+static
+#endif
+mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     usbhid_context_t *ctx = usbhid_get_context();

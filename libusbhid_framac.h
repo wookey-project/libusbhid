@@ -96,8 +96,8 @@ typedef struct {
 } usbhid_context_t;
 
 
-static usbhid_context_t usbhid_ctx = { 0 };
-// pmo addition done for FC 
+usbhid_context_t usbhid_ctx = { 0 };
+// pmo addition done for FC
 usbhid_report_infos_t report_oneindex;
 
 usbhid_report_infos_t report_twoindex;

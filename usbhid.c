@@ -34,6 +34,15 @@
 #include "usbhid_default_handlers.h"
 #include "libc/sanhandlers.h"
 
+/*@
+  assigns \nothing;
+  */
+void usbctrl_configuration_set(void)
+{
+    return;
+}
+
+
 
 #ifndef __FRAMAC__
 static bool data_being_sent = false;
@@ -83,7 +92,10 @@ __attribute__((weak)) mbed_error_t usbhid_report_received_trigger(uint8_t hid_ha
   @ disjoint behaviors;
 
  */
-static inline uint8_t get_in_epid(usbctrl_interface_t const * const iface)
+#ifndef __FRAMAC__
+static inline
+#endif
+uint8_t get_in_epid(usbctrl_interface_t const * const iface)
 {
     uint8_t epin = 0;
     uint8_t iface_ep_num = 0;
@@ -319,7 +331,42 @@ mbed_error_t usbhid_declare(uint32_t usbxdci_handler,
 
 
     uint8_t i = usbhid_ctx.num_iface;
+#ifndef __FRAMAC__
+    /* INFO: memset, as it uses void* types, is incompatible with assigns constraint.
+     * Wait for the -instanciate mode to be compatible with -nostd use case to allow memset instanciation
+     * by framaC.
+     */
     memset((void*)&usbhid_ctx.hid_ifaces[i], 0x0, sizeof(usbctrl_interface_t));
+#else
+    usbhid_ctx.hid_ifaces[i].inep.id = 0;
+    /*@
+      @ loop invariant 0 <= k <= MAX_HID_REPORTS;
+      @ loop assigns k, usbhid_ctx.hid_ifaces[i].inep.idle_ms[0 .. MAX_HID_REPORTS-1];
+      @ loop variant MAX_HID_REPORTS - k;
+      */
+    for (uint8_t k = 0; k < MAX_HID_REPORTS; ++k) {
+        usbhid_ctx.hid_ifaces[i].inep.idle_ms[k] = 0;
+    }
+    /*@
+      @ loop invariant 0 <= k <= MAX_HID_REPORTS;
+      @ loop assigns k, usbhid_ctx.hid_ifaces[i].inep.silence[0 .. MAX_HID_REPORTS-1];
+      @ loop variant MAX_HID_REPORTS - k;
+      */
+    for (uint8_t k = 0; k < MAX_HID_REPORTS; ++k) {
+        usbhid_ctx.hid_ifaces[i].inep.silence[k] = false;
+    }
+    /* no need to set iface as it is fully set just below */
+    usbhid_ctx.hid_ifaces[i].num_descriptors = 0;
+    usbhid_ctx.hid_ifaces[i].dedicated_out_ep = 0;
+    usbhid_ctx.hid_ifaces[i].in_buff = NULL;
+    usbhid_ctx.hid_ifaces[i].in_buff_len = 0;
+    usbhid_ctx.hid_ifaces[i].get_report_cb = NULL;
+    usbhid_ctx.hid_ifaces[i].set_report_cb = NULL;
+    usbhid_ctx.hid_ifaces[i].set_proto_cb = NULL;
+    usbhid_ctx.hid_ifaces[i].set_idle_cb = NULL;
+    usbhid_ctx.hid_ifaces[i].configured = false;
+    usbhid_ctx.hid_ifaces[i].declared = false;
+#endif
 
 #ifndef __FRAMAC__
     ADD_LOC_HANDLER(usbhid_class_rqst_handler);
@@ -508,14 +555,19 @@ err:
 }
 /*@ requires true;
   @
+  @ behavior not_exist_invhandler:
+  @    assumes !(hid_handler < usbhid_ctx.num_iface);
+  @    assigns \nothing;
+  @    ensures \result == MBED_ERROR_INVPARAM;
+
   @ behavior not_exist:
-  @    assumes !(hid_handler < usbhid_ctx.num_iface ∧ hid_handler < 4);
+  @    assumes (hid_handler < usbhid_ctx.num_iface);
   @    assumes (usbhid_ctx.hid_ifaces[hid_handler].declared ≢ 0) != \true ;
   @    assigns \nothing;
   @    ensures \result == MBED_ERROR_INVPARAM;
-  @
+
   @ behavior exists:
-  @     assumes hid_handler < usbhid_ctx.num_iface ∧ hid_handler < 4;
+  @    assumes (hid_handler < usbhid_ctx.num_iface);
   @    assumes (usbhid_ctx.hid_ifaces[hid_handler].declared ≢ 0) == \true ;
   @    assigns GHOST_opaque_drv_privates;
   @    ensures \result==MBED_ERROR_NONE;
@@ -603,7 +655,7 @@ mbed_error_t usbhid_send_report(uint8_t               hid_handler,
                                 uint8_t               report_index)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
-    uint32_t len = 0;
+    uint16_t len = 0;
     if (report == NULL) {
         errcode = MBED_ERROR_INVPARAM;
         goto err;
@@ -614,14 +666,14 @@ mbed_error_t usbhid_send_report(uint8_t               hid_handler,
     }
     /* first field is the report index */
     uint8_t buf[MAX_HID_REPORT_SIZE + 1] = { 0 };
+    /* report, as report length, is transmit by the upper layer and as a consequence, is under the responsability
+     * of it.
+     * We assume that if report is a valid_read pointer, given report length is correct (i.e. smaller or equal to the
+     * effective report buffer.
+     */
     len = usbhid_get_report_len(hid_handler, type, report_index);
-    if (len == 0) {
+    if (len == 0 || len > MAX_HID_REPORT_SIZE) {
         log_printf("[USBHID] unable to get back report len for iface %d/idx %d\n", hid_handler, report_index);
-        errcode = MBED_ERROR_INVPARAM;
-        goto err;
-    }
-    if (len > MAX_HID_REPORT_SIZE) {
-        log_printf("[USBHID] report len is %x, too long for local buffer!\n", len);
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
@@ -641,8 +693,12 @@ mbed_error_t usbhid_send_report(uint8_t               hid_handler,
     set_bool_with_membarrier(&data_being_sent, true);
     /* is a report id needed ? if a REPORT_ID is defined in the report descriptor, it is added,
      * otherwise, items are sent directly */
-    uint8_t * dest_buf;
-    bool requires_id = usbhid_report_needs_id(hid_handler, report_index);
+    uint8_t * dest_buf = NULL;
+    bool requires_id = false;
+    errcode = usbhid_report_needs_id(hid_handler, report_index, &requires_id);
+    if (errcode != MBED_ERROR_NONE) {
+        goto err;
+    }
 
     if (requires_id) {
         buf[0] = usbhid_report_get_id(hid_handler, report_index);
@@ -652,13 +708,19 @@ mbed_error_t usbhid_send_report(uint8_t               hid_handler,
         log_printf("[USBHID] sending report without ID\n");
         dest_buf = &buf[0];
     }
-    /* @ghost
-      uint8_t *start_of_report = (uint8_t*)report;
-      uint8_t *end_of_report = (uint8_t*)(report + (len-1));
-    */
-    /*  assert \valid_read((uint8_t*)(start_of_report .. end_of_report)); */
-    /* @assert \valid((uint8_t*)report+(0..(len-1))) ; */
-    memcpy((void*)&dest_buf[0], (void*)report, len);
+#ifndef __FRAMAC__
+    memcpy(&dest_buf[0], report, len);
+#else
+    /*@
+      @ loop invariant \separated(dest_buf + (0 .. len-1), report + (0 .. len-1));
+      @ loop invariant 0 <= offset <= len;
+      @ loop assigns offset, dest_buf[0 .. len-1];
+      @ loop variant len - offset;
+     */
+    for (uint16_t offset = 0; offset < len; ++offset) {
+        dest_buf[offset] = report[offset];
+    }
+#endif
 
     if (requires_id) {
         len += 1;

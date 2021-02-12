@@ -144,6 +144,8 @@ LIBUSB_API_DIR ?= $(PROJ_FILES)/libs/usbctrl/api
 # itself and thus by upper layers, including drivers and libraries.
 EWOK_API_DIR ?= $(PROJ_FILES)/kernel/src/C/exported
 
+FRAMAC_RESULTSDIR := framac/results
+
 SESSION     := framac/results/frama-c-rte-eva-wp-ref.session
 LOGFILE     := framac/results/frama-c-rte-eva-wp-ref.log
 EVA_SESSION := framac/results/frama-c-rte-eva.session
@@ -152,6 +154,10 @@ TIMESTAMP   := framac/results/timestamp-calcium_wp-eva.txt
 JOBS        := $(shell nproc)
 # Does this flag could be overriden by env (i.e. using ?=)
 TIMEOUT     := 15
+
+
+$(FRAMAC_RESULTSDIR):
+	$(call cmd,mkdir)
 
 FRAMAC_GEN_FLAGS:=\
 			-absolute-valid-range 0x40040000-0x40044000 \
@@ -201,20 +207,20 @@ FRAMAC_WP_FLAGS:=\
    			-wp-log a:$(LOGFILE)
 
 
-frama-c-parsing:
+frama-c-parsing: $(FRAMAC_RESULTSDIR)
 	frama-c framac/entrypoint.c usbhid*.c  \
 		 -c11 \
 		 -no-frama-c-stdlib \
 		 -cpp-extra-args="-nostdinc -I framac/include -I $(LIBUSB_API_DIR) -I $(LIBSTD_API_DIR) -I $(USBOTGHS_API_DIR) -I $(USBOTGHS_DEVHEADER_PATH) -I $(EWOK_API_DIR)"
 
-frama-c-eva:
+frama-c-eva: $(FRAMAC_RESULTSDIR)
 	frama-c framac/entrypoint.c usbhid*.c -c11 \
 		    $(FRAMAC_GEN_FLAGS) \
 			$(FRAMAC_EVA_FLAGS) \
 			-save $(EVA_SESSION) \
    			-time $(TIMESTAMP)
 
-frama-c:
+frama-c: $(FRAMAC_RESULTSDIR)
 	frama-c framac/entrypoint.c usbhid*.c  -c11 \
 		    $(FRAMAC_GEN_FLAGS) \
 			$(FRAMAC_EVA_FLAGS) \
@@ -223,7 +229,7 @@ frama-c:
    			-save $(SESSION) \
    			-time $(TIMESTAMP)
 
-frama-c-instantiate:
+frama-c-instantiate: $(FRAMAC_RESULTSDIR)
 	frama-c framac/entrypoint.c -c11 -machdep x86_32 \
 			$(FRAMAC_GEN_FLAGS) \
 			-instantiate
