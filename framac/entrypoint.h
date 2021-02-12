@@ -61,12 +61,16 @@ uint16_t usbhid_get_requested_idle(uint8_t hid_handler, uint8_t index);
  * prototypes only
  */
 /*@ assigns \nothing;
-  @ ensures \result == &report_oneindex || \result == &report_twoindex || \result == NULL;
+  @ ensures index == 0 ==> \result == &report_oneindex;
+  @ ensures index == 1 ==> \result == &report_twoindex;
+  @ ensures (index != 0 && index != 1) ==> \result == NULL;
 */
 usbhid_report_infos_t   *oneidx_get_report_cb(uint8_t hid_handler, uint8_t index);
 
 /*@ assigns \nothing;
-  @ ensures \result == &report_oneindex || \result == &report_twoindex || \result == NULL;
+  @ ensures index == 0 ==> \result == &report_oneindex;
+  @ ensures index == 1 ==> \result == &report_twoindex;
+  @ ensures (index != 0 && index != 1) ==> \result == NULL;
 */
 usbhid_report_infos_t   *twoidx_get_report_cb(uint8_t hid_handler, uint8_t index);
 

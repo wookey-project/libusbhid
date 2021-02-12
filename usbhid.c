@@ -701,7 +701,10 @@ mbed_error_t usbhid_send_report(uint8_t               hid_handler,
     }
 
     if (requires_id) {
-        buf[0] = usbhid_report_get_id(hid_handler, report_index);
+        errcode = usbhid_report_get_id(hid_handler, report_index, &buf[0]);
+        if (errcode != MBED_ERROR_NONE) {
+            goto err;
+        }
         log_printf("[USBHID] this report requires its ID (0x%x) to be sent\n", buf[0]);
         dest_buf = &buf[1];
     } else {

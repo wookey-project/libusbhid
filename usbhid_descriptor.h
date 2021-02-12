@@ -93,7 +93,6 @@ typedef struct __packed {
     uint8_t bCountryCode;
     uint8_t bNumDescriptors; /* num of class descriptors, at least 1 (report descriptor) */
     /* other potential descriptors */
-    usbhid_content_descriptor_t descriptors[];
 } usbhid_descriptor_t;
 
 

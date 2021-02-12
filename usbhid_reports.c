@@ -44,7 +44,6 @@ mbed_error_t usbhid_report_needs_id(uint8_t hid_handler, uint8_t index, bool *id
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    /* TODO: add usbhid_interface_configured() */
     if (ctx->hid_ifaces[hid_handler].configured == false) {
         errcode = MBED_ERROR_INVSTATE;
         goto err;
@@ -56,9 +55,13 @@ mbed_error_t usbhid_report_needs_id(uint8_t hid_handler, uint8_t index, bool *id
     /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
     if (report == NULL) {
-        errcode = MBED_ERROR_UNKNOWN;
+        errcode = MBED_ERROR_NOBACKEND;
         goto err;
     }
+    /* INFO: for the needs of the proof, two HID descriptors have been defined in the entrypoint.
+     * These descriptors have different reports number & size that can be sent back by the device and
+     * are associated two HID descriptor index 0 & 1.
+     */
     /*@ assert (report == &report_oneindex || report ==  &report_twoindex); */
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
@@ -69,26 +72,31 @@ mbed_error_t usbhid_report_needs_id(uint8_t hid_handler, uint8_t index, bool *id
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
             report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) {
+            /*  assert (index == 0 ==> (\exists integer i; 0 <= i < ONEINDEX_ITEMS_NUM && (report_oneindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_oneindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID))); */
+            /*  assert (index == 1 ==> (\exists integer i; 0 <= i < TWOINDEX_ITEMS_NUM && (report_twoindex.items[i].type == USBHID_ITEM_TYPE_GLOBAL && report_twoindex.items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID))); */
             *id_needed = true;
             goto err;
         }
     }
-    /*@ assert \forall integer i; 0<=i<report->num_items ==> !(report->items[i].type == USBHID_ITEM_TYPE_GLOBAL && report->items[i].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID);*/
+    /* tag not found */
     *id_needed = false;
 err:
     return errcode;
 }
 
 
-uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index)
+mbed_error_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index, uint8_t *id)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     usbhid_context_t *ctx = usbhid_get_context();
-    uint8_t id = 0;
 
     /* sanitize */
     if (!usbhid_interface_exists(hid_handler)) {
         errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (ctx->hid_ifaces[hid_handler].configured == false) {
+        errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
 
@@ -97,24 +105,28 @@ uint8_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index)
     /*@ calls twoidx_get_report_cb ; */
     report  = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
     if (report == NULL) {
+        errcode = MBED_ERROR_NOBACKEND;
         goto err;
     }
     /*@ assert \valid_read(report); */
 
+    uint8_t found_id = 0;
     /*@
       @ loop invariant 0 <= iterator <= report->num_items ;
-      @ loop assigns iterator, id ;
+      @ loop assigns iterator, found_id ;
       @ loop variant report->num_items - iterator ;
       */
     for (uint32_t iterator = 0; iterator < report->num_items; ++iterator) {
         if (report->items[iterator].type == USBHID_ITEM_TYPE_GLOBAL &&
             report->items[iterator].tag == USBHID_ITEM_GLOBAL_TAG_REPORT_ID) {
-            id = report->items[iterator].data1;
+            found_id = report->items[iterator].data1;
             goto err;
         }
     }
+    /* tag not found, falling back to id 0 */
+    *id = found_id;
 err:
-    return id;
+    return errcode;
 }
 
 

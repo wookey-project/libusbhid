@@ -23,6 +23,7 @@
  */
 
 #include "libc/types.h"
+#include "libc/string.h"
 #include "autoconf.h"
 #include "usbhid.h"
 #include "usbhid_descriptor.h"
@@ -30,12 +31,97 @@
 #include "usbhid_requests.h"
 
 
+/*
+ * INFO:
+ * When translating content with cast required (here from descriptor structure to uint8_t* generic buffer)
+ * we handle the translation through a local (local is important, no border effect) translator mechanism
+ * using union.
+ * Globals keep an strictly typed mapping in the Typed+Ref WP request and we can use EVA locally in
+ * the function to validate local variable and types overflow/underflow/...
+ *
+ * This methodology may be costly, but the usage of static inline functions associated to offencive compiler
+ * optimization (O2, O3), highly reduce the overhead.
+ * Most of the time, such constraint happen out of the critical data plane, where little overhead is not
+ * a problem.
+ */
+/*@
+  @ requires \valid(buf_len);
+  @ requires \valid(buf + (0 .. *buf_len-1));
+  @ requires \separated(buf_len, buf + (0 .. *buf_len-1));
+  @ requires (num_desc > 0);
+  @ requires *buf_len >= sizeof(usbhid_descriptor_t) + (num_desc * sizeof (usbhid_content_descriptor_t));
+
+  @ assigns buf[0 .. *buf_len-1], *buf_len;
+  */
+#ifndef __FRAMAC__
+static inline
+#endif
+mbed_error_t set_descriptor_data(uint8_t * const buf, uint8_t *buf_len, const uint8_t iface_id, const uint8_t num_desc)
+{
+    /* no input sanitation, only called locally by get_descriptor, which has previously checked input data.
+     * Input values are proved by WP
+     */
+    mbed_error_t errcode = MBED_ERROR_NONE;
+    struct __packed full_desc {
+        usbhid_descriptor_t               desc_header;
+        usbhid_content_descriptor_t       descs[MAX_HID_REPORTS];
+    };
+    union hid_desc {
+        uint8_t             u8[sizeof(usbhid_descriptor_t)+(sizeof(usbhid_content_descriptor_t)*MAX_HID_REPORTS)];
+        struct full_desc    desc;
+    };
+    union hid_desc hid_desc;
+    uint8_t size = sizeof(usbhid_descriptor_t) + (num_desc * sizeof (usbhid_content_descriptor_t));
+
+    hid_desc.desc.desc_header.bLength = size; /* HID descriptor size */
+    hid_desc.desc.desc_header.bDescriptorType = HID_DESCRIPTOR_TYPE; /* HID descriptor type, set by USB consortium */
+    hid_desc.desc.desc_header.bcdHID = 0x111; /* HID class specification release 1.11 */
+    hid_desc.desc.desc_header.bCountryCode = 0;  /* contry code : 0x0 = not supported */
+    hid_desc.desc.desc_header.bNumDescriptors = num_desc; /* number of class descriptor, including report descriptor (at least one) */
+
+    /*@
+      @ loop invariant 0 <= descid <= num_desc ;
+      @ loop assigns descid, buf[0 .. *buf_len-1], errcode;
+      @ loop assigns hid_desc.desc.descs[0..(num_desc-1)].bDescriptorType ;
+      @ loop assigns hid_desc.desc.descs[0..(num_desc-1)].wDescriptorLength ;
+      @ loop variant (num_desc - descid) ;
+      */
+    for (uint8_t descid = 0; descid < num_desc; ++descid) {
+        uint8_t len = 0;
+        hid_desc.desc.descs[descid].bDescriptorType = REPORT_DESCRIPTOR_TYPE;
+        errcode = usbhid_get_report_desc_len(iface_id, descid, &len);
+        if (errcode != MBED_ERROR_NONE) {
+            goto err;
+        }
+        hid_desc.desc.descs[descid].wDescriptorLength = len;
+    }
+    /* now copy u8 to buff */
+    /*@ assert size <= *buf_len; */
+    //memcpy(buf, &hid_desc.u8[0], size);
+#if 1
+    /*@
+      @ loop invariant \separated(buf + (0 .. size-1), &hid_desc.u8 + (0 .. size-1));
+      @ loop invariant 0 <= i <= size ;
+      @ loop assigns i, buf[0 .. size-1];
+      @ loop variant (size - i);
+      */
+    for (uint8_t i = 0; i < size; ++i) {
+        buf[i] = hid_desc.u8[i];
+    }
+#endif
+    *buf_len = size;
+
+
+err:
+    return errcode;
+}
+
 /* This is the HID class descriptor content. This descriptor is returned at GetConfiguration time.
  * Each other class-level descriptor (report descriptor and others) are returned to
  * GetDescriptor class level requests, handled by the class-level handler */
 /*@
-  @ requires \separated(buf + (0 .. sizeof(usbhid_descriptor_t)-1),desc_size) ;
-  @ assigns buf[0 .. sizeof(usbhid_descriptor_t)-1] ;
+  @ requires \separated(buf + (0 .. (sizeof(usbhid_descriptor_t)+MAX_HID_REPORTS*(sizeof(usbhid_content_descriptor_t)))-1),desc_size) ;
+  @ assigns buf[0 .. *desc_size-1] ;
   @ assigns *desc_size ;
 
   @behavior invparam:
@@ -83,6 +169,7 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
+
     /*@ assert ctx->num_iface < MAX_USBHID_IFACES; */
 
     /* desc size is usbhid_descriptor_t size plus usbhid_content_descriptor_t size
@@ -103,6 +190,7 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
         if (ctx->hid_ifaces[i].id == iface_id) {
             size = sizeof(usbhid_descriptor_t) + (ctx->hid_ifaces[i].num_descriptors * sizeof (usbhid_content_descriptor_t));
             if (*desc_size < size) {
+                /* this should not happend if requires are proven. */
                 log_printf("[USBHID] invalid param buffers\n");
                 errcode = MBED_ERROR_NOMEM;
                 goto err;
@@ -119,34 +207,12 @@ mbed_error_t      usbhid_get_descriptor(uint8_t             iface_id,
     /* @ assert i < MAX_USBHID_IFACES ; */
 
     /* @ assert ctx->hid_ifaces[i].num_descriptors < MAX_HID_DESCRIPTORS; */
+
+
     const uint8_t num_desc = ctx->hid_ifaces[i].num_descriptors;
-
-    usbhid_descriptor_t * const desc =
-        (usbhid_descriptor_t *)(&buf[0]);
-    desc->bLength = size; /* HID descriptor size */
-    desc->bDescriptorType = HID_DESCRIPTOR_TYPE; /* HID descriptor type, set by USB consortium */
-    desc->bcdHID = 0x111; /* HID class specification release 1.11 */
-    desc->bCountryCode = 0;  /* contry code : 0x0 = not supported */
-    desc->bNumDescriptors = num_desc; /* number of class descriptor, including report descriptor (at least one) */
-
-    uint8_t descid = 0;
-    /*@
-      @ loop invariant 0 <= descid <= num_desc ;
-      @ loop assigns descid, buf[0 .. sizeof(usbhid_descriptor_t)-1], errcode;
-      @ loop assigns desc->descriptors[0..(num_desc-1)].bDescriptorType ;
-      @ loop assigns desc->descriptors[0..(num_desc-1)].wDescriptorLength ;
-      @ loop variant (num_desc - descid) ;
-      */
-    for (descid = 0; descid < num_desc; ++descid) {
-        desc->descriptors[descid].bDescriptorType = REPORT_DESCRIPTOR_TYPE;
-        uint8_t len = 0;
-        errcode = usbhid_get_report_desc_len(i, descid, &len);
-        if (errcode != MBED_ERROR_NONE) {
-            goto err;
-        }
-        desc->descriptors[descid].wDescriptorLength = len;
+    if ((errcode = set_descriptor_data(&buf[0], desc_size, i, num_desc)) != MBED_ERROR_NONE) {
+        goto err;
     }
-    *desc_size = size;
 err:
     return errcode;
 }

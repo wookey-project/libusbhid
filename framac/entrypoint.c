@@ -176,7 +176,6 @@ usbhid_report_infos_t report_twoindex = {
  * Callbacks implementations that are required by libusbhid API
  */
 
-
 usbhid_report_infos_t   *oneidx_get_report_cb(uint8_t hid_handler, uint8_t index)
 {
     if (index == 0) {
