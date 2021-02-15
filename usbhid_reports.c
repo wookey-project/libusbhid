@@ -44,7 +44,7 @@ mbed_error_t usbhid_report_needs_id(uint8_t hid_handler, uint8_t index, bool *id
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    if (ctx->hid_ifaces[hid_handler].configured == false) {
+    if (!usbhid_interface_configured(hid_handler)) {
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
@@ -95,11 +95,10 @@ mbed_error_t usbhid_report_get_id(uint8_t hid_handler, uint8_t index, uint8_t *i
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    if (ctx->hid_ifaces[hid_handler].configured == false) {
+    if (!usbhid_interface_configured(hid_handler)) {
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
-
     usbhid_report_infos_t *report;
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&twoidx_get_report_cb} ;*/
     /*@ calls twoidx_get_report_cb ; */
@@ -237,7 +236,7 @@ err:
 }
 
 
-uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uint8_t *len)
+mbed_error_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uint8_t *len)
 {
     mbed_error_t errcode = MBED_ERROR_NONE;
     uint32_t offset = 0;
@@ -248,10 +247,10 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uin
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    /* TODO: add usbhid_interface_configured() */
-
-
-
+    if (!usbhid_interface_configured(hid_handler)) {
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
     if (ctx->hid_ifaces[hid_handler].get_report_cb == NULL) {
         errcode = MBED_ERROR_INVSTATE;
         goto err;
@@ -259,8 +258,8 @@ uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uin
     /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb != NULL; */
 
     usbhid_report_infos_t *report ;
-    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb} ;*/
-    /*@ calls oneidx_get_report_cb ; */
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb, &twoidx_get_report_cb} ;*/
+    /*@ calls oneidx_get_report_cb, twoidx_get_report_cb ; */
     report = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
 
@@ -355,12 +354,11 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-
-    /* TODO: add usbhid_interface_configured() */
-    if (ctx->hid_ifaces[hid_handler].get_report_cb == NULL) {
+    if (!usbhid_interface_configured(hid_handler)) {
         errcode = MBED_ERROR_INVSTATE;
         goto err;
     }
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb != NULL  ; */
 
     /* define a buffer of num_items x max item size
      * these informations should be rodata content, defining the number of
@@ -375,8 +373,8 @@ mbed_error_t usbhid_forge_report_descriptor(uint8_t hid_handler, uint8_t *buf, u
     uint32_t offset = 0;
     usbhid_report_infos_t *report;
 
-    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb} ;*/
-    /*@ calls oneidx_get_report_cb; */
+    /*@ assert ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb, &twoidx_get_report_cb} ;*/
+    /*@ calls oneidx_get_report_cb,twoidx_get_report_cb; */
     report  = ctx->hid_ifaces[hid_handler].get_report_cb(hid_handler, index);
 
     if (report == NULL) {

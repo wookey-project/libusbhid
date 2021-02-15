@@ -175,7 +175,11 @@ usbhid_report_infos_t report_twoindex = {
 /*********************************************************************
  * Callbacks implementations that are required by libusbhid API
  */
-
+/*@ assigns \nothing;
+  @ ensures index == 0 ==> \result == &report_oneindex;
+  @ ensures index == 1 ==> \result == &report_twoindex;
+  @ ensures (index != 0 && index != 1) ==> \result == NULL;
+*/
 usbhid_report_infos_t   *oneidx_get_report_cb(uint8_t hid_handler, uint8_t index)
 {
     if (index == 0) {
@@ -187,7 +191,11 @@ usbhid_report_infos_t   *oneidx_get_report_cb(uint8_t hid_handler, uint8_t index
     }
 }
 
-
+/*@ assigns \nothing;
+  @ ensures index == 0 ==> \result == &report_oneindex;
+  @ ensures index == 1 ==> \result == &report_twoindex;
+  @ ensures (index != 0 && index != 1) ==> \result == NULL;
+*/
 usbhid_report_infos_t   *twoidx_get_report_cb(uint8_t hid_handler, uint8_t index)
 {
     if (index == 0) {
@@ -380,12 +388,12 @@ void test_fcn_usbhid(){
     ///////////////////////////////////////////////////
     //
 
-    errcode = usbhid_declare(ctxh1,
-            USB_subclass, USB_protocol,
-            1, poll, dedicated_out,
-            mpsize, &(hid_handler),
-            recv_buf,
-            my_maxlen);
+//    errcode = usbhid_declare(ctxh1,
+//            USB_subclass, USB_protocol,
+//            1, poll, dedicated_out,
+//            mpsize, &(hid_handler),
+//            recv_buf,
+//            my_maxlen);
 
     /* @ assert errcode == MBED_ERROR_NONE ; */
 
@@ -604,6 +612,10 @@ void test_fcn_driver_eva() {
     usbhid_get_descriptor((uint8_t)42, &(buf[0]), &ephemeral_desc_size, 0);
 
     usbhid_class_rqst_handler(ctxh1, &pkt);
+    pkt.wIndex = 1;
+    usbhid_class_rqst_handler(ctxh1, &pkt);
+    pkt.wIndex = 2;
+    usbhid_class_rqst_handler(ctxh1, &pkt);
 
     uint8_t dflt_hid_handler = Frama_C_interval_8(0,255);
     uint8_t dflt_index = Frama_C_interval_8(0,255);
@@ -643,8 +655,8 @@ int main(void)
         goto err;
     }
     test_fcn_usbhid() ;
-    test_fcn_usbhid_erreur() ;
     test_fcn_driver_eva() ;
+    test_fcn_usbhid_erreur() ;
 err:
     return errcode;
 }

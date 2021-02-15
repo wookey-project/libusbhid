@@ -100,32 +100,67 @@ err:
     return result;
 }
 
+
+/*@
+  @ requires \valid(hid_handler);
+  @   assigns *hid_handler;
+
+  @ behavior inviface:
+  @   assumes !(\exists integer i; 0 <= i < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[i].iface.id == iface) ;
+  @   ensures \result == MBED_ERROR_INVPARAM;
+
+  // we can't consider this as two behavior as usbhid_ctx.hid_ifaces[] is not a program input data but a global
+  // separating into two behaviors would fail the disjoint property
+  @ behavior ok:
+  @   assumes (\exists integer i; 0 <= i < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[i].iface.id == iface) ;
+  @   ensures \result == MBED_ERROR_INVSTATE ==> \exists integer i; 0 <= i < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[i].iface.id == iface && usbhid_ctx.hid_ifaces[i].configured == \false;
+  @   ensures \result == MBED_ERROR_NONE ==> \exists integer i; 0 <= i < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[i].iface.id == iface && usbhid_ctx.hid_ifaces[i].configured == \true;
+
+  @ disjoint behaviors;
+  @ complete behaviors;
+ */
 /*
-  // behaviors to define properly
+ * This function is used in HID requests. We assumes that request should be executed
+ * only if the associated interface is declared and configured.
  */
 #ifndef __FRAMAC__
 static inline
 #endif
-uint8_t get_hid_handler_from_iface(uint8_t iface)
+mbed_error_t get_hid_handler_from_iface(uint8_t iface, uint8_t *hid_handler)
 {
+    mbed_error_t errcode = MBED_ERROR_NONE;
     /* ctx checked by parent function */
     usbhid_context_t *ctx = usbhid_get_context();
 
     uint8_t handler = 0;
     uint8_t num_iface = ctx->num_iface;
+    bool handler_found = false;
     /*@
       @ loop invariant 0 <= i <= num_iface ;
-      @ loop assigns i, handler ;
+      @ loop assigns i, handler, handler_found ;
       @ loop variant num_iface - i;
       */
     for (uint8_t i = 0; i < num_iface; ++i) {
         if (ctx->hid_ifaces[i].iface.id == iface) {
             handler = i;
-            goto end;
+            handler_found = true;
+            /*@ assert (\exists integer j; 0 <= i < usbhid_ctx.num_iface && usbhid_ctx.hid_ifaces[j].iface.id == iface && j == i); */
+            break;
         }
     }
-end:
-    return handler;
+    if (handler_found == false) {
+        /* iface not found */
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (!usbhid_interface_configured(handler)) {
+        /* iface found, but not configured */
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
+    *hid_handler = handler;
+err:
+    return errcode;
 }
 
 
@@ -143,7 +178,11 @@ mbed_error_t usbhid_handle_set_protocol(usbctrl_setup_pkt_t *pkt)
     }
     uint16_t proto = pkt->wValue;
     uint8_t iface = pkt->wIndex & 0xff;
-    uint8_t hid_handler = get_hid_handler_from_iface(iface);
+    uint8_t hid_handler;
+    errcode = get_hid_handler_from_iface(iface, &hid_handler);
+    if (errcode != MBED_ERROR_NONE) {
+        goto err;
+    }
 
     switch (proto) {
         case 0:
@@ -180,7 +219,12 @@ mbed_error_t usbhid_handle_set_idle(usbctrl_setup_pkt_t *pkt)
     uint8_t lbyte = wvalue & 0xff;
 
     uint8_t iface = pkt->wIndex & 0xff;
-    uint8_t hid_handler = get_hid_handler_from_iface(iface);
+    uint8_t hid_handler;
+
+    errcode = get_hid_handler_from_iface(iface, &hid_handler);
+    if (errcode != MBED_ERROR_NONE) {
+        goto err;
+    }
 
     if (hbyte == 0) {
         /* duration_ms to 0, no limit to IDLE time, do not send */
@@ -251,7 +295,12 @@ mbed_error_t usbhid_handle_std_request(usbctrl_setup_pkt_t *pkt)
 
                     /* get back hid iface handler from targetted iface */
                     uint8_t iface = pkt->wIndex & 0xff;
-                    uint8_t hid_handler = get_hid_handler_from_iface(iface);
+                    uint8_t hid_handler;
+
+                    errcode = get_hid_handler_from_iface(iface, &hid_handler);
+                    if (errcode != MBED_ERROR_NONE) {
+                        goto err;
+                    }
                     /* forge the descriptor */
                     usbhid_forge_report_descriptor(hid_handler, &desc[0], &size, descriptor_index);
                     log_printf("[USBHID] written %d byte in descriptor\n", size);

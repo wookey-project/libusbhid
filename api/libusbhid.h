@@ -404,14 +404,24 @@ mbed_error_t usbhid_declare(uint32_t          usbxdci_handler,
   @    assumes hid_handler >= usbhid_ctx.num_iface ;
   @    ensures \result == MBED_ERROR_INVPARAM;
 
+  @ behavior uc_undec_iface:
+  @    assumes hid_handler < usbhid_ctx.num_iface ;
+  @    assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \false;
+  @    ensures \result == MBED_ERROR_INVPARAM;
+
   @ behavior uc_invgetter:
-  @    assumes hid_handler < usbhid_ctx.num_iface && get_report_cb == NULL ;
+  @    assumes hid_handler < usbhid_ctx.num_iface ;
+  @    assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \true ;
+  @    assumes get_report_cb == NULL ;
   @    ensures \result == MBED_ERROR_INVPARAM;
 
   @ behavior uc_ok:
-  @    assumes hid_handler < usbhid_ctx.num_iface && get_report_cb != NULL ;
+  @    assumes hid_handler < usbhid_ctx.num_iface ;
+  @    assumes usbhid_ctx.hid_ifaces[hid_handler].declared == \true ;
+  @    assumes get_report_cb != NULL ;
   @    assigns usbhid_ctx.hid_ifaces[hid_handler] ;
   @    ensures usbhid_ctx.hid_ifaces[hid_handler].configured == \true ;
+  @    ensures usbhid_ctx.hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb, &twoidx_get_report_cb};
   @    ensures \result == MBED_ERROR_NONE;
 
   @ complete behaviors ;

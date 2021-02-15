@@ -102,6 +102,12 @@ usbhid_report_infos_t report_oneindex;
 
 usbhid_report_infos_t report_twoindex;
 
+/* declaring entrypoint get_report cb prototypes */
+/* specs are in entrypoint.c file */
+usbhid_report_infos_t   *oneidx_get_report_cb(uint8_t hid_handler, uint8_t index);
+usbhid_report_infos_t   *twoidx_get_report_cb(uint8_t hid_handler, uint8_t index);
+
+
 #define TWOINDEX_ITEMS_NUM 25
 #define ONEINDEX_ITEMS_NUM 16
 #endif

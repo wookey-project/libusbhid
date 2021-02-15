@@ -41,9 +41,9 @@
   @ requires \separated( &usbhid_ctx, len, &GHOST_opaque_drv_privates, &GHOST_num_ctx, ctx_list+(..));
   @ requires \valid(len);
   @ assigns *len;
-  @ ensures \result== MBED_ERROR_INVPARAM || \result== MBED_ERROR_NONE || \result== MBED_ERROR_INVSTATE || \result== MBED_ERROR_NOSTORAGE;
+  @ ensures \result == MBED_ERROR_INVPARAM || \result== MBED_ERROR_NONE || \result== MBED_ERROR_INVSTATE || \result== MBED_ERROR_NOSTORAGE;
   */
-uint8_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uint8_t *len);
+mbed_error_t usbhid_get_report_desc_len(uint8_t hid_handler, uint8_t index, __out uint8_t *len);
 
 /*
  * forge report descriptor based on the upper stack item lists of the given report id.

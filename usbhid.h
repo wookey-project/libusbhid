@@ -98,4 +98,6 @@ usbhid_context_t *usbhid_get_context(void);
 
 bool usbhid_interface_exists(uint8_t hid_handler);
 
+bool usbhid_interface_configured(uint8_t hid_handler);
+
 #endif/*!USBHID_H_*/

@@ -243,6 +243,45 @@ bool usbhid_interface_exists(uint8_t hid_handler)
     return result;
 }
 
+/*@
+  @ assigns \nothing ;
+  @ ensures usbhid_ctx.num_iface <= MAX_USBHID_IFACES;
+
+  @ behavior invalid_handler:
+  @   assumes hid_handler >= usbhid_ctx.num_iface ||hid_handler >=MAX_USBHID_IFACES;
+  @   ensures \result == \false;
+
+  @ behavior unconfigured_iface:
+  @   assumes hid_handler < usbhid_ctx.num_iface && hid_handler < MAX_USBHID_IFACES ;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \false;
+  @   ensures \result == \false;
+
+  @ behavior ok:
+  @   assumes hid_handler < usbhid_ctx.num_iface&& hid_handler < MAX_USBHID_IFACES ;
+  @   assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;
+  @   ensures \result == \true;
+
+  @ complete behaviors;
+  @ disjoint behaviors;
+
+ */
+bool usbhid_interface_configured(uint8_t hid_handler)
+{
+    usbhid_context_t *ctx = usbhid_get_context();
+    bool result = false;
+    if (hid_handler < ctx->num_iface && hid_handler < MAX_USBHID_IFACES) {
+        /* INFO: boolean normalization based on false (lonely checked value.
+         * Thus, this is not fault-resilient as any non-zero value generates a
+         * TRUE result */
+        result = !(ctx->hid_ifaces[hid_handler].configured == false);
+    }
+    /*@ assert result == true ==> ctx->hid_ifaces[hid_handler].get_report_cb \in {&oneidx_get_report_cb, &twoidx_get_report_cb} ;*/
+    return result;
+}
+
+
+
+
 #ifndef __FRAMAC__
 /* INFO: must be exported in order to be triggered by EVA */
 static
@@ -516,7 +555,7 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
         errcode = MBED_ERROR_INVPARAM;
         goto err;
     }
-    /*@ assert errcode==MBED_ERROR_NONE; */
+    /*@ assert get_report \in {&oneidx_get_report_cb, &twoidx_get_report_cb}; */
     /* set each of the interface callbacks */
     ctx->hid_ifaces[hid_handler].get_report_cb = get_report;
     /* @ assert ctx->hid_ifaces[hid_handler].get_report_cb ∈ {oneidx_get_report_cb,  twoidx_get_report_cb} ;)*/
@@ -528,7 +567,6 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
         ctx->hid_ifaces[hid_handler].set_report_cb = usbhid_dflt_set_report;
         /* @ assert ctx->hid_ifaces[hid_handler].set_report_cb ∈ {usbhid_dflt_set_report} ;)*/
     }
-
     if (set_proto != NULL) {
         ctx->hid_ifaces[hid_handler].set_proto_cb = set_proto;
         /* @ assert ctx->hid_ifaces[hid_handler].set_proto_cb ∈ {set_proto} ;)*/
@@ -548,7 +586,7 @@ mbed_error_t usbhid_configure(uint8_t               hid_handler,
     /* set interface as configured */
     ctx->hid_ifaces[hid_handler].configured = true;
     /*@ assert errcode==MBED_ERROR_NONE; */
-    /*@ assert  errcode==MBED_ERROR_NONE ==> (hid_handler < usbhid_ctx.num_iface && get_report != NULL) ;*/
+    /*@ assert  errcode==MBED_ERROR_NONE ==> (hid_handler < usbhid_ctx.num_iface && get_report \in {&oneidx_get_report_cb, &twoidx_get_report_cb}) ;*/
 
 err:
     return errcode;
