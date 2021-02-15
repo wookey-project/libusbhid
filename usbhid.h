@@ -54,6 +54,11 @@ typedef struct {
                                         * associated iface) */
 } usbhid_inep_t;
 
+typedef enum {
+    USBHID_PROTO_BOOT =   0x0,
+    USBHID_PROTO_REPORT = 0x1
+} usbhid_proto_t;
+
 /*
  * Each USB HID interface is composed of:
  * - an interface id (used to determine which interface is called by the host), set by libxDCI,
@@ -79,6 +84,7 @@ typedef struct {
     usbhid_set_idle_t     set_idle_cb;
     bool                  configured;
     bool                  declared;
+    usbhid_proto_t        protocol;
 } usbhid_iface_t;
 
 

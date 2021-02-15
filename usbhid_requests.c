@@ -56,48 +56,83 @@ __attribute__((weak)) mbed_error_t usbhid_request_trigger(uint8_t hid_handler __
 /*
  * TODO: behaviors
  */
+/*@
+  @ requires \valid(it_does);
+  @ assigns *it_does;
+
+  // full functional
+  @ behavior invhandler:
+  @    assumes hid_handler >= MAX_USBHID_IFACES;
+  @    ensures \result == MBED_ERROR_INVPARAM;
+
+  @ behavior inv_handler_state:
+  @    assumes hid_handler < MAX_USBHID_IFACES;
+  @    assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \false;
+  @    ensures \result == MBED_ERROR_INVSTATE;
+
+  @ behavior inv_handler_content:
+  @    assumes hid_handler < MAX_USBHID_IFACES;
+  @    assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;
+  @    assumes usbhid_ctx.hid_ifaces[hid_handler].iface.usb_ep_number >= MAX_EP_PER_INTERFACE;
+  @    ensures \result == MBED_ERROR_UNKNOWN;
+
+  @ behavior ok:
+  @    assumes hid_handler < MAX_USBHID_IFACES;
+  @    assumes usbhid_ctx.hid_ifaces[hid_handler].configured == \true;
+  @    assumes usbhid_ctx.hid_ifaces[hid_handler].iface.usb_ep_number < MAX_EP_PER_INTERFACE;
+  @    ensures *it_does == \true ==> \exists integer i; 0 <= i < usbhid_ctx.hid_ifaces[hid_handler].iface.usb_ep_number && usbhid_ctx.hid_ifaces[hid_handler].iface.eps[i].dir == USB_EP_DIR_OUT;
+  @    ensures *it_does == \false ==> (\forall integer j; 0 <= j < usbhid_ctx.hid_ifaces[hid_handler].iface.usb_ep_number ==> usbhid_ctx.hid_ifaces[hid_handler].iface.eps[j].dir != USB_EP_DIR_OUT);
+  @    ensures \result == MBED_ERROR_NONE;
+
+ */
 #ifndef __FRAMAC__
 static inline
 #endif
-uint8_t is_iface_using_out_ep(uint8_t iface)
+mbed_error_t is_iface_using_out_ep(uint8_t hid_handler, bool *it_does)
 {
     /* ctx checked by parent function */
+    mbed_error_t errcode = MBED_ERROR_NONE;
     usbhid_context_t *ctx = usbhid_get_context();
     bool result = false;
+
+    if (hid_handler >= MAX_USBHID_IFACES) {
+        /* in the current call context, never reached, thus fault injection
+         * protection. */
+        /*@ assert \false; */
+        errcode = MBED_ERROR_INVPARAM;
+        goto err;
+    }
+    if (usbhid_interface_configured(hid_handler) == false) {
+        /* interface not configured (hould not happen, but can be emulated. This
+         * is a fault injection case too) */
+        errcode = MBED_ERROR_INVSTATE;
+        goto err;
+    }
+    if (ctx->hid_ifaces[hid_handler].iface.usb_ep_number >= MAX_EP_PER_INTERFACE) {
+        /* current iface config is invalid, this should not happen
+         * (fault injection?) */
+        errcode = MBED_ERROR_UNKNOWN;
+        goto err;
+    }
     /*@
-      @ loop invariant 0 <= i <= ctx->num_iface ;
-      @ loop assigns i, result;
-      @ loop variant (ctx->num_iface - i);
+      @ loop invariant 0 <= j <= ctx->hid_ifaces[hid_handler].iface.usb_ep_number ;
+      @ loop assigns j, result;
+      @ loop variant (ctx->hid_ifaces[hid_handler].iface.usb_ep_number - j);
       */
-    for (uint8_t i = 0; i < ctx->num_iface; ++i) {
-        if (ctx->hid_ifaces[i].iface.id == iface) {
-            if (ctx->hid_ifaces[i].configured == false) {
-                /* invalid behavior */
-                result = false;
-                goto err;
-            }
-            if (ctx->hid_ifaces[i].iface.usb_ep_number >= MAX_EP_PER_INTERFACE) {
-                /* current iface config is invalid, this should not happen
-                 * (fault injection, invalid lib entry) */
-                result = false;
-                goto err;
-            }
-            /*@
-              @ loop invariant 0 <= j <= ctx->hid_ifaces[i].iface.usb_ep_number ;
-              @ loop invariant 0 <= i <= ctx->num_iface ;
-              @ loop assigns j, result;
-              @ loop variant (ctx->hid_ifaces[i].iface.usb_ep_number - j);
-              */
-            for (uint8_t j = 0; j < ctx->hid_ifaces[i].iface.usb_ep_number; ++j) {
-                if (ctx->hid_ifaces[i].iface.eps[j].dir == USB_EP_DIR_OUT) {
-                    result = true;
-                    goto err;
-                }
-            }
+    for (uint8_t j = 0; j < ctx->hid_ifaces[hid_handler].iface.usb_ep_number; ++j) {
+        if (ctx->hid_ifaces[hid_handler].iface.eps[j].dir == USB_EP_DIR_OUT) {
+            result = true;
+            /* helping wp with eva */
+            /*@  assert \exists integer i; 0 <= i < usbhid_ctx.hid_ifaces[hid_handler].iface.usb_ep_number && usbhid_ctx.hid_ifaces[hid_handler].iface.eps[i].dir == USB_EP_DIR_OUT; */
+            goto err;
         }
     }
+    result = false;
+    /*@ assert \forall integer j; 0 <= j < usbhid_ctx.hid_ifaces[hid_handler].iface.usb_ep_number ==> usbhid_ctx.hid_ifaces[hid_handler].iface.eps[j].dir != USB_EP_DIR_OUT; */
+
 err:
-    return result;
+    *it_does = result;
+    return errcode;
 }
 
 
@@ -164,6 +199,50 @@ err:
 }
 
 
+/*@
+  @ requires \valid_read(pkt);
+  @ requires \separated(pkt,&usbhid_ctx);
+  @ assigns usbhid_ctx.hid_ifaces[0 .. MAX_USBHID_IFACES-1].protocol;
+
+ // let's handle functional proof (usbhid conformity)
+ // Set_Proto, usb_hid 1.11, chap 7.2.6
+ // Info: bmRequestType & bRequest has been checked by caller
+
+ // value should be 0 (Boot Protocol) or 1 (Report Protocol)
+ @ behavior bad_wValue:
+ @   assumes pkt->wValue != 0 && pkt->wValue != 1;
+ @   ensures \result == MBED_ERROR_UNSUPORTED_CMD;
+
+ // wLength (data size) should be 0)
+ @ behavior bad_wLength:
+ @   assumes pkt->wValue == 0 || pkt->wValue == 1;
+ @   assumes pkt->wLength != 0;
+ @   ensures \result == MBED_ERROR_UNSUPORTED_CMD;
+
+ // wIndex: interface identifier
+ @ behavior bad_wIndex_hbyte:
+ @   assumes pkt->wValue == 0 || pkt->wValue == 1;
+ @   assumes pkt->wLength == 0;
+ @   assumes ((pkt->wIndex >> 8) & 0xff) != 0;
+ @   ensures \result == MBED_ERROR_UNSUPORTED_CMD;
+
+ // input (setup pkt) ok. Let's check current context
+ @ behavior input_ok:
+ @   assumes pkt->wValue == 0 || pkt->wValue == 1;
+ @   assumes pkt->wLength == 0;
+ @   assumes ((pkt->wIndex >> 8) & 0xff) == 0;
+ @   ensures !(\exists integer j; 0 <= j < usbhid_ctx.num_iface &&
+         usbhid_ctx.hid_ifaces[j].iface.id == (pkt->wIndex & 0xff) && usbhid_ctx.hid_ifaces[j].configured == \true) ==> \result != MBED_ERROR_NONE;
+ @   ensures (\forall integer j; 0 <= j < usbhid_ctx.num_iface ==>
+         !(usbhid_ctx.hid_ifaces[j].iface.id != (pkt->wIndex & 0xff) && usbhid_ctx.hid_ifaces[j].configured == \true &&
+           usbhid_ctx.hid_ifaces[j].iface.usb_subclass == USBHID_SUBCLASS_BOOT_IFACE)) ==> \result != MBED_ERROR_NONE;
+ @   ensures !(\forall integer j; 0 <= j < usbhid_ctx.num_iface ==>
+         !(usbhid_ctx.hid_ifaces[j].iface.id == (pkt->wIndex & 0xff) && usbhid_ctx.hid_ifaces[j].configured == \true &&
+           usbhid_ctx.hid_ifaces[j].iface.usb_subclass == USBHID_SUBCLASS_BOOT_IFACE)) ==> \result == MBED_ERROR_NONE;
+
+ @ complete behaviors;
+ @ disjoint behaviors;
+ */
 #ifndef __FRAMAC__
 /* export needed to be triggered in EVA entrypoint */
 static
@@ -177,26 +256,60 @@ mbed_error_t usbhid_handle_set_protocol(usbctrl_setup_pkt_t *pkt)
         goto err;
     }
     uint16_t proto = pkt->wValue;
+    if (proto != 0 && proto != 1) {
+        errcode = MBED_ERROR_UNSUPORTED_CMD;
+        goto err;
+    }
+    if (pkt->wLength != 0) {
+        /* should be zero, as defined in the standard */
+        errcode = MBED_ERROR_UNSUPORTED_CMD;
+        goto err;
+    }
+    uint8_t wIndex_hbyte = (pkt->wIndex >> 8) & 0xff;
+    if (wIndex_hbyte != 0x0) {
+        log_printf("[USBHID] wIndex should handle iface id only (hid 1.11, 7.2.6)\n");
+        errcode = MBED_ERROR_UNSUPORTED_CMD;
+        goto err;
+    }
     uint8_t iface = pkt->wIndex & 0xff;
     uint8_t hid_handler;
     errcode = get_hid_handler_from_iface(iface, &hid_handler);
     if (errcode != MBED_ERROR_NONE) {
+         /*  assert !(\exists integer j; 0 <= j < usbhid_ctx.num_iface &&
+            (usbhid_ctx.hid_ifaces[j].iface.id == iface && usbhid_ctx.hid_ifaces[j].configured == \true)); */
         goto err;
     }
+    /*@ assert \exists integer j; 0 <= j < usbhid_ctx.num_iface &&
+         (usbhid_ctx.hid_ifaces[j].iface.id == iface && usbhid_ctx.hid_ifaces[j].configured == \true); */
+    /*@ assert hid_handler < usbhid_ctx.num_iface; */
+    /*@ assert usbhid_ctx.hid_ifaces[hid_handler].iface.id == iface; */
+    /*@ assert usbhid_ctx.hid_ifaces[hid_handler].configured == \true; */
 
+    /* iface **must** be declared in the boot subclass */
+    if (ctx->hid_ifaces[hid_handler].iface.usb_subclass != USBHID_SUBCLASS_BOOT_IFACE) {
+        /* SetProtocol is only for boot interfaces (typically keyboards) */
+        errcode = MBED_ERROR_UNSUPORTED_CMD;
+        goto err;
+    }
+    /*@ assert usbhid_ctx.hid_ifaces[hid_handler].iface.usb_subclass == USBHID_SUBCLASS_BOOT_IFACE; */
     switch (proto) {
         case 0:
             log_printf("[USBHID] requesting boot protocol on iface %d\n", iface);
+            ctx->hid_ifaces[hid_handler].protocol = USBHID_PROTO_BOOT;
             break;
         case 1:
             log_printf("[USBHID] requesting report protocol on iface %d\n", iface);
+            ctx->hid_ifaces[hid_handler].protocol = USBHID_PROTO_REPORT;
             break;
         default:
-            log_printf("[USBHID] unknown protocol %x received!\n", proto);
+            /* dead code, fault resilient, required as default fallback for compiler */
+            /*@ assert \false; */
             errcode = MBED_ERROR_UNSUPORTED_CMD;
             goto err;
     }
+    /* trigger upper layer that SetProtocol has been received */
     usbhid_request_trigger(hid_handler, USB_CLASS_RQST_SET_PROTOCOL);
+    /*@ assert errcode == MBED_ERROR_NONE; */
 err:
     return errcode;
 }
@@ -378,11 +491,22 @@ mbed_error_t usbhid_handle_class_request(usbctrl_setup_pkt_t *pkt)
         case USB_CLASS_RQST_SET_REPORT:
             log_printf("[USBHID] Set_Report class request (TODO)\n");
             /* receiving report on EP0 (when no EP OUT declared) */
-            if (is_iface_using_out_ep(iface)) {
+
+            uint8_t hid_handler;
+            if ((errcode = get_hid_handler_from_iface(iface, &hid_handler)) != MBED_ERROR_NONE) {
+                goto err;
+            }
+            bool iface_using_outep = false;
+
+            if ((errcode = is_iface_using_out_ep(hid_handler, &iface_using_outep)) != MBED_ERROR_NONE) {
+                goto err;
+            }
+            if (iface_using_outep == true) {
                 log_printf("[USBHID] iface %d is using OUT EP, Set_Report class request should not be received!\n", iface);
                 /* Set_Report is replaced by sending report directly to OUT EP */
                 usb_backend_drv_stall(0, USB_BACKEND_DRV_EP_DIR_OUT);
             } else {
+                /* TODO: pass received report to upper stack */
                 /* 1. get back report content */
                 /* 2. push it to the upper stack */
                 /* 3. and acknowledge */
