@@ -196,11 +196,13 @@ FRAMAC_EVA_FLAGS:=\
 		    -eva-use-spec usbotghs_endpoint_clear_nak \
 		    -eva-log a:$(EVA_LOGFILE)
 
+FRAMAC_WP_PROVERS ?= alt-ergo,cvc4,z3
+
 FRAMAC_WP_FLAGS:=\
 	        -wp \
   			-wp-model "Typed+ref+int" \
   			-wp-literals \
-  			-wp-prover alt-ergo,cvc4,z3,tip \
+  			-wp-prover $(FRAMAC_WP_PROVERS),tip \
 			-wp-prop="-@lemma" \
 			-wp-time-margin 25 \
    			-wp-timeout $(TIMEOUT) \
