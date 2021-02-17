@@ -196,11 +196,18 @@ FRAMAC_EVA_FLAGS:=\
 		    -eva-use-spec usbotghs_endpoint_clear_nak \
 		    -eva-log a:$(EVA_LOGFILE)
 
+ifeq (22,$(FRAMAC_VERSION))
+FRAMAC_WP_SUPP_FLAGS=-wp-check-memory-model
+else
+FRAMAC_WP_SUPP_FLAGS=
+endif
+
 FRAMAC_WP_PROVERS ?= alt-ergo,cvc4,z3
 
 FRAMAC_WP_FLAGS:=\
 	        -wp \
   			-wp-model "Typed+ref+int" \
+			$(FRAMAC_WP_SUPP_FLAGS)\
   			-wp-literals \
   			-wp-prover $(FRAMAC_WP_PROVERS),tip \
 			-wp-prop="-@lemma" \
