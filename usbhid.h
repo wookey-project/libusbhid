@@ -97,7 +97,6 @@ typedef struct {
     usbhid_iface_t        hid_ifaces[MAX_USBHID_IFACES];
 } usbhid_context_t;
 
-
 #endif
 
 usbhid_context_t *usbhid_get_context(void);

@@ -83,22 +83,9 @@ uint32_t hid_handler_valid;
 uint8_t  hid_handler;
 
 /*@
-  @ requires \separated(&GHOST_opaque_drv_privates,&ctxh1,&hid_handler_valid,&hid_handler, ctx_list+ (..));
+  @ requires \separated(&GHOST_opaque_drv_privates,&ctxh1,&hid_handler_valid,&hid_handler, &GHOST_num_ctx, &GHOST_opaque_libusbdci_privates);
   @ requires \valid(ctx_list + (0..(GHOST_num_ctx-1))) ;
-  @ ensures GHOST_num_ctx == num_ctx ;
 
-
-  @ behavior bad_num_ctx:
-  @   assumes num_ctx >= MAX_USB_CTRL_CTX   ;
-  @   ensures ctxh1 == \old(ctxh1) &&  num_ctx == \old(num_ctx) &&  GHOST_opaque_drv_privates == \old(GHOST_opaque_drv_privates) && ctx_list[\old(num_ctx)] == \old(ctx_list[\old(num_ctx)]) ;
-  @   ensures \result == MBED_ERROR_NOMEM ;
-  @
-  @  behavior ok:
-  @   assumes num_ctx < MAX_USB_CTRL_CTX ;
-  @   ensures \result == MBED_ERROR_NONE ==> (ctxh1 == \old(GHOST_num_ctx));
-  @
-  @ complete behaviors;
-  @ disjoint behaviors;
 */
 mbed_error_t prepare_ctrl_ctx(void);
 

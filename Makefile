@@ -150,6 +150,7 @@ SESSION     := $(FRAMAC_RESULTSDIR)/frama-c-rte-eva-wp-ref.session
 LOGFILE     := $(FRAMAC_RESULTSDIR)/frama-c-rte-eva-wp-ref.log
 EVA_SESSION := $(FRAMAC_RESULTSDIR)/frama-c-rte-eva.session
 EVA_LOGFILE := $(FRAMAC_RESULTSDIR)/frama-c-rte-eva.log
+EVAREPORT	:= $(FRAMAC_RESULTSDIR)/frama-c-rte-eva_report
 TIMESTAMP   := $(FRAMAC_RESULTSDIR)/timestamp-calcium_wp-eva.txt
 JOBS        := $(shell nproc)
 # Does this flag could be overriden by env (i.e. using ?=)
@@ -194,10 +195,11 @@ FRAMAC_EVA_FLAGS:=\
 		    -eva-use-spec usbotghs_endpoint_stall_clear \
 		    -eva-use-spec usbotghs_endpoint_set_nak \
 		    -eva-use-spec usbotghs_endpoint_clear_nak \
-		    -eva-log a:$(EVA_LOGFILE)
+		    -eva-log a:$(EVA_LOGFILE)\
+			-eva-report-red-statuses $(EVAREPORT)
 
 ifeq (22,$(FRAMAC_VERSION))
-FRAMAC_WP_SUPP_FLAGS=-wp-check-memory-model
+	FRAMAC_WP_SUPP_FLAGS= # -wp-check-memory-model, asserts are to be added first: invalid wp behavior by now
 else
 FRAMAC_WP_SUPP_FLAGS=
 endif

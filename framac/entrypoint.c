@@ -273,19 +273,18 @@ mbed_error_t prepare_ctrl_ctx(void){
      * MBED_ERROR_NOBACKEND can't be reached from here. */
     errcode = usbctrl_declare(USB_OTG_HS_ID, &ctxh1);
     if (errcode != MBED_ERROR_NONE) {
-      /*@ assert errcode == MBED_ERROR_NOMEM || errcode == MBED_ERROR_UNKNOWN;*/
       goto err;
     }
     /*@ assert errcode == MBED_ERROR_NONE ; */
-    /*@ assert ctxh1 == 0 ; */
 
     errcode = usbctrl_initialize(ctxh1);
     if (errcode != MBED_ERROR_NONE) {
-            /*@ assert errcode == MBED_ERROR_UNKNOWN || errcode == MBED_ERROR_NONE;*/
         goto err;
     }
     /*@ assert errcode == MBED_ERROR_NONE ; */
-    /*@ assert ctxh1 == 0 ; */
+
+//    usbctrl_start_device(ctxh1);
+
 err:
     return errcode;
 }
@@ -319,22 +318,24 @@ void test_fcn_usbhid(){
 
     mbed_error_t errcode;
 
-
-
     ///////////////////////////////////////////////////
     //        premier context (all callbacks set)
     ///////////////////////////////////////////////////
-
     errcode = usbhid_declare(ctxh1,
             USB_subclass, USB_protocol,
             1, poll, dedicated_out,
             mpsize, &(hid_handler),
             recv_buf,
             maxlen);
+    if (errcode != MBED_ERROR_NONE) {
+        goto err;
+    }
     /* @ assert errcode == MBED_ERROR_NONE ; */
 
-    /* define this handler as valid for future use */
+
     hid_handler_valid = hid_handler;
+
+
 
     if(errcode == MBED_ERROR_NONE) {
         errcode = usbhid_configure(hid_handler, NULL, NULL, NULL, NULL);
@@ -343,6 +344,7 @@ void test_fcn_usbhid(){
         errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, set_report_cb, set_proto_cb, NULL);
         errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, set_report_cb, set_proto_cb, set_idle_cb);
     }
+
 
     if(errcode == MBED_ERROR_NONE) {
         usbhid_recv_report(hid_handler, recv_buf, my_maxlen);
@@ -397,13 +399,12 @@ void test_fcn_usbhid(){
 
     /* @ assert errcode == MBED_ERROR_NONE ; */
 
-    if(errcode == MBED_ERROR_NONE){
+    if (errcode == MBED_ERROR_NONE) {
         errcode = usbhid_configure(hid_handler, NULL, NULL, NULL, NULL);
-
         errcode = usbhid_configure(hid_handler, oneidx_get_report_cb, NULL, NULL, NULL);
     }
 
-    if(errcode == MBED_ERROR_NONE){
+    if (errcode == MBED_ERROR_NONE) {
         usbhid_recv_report(hid_handler, recv_buf, my_maxlen);
     }
     usbhid_is_silence_requested(hid_handler, 0);
@@ -418,6 +419,8 @@ void test_fcn_usbhid(){
     usbhid_send_report(hid_handler, (uint8_t*)&report_buf[0], my_report_type, 1);
     usbhid_send_response(hid_handler, my_report, my_response_len);
     usbhid_response_done(hid_handler);
+err:
+    return;
 
 }
 
@@ -504,14 +507,12 @@ void test_fcn_usbhid_erreur(){
 
     /* get back valid HID handler for next commands */
     hid_handler_err = hid_handler_valid;
-    /* @ assert errcode == MBED_ERROR_NONE; */
 
     errcode = usbhid_configure(hid_handler_err + 1, oneidx_get_report_cb, NULL, NULL, NULL);
 
     errcode = usbhid_configure(hid_handler_err, NULL, NULL, NULL, NULL);
 
     errcode = usbhid_configure(hid_handler_err, oneidx_get_report_cb, set_report_cb, set_proto_cb, set_idle_cb);
-    /* @ assert errcode == MBED_ERROR_NONE; */
 
     usbhid_recv_report(hid_handler_err + 1, recv_buf, maxlen);
     usbhid_recv_report(hid_handler_err, NULL, Frama_C_interval_16(0,maxlen));
@@ -545,6 +546,9 @@ void test_fcn_usbhid_erreur(){
     usbhid_get_requested_idle(hid_handler_err, Frama_C_interval_8(0, 8));
     usbhid_get_requested_idle(Frama_C_interval_8(0, 4), Frama_C_interval_8(0, 2));
 
+    uint8_t buf[256];
+    uint8_t ephemeral_desc_size = 255;
+    usbhid_get_descriptor((uint8_t)0, &(buf[0]), &ephemeral_desc_size, 0);
 }
 
 /*requests, triggers... */

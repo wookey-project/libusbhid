@@ -362,12 +362,11 @@ typedef mbed_error_t          (*usbhid_set_idle_t)(uint8_t hid_handler,
 
   // the lonely possibility here is that there is no more space at CTRL level for our interface.
   // The iface content should be valid (no INVPARAM)
-  // TODO: assigns ctx_list (usbctrl)
   @behavior declare_iface:
   @   assumes num_descriptor != 0 && num_descriptor < MAX_HID_DESCRIPTORS && hid_handler != NULL ;
   @   assumes usbhid_ctx.num_iface < MAX_USBHID_IFACES && in_buff != NULL && in_buff_len > 0 ;
   @   assigns usbhid_ctx ;
-  @   assigns ctx_list[usbxdci_handler];
+  @   assigns GHOST_opaque_libusbdci_privates;
   @   assigns *hid_handler;
   @   ensures \result >= MBED_ERROR_NONE && \result <= MBED_ERROR_INTR ;
 
