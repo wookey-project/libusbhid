@@ -84,8 +84,6 @@ uint8_t  hid_handler;
 
 /*@
   @ requires \separated(&GHOST_opaque_drv_privates,&ctxh1,&hid_handler_valid,&hid_handler, &GHOST_num_ctx, &GHOST_opaque_libusbdci_privates);
-  @ requires \valid(ctx_list + (0..(GHOST_num_ctx-1))) ;
-
 */
 mbed_error_t prepare_ctrl_ctx(void);
 
