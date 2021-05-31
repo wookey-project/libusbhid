@@ -37,7 +37,7 @@
 /*@
   assigns \nothing;
   */
-void usbctrl_configuration_set(void)
+__attribute__((weak)) void usbctrl_configuration_set(void)
 {
     return;
 }
